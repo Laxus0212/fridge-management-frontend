@@ -1,0 +1,69 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button text="Back" icon="arrow-back-circle-outline"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{commonService.getFridgeName()}}'s Shelves</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-fab horizontal="end" vertical="bottom" slot="fixed">
+    <ion-fab-button>
+      <ion-icon name="add" (click)="openAddShelfModal()"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <ion-list>
+    <ion-item *ngFor="let shelf of shelves">
+      <ion-label (click)="navigateToProductPage(shelf.id!)">{{ shelf.name }}</ion-label>
+      <ion-button slot="end" color="primary" (click)="openUpdateShelfModal(shelf)">Edit</ion-button>
+      <ion-button slot="end" color="danger" (click)="deleteShelf(shelf.id)">Delete</ion-button>
+    </ion-item>
+  </ion-list>
+
+  <!-- Modal a polc hozzáadásához -->
+  <ion-modal [isOpen]="isAddModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Add New Shelf</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddShelfModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content>
+        <ion-item>
+          <ion-label position="floating">Shelf Name</ion-label>
+          <ion-input [(ngModel)]="newShelfName"></ion-input>
+        </ion-item>
+        <ion-button expand="block" [disabled]="!newShelfName" (click)="addShelf()">Add Shelf</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal a polc szerkesztéséhez -->
+  <ion-modal [isOpen]="isUpdateModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Update Shelf</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeUpdateShelfModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-item>
+          <ion-label position="stacked">Shelf Name</ion-label>
+          <ion-input [(ngModel)]="selectedShelfName"></ion-input>
+        </ion-item>
+        <ion-button expand="block" [disabled]="!selectedShelfName" (click)="updateShelf()">Update Shelf</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+
+</ion-content>

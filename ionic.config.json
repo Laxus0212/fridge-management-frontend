@@ -1,0 +1,10 @@
+{
+  "name": "fridge-management",
+  "integrations": {
+    "capacitor": {},
+    "serve": {
+      "open": false
+    }
+  },
+  "type": "angular"
+}

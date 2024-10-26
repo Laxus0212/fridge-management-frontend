@@ -1,0 +1,131 @@
+paths:
+  /fridges:
+    get:
+      tags:
+        - Fridge
+      summary: Get all fridges
+      operationId: getAllFridges
+      responses:
+        '200':
+          description: List of fridges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+              examples:
+                example1:
+                  value:
+                    - fridge_id: 1
+                      fridge_name: "Main Fridge"
+                      owner_id: 1
+                      shared_with_family: true
+                    - fridge_id: 2
+                      fridge_name: "Second Fridge"
+                      owner_id: 2
+                      shared_with_family: false
+    post:
+      tags:
+        - Fridge
+      summary: Add a new fridge
+      operationId: addFridge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+      responses:
+        '201':
+          description: Fridge added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+              examples:
+                example1:
+                  value:
+                    fridge_id: 3
+                    fridge_name: "Office Fridge"
+                    owner_id: 1
+                    shared_with_family: true
+
+  /fridges/{fridgeId}:
+    get:
+      tags:
+        - Fridge
+      summary: Get fridge by ID
+      operationId: getFridgeById
+      parameters:
+        - in: path
+          name: fridgeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Fridge details
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+              examples:
+                example1:
+                  value:
+                    fridge_id: 1
+                    fridge_name: "Main Fridge"
+                    owner_id: 1
+                    shared_with_family: true
+    put:
+      tags:
+        - Fridge
+      summary: Update fridge name
+      operationId: updateFridgeName
+      parameters:
+        - in: path
+          name: fridgeId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fridge_name:
+                  type: string
+      responses:
+        '200':
+          description: Fridge name updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+              examples:
+                example1:
+                  value:
+                    fridge_id: 1
+                    fridge_name: "Updated Fridge Name"
+                    owner_id: 1
+                    shared_with_family: true
+        '400':
+          description: Invalid input
+        '404':
+          description: Fridge not found
+    delete:
+      tags:
+        - Fridge
+      summary: Delete fridge
+      operationId: deleteFridge
+      parameters:
+        - in: path
+          name: fridgeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: Fridge deleted successfully

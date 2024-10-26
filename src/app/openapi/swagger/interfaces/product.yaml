@@ -1,0 +1,25 @@
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        product_id:
+          type: integer
+        product_name:
+          type: string
+        quantity:
+          type: number
+          format: decimal
+        unit:
+          type: string
+        expiration_date:
+          type: string
+          format: date
+        opened_date:
+          type: string
+          format: date
+        shelf_id:
+          type: integer
+        barcode:
+          type: string
+      required: [product_name, quantity, unit, expiration_date]

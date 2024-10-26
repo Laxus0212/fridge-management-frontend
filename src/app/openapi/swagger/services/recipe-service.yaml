@@ -1,0 +1,55 @@
+paths:
+  /recipes:
+    post:
+      tags:
+        - Recipe
+      summary: Add a new recipe
+      operationId: addRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/recipe.yaml#/components/schemas/Recipe'
+      responses:
+        '201':
+          description: Recipe added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/recipe.yaml#/components/schemas/Recipe'
+              examples:
+                example1:
+                  value:
+                    recipe_id: 1
+                    recipe_name: "Pancakes"
+                    meal_type: "reggeli"
+                    shared_with_family: true
+
+  /recipes/{recipeId}/ingredients:
+    post:
+      tags:
+        - Recipe
+      summary: Add ingredient to a recipe
+      operationId: addIngredientToRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/recipe.yaml#/components/schemas/Ingredient'
+      responses:
+        '201':
+          description: Ingredient added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/recipe.yaml#/components/schemas/Ingredient'
+              examples:
+                example1:
+                  value:
+                    ingredient_id: 1
+                    recipe_id: 1
+                    product_name: "Flour"
+                    quantity: 2
+                    unit: "dkg"

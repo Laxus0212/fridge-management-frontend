@@ -1,0 +1,24 @@
+components:
+  schemas:
+    ShoppingList:
+      type: object
+      properties:
+        list_id:
+          type: integer
+        family_id:
+          type: integer
+
+    ShoppingListItem:
+      type: object
+      properties:
+        item_id:
+          type: integer
+        list_id:
+          type: integer
+        product_name:
+          type: string
+        quantity:
+          type: number
+          format: decimal
+        unit:
+          type: string

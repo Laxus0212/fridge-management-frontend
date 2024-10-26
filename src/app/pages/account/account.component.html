@@ -1,0 +1,107 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Account</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="accountForm">
+  <form [formGroup]="accountForm" (ngSubmit)="updateAccount()">
+    <ion-list>
+      <ion-item-divider>Personal Information</ion-item-divider>
+
+      <ion-item>
+        <ion-input
+          type="email"
+          fill="solid"
+          label="Email"
+          labelPlacement="stacked"
+          formControlName="email"
+          [errorText]="emailErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="accountForm.get('email')?.dirty && accountForm.get('email')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="accountForm.get('email')?.dirty && accountForm.get('email')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          type="text"
+          fill="solid"
+          label="Username"
+          labelPlacement="stacked"
+          formControlName="username"
+          [errorText]="usernameErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="accountForm.get('username')?.dirty && accountForm.get('username')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="accountForm.get('username')?.dirty && accountForm.get('username')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          type="password"
+          fill="solid"
+          label="Password"
+          labelPlacement="stacked"
+          formControlName="password"
+          [errorText]="passwordErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="accountForm.get('password')?.dirty && accountForm.get('password')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="accountForm.get('password')?.dirty && accountForm.get('password')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          type="password"
+          fill="solid"
+          label="Repeat Password"
+          labelPlacement="stacked"
+          formControlName="password_repeat"
+          [errorText]="passwordRepeatErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="accountForm.get('password_repeat')?.dirty && !accountForm.hasError('passwordsDoNotMatch')"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="accountForm.get('password_repeat')?.dirty && accountForm.hasError('passwordsDoNotMatch')"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+    </ion-list>
+    <ion-button expand="full" type="submit">Save Changes</ion-button>
+  </form>
+</ion-content>

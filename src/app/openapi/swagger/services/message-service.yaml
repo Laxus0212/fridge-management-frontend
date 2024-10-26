@@ -1,0 +1,28 @@
+paths:
+  /messages:
+    post:
+      tags:
+        - Message
+      summary: Send a message
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/message.yaml#/components/schemas/Message'
+      responses:
+        '201':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/message.yaml#/components/schemas/Message'
+              examples:
+                example1:
+                  value:
+                    message_id: 1
+                    sender_id: 1
+                    family_id: 1
+                    message: "Hello, family!"
+                    sent_at: "2023-11-01T10:00:00Z"

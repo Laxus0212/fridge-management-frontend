@@ -1,0 +1,25 @@
+components:
+  schemas:
+    Fridge:
+      type: object
+      properties:
+        fridge_id:
+          type: integer
+        fridge_name:
+          type: string
+        owner_id:
+          type: integer
+        shared_with_family:
+          type: boolean
+      required: [fridge_name]
+
+    Shelf:
+      type: object
+      properties:
+        shelf_id:
+          type: integer
+        shelf_name:
+          type: string
+        fridge_id:
+          type: integer
+      required: [shelf_name, fridge_id]

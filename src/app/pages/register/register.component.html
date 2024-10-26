@@ -1,0 +1,143 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Register</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="registerForm">
+  <form [formGroup]="registerForm" (ngSubmit)="register()">
+    <ion-list>
+      <ion-item-divider>Personal Information</ion-item-divider>
+      <ion-item>
+        <ion-input
+          type="email"
+          fill="solid"
+          label="Email"
+          labelPlacement="stacked"
+          formControlName="email"
+          [errorText]="emailErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="registerForm.get('email')?.dirty && registerForm.get('email')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="registerForm.get('email')?.dirty && registerForm.get('email')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          type="text"
+          fill="solid"
+          label="Username"
+          labelPlacement="stacked"
+          formControlName="username"
+          [errorText]="usernameErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="registerForm.get('username')?.dirty && registerForm.get('username')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="registerForm.get('username')?.dirty && registerForm.get('username')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          type="password"
+          fill="solid"
+          label="Password"
+          labelPlacement="stacked"
+          formControlName="password"
+          [errorText]="passwordErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="registerForm.get('password')?.dirty && registerForm.get('password')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="registerForm.get('password')?.dirty && registerForm.get('password')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          type="password"
+          fill="solid"
+          label="Confirm Password"
+          labelPlacement="stacked"
+          formControlName="confirmPassword"
+          [errorText]="confirmPasswordErrorText"
+        ></ion-input>
+        <ion-icon
+          *ngIf="registerForm.get('confirmPassword')?.dirty && registerForm.get('confirmPassword')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="registerForm.get('confirmPassword')?.dirty && registerForm.get('confirmPassword')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+      <!-- Family kiválasztása -->
+      <ion-item-divider>Family</ion-item-divider>
+      <ion-item *ngIf="families.length > 0">
+        <ion-select formControlName="isNewFamily">
+          <ion-select-option [value]="false">Join Existing</ion-select-option>
+          <ion-select-option [value]="true">Create New</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item *ngIf="registerForm.get('isNewFamily')?.value === false">
+        <ion-select formControlName="familyId" label="Choose Family">
+          <ion-select-option *ngFor="let family of families" [value]="family.id">{{ family.name }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item *ngIf="registerForm.get('isNewFamily')?.value === true">
+        <ion-input
+          type="text"
+          fill="solid"
+          formControlName="newFamilyName"
+          label="New Family Name"
+          labelPlacement="stacked"
+          [errorText]="familyErrorText"></ion-input>
+        <ion-icon
+          *ngIf="registerForm.get('newFamilyName')?.dirty && registerForm.get('newFamilyName')?.valid"
+          name="checkmark-circle-outline"
+          color="success"
+          slot="end">
+        </ion-icon>
+        <ion-icon
+          *ngIf="registerForm.get('newFamilyName')?.dirty && registerForm.get('newFamilyName')?.invalid"
+          name="alert-circle-outline"
+          color="danger"
+          slot="end">
+        </ion-icon>
+      </ion-item>
+
+    </ion-list>
+    <ion-button expand="full" type="submit">Register</ion-button>
+  </form>
+</ion-content>

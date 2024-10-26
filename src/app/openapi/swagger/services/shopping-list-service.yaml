@@ -1,0 +1,53 @@
+paths:
+  /shopping-lists:
+    post:
+      tags:
+        - ShoppingList
+      summary: Create a new shopping list
+      operationId: createShoppingList
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
+      responses:
+        '201':
+          description: Shopping list created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
+              examples:
+                example1:
+                  value:
+                    list_id: 1
+                    family_id: 1
+
+  /shopping-lists/{listId}/items:
+    post:
+      tags:
+        - ShoppingList
+      summary: Add item to shopping list
+      operationId: addItemToShoppingList
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
+      responses:
+        '201':
+          description: Item added to shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
+              examples:
+                example1:
+                  value:
+                    item_id: 1
+                    list_id: 1
+                    product_name: "Bread"
+                    quantity: 2
+                    unit: "pcs"

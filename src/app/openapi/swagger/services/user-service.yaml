@@ -1,0 +1,132 @@
+paths:
+  /users:
+    get:
+      tags:
+        - User
+      summary: List all users
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/user.yaml#/components/schemas/User'
+              examples:
+                example1:
+                  value:
+                    - user_id: 1
+                      email: "user1@example.com"
+                      username: "user1"
+                    - user_id: 2
+                      email: "user2@example.com"
+                      username: "user2"
+    post:
+      tags:
+        - User
+      summary: Register a new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/user.yaml#/components/schemas/User'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/user.yaml#/components/schemas/User'
+              examples:
+                example1:
+                  value:
+                    user_id: 3
+                    email: "newuser@example.com"
+                    username: "newuser"
+
+  /users/{userId}:
+    get:
+      tags:
+        - User
+      summary: Get user by ID
+      operationId: getUserById
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/user.yaml#/components/schemas/User'
+              examples:
+                example1:
+                  value:
+                    user_id: 1
+                    email: "user1@example.com"
+                    username: "user1"
+    delete:
+      tags:
+        - User
+      summary: Delete a user
+      operationId: deleteUser
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              examples:
+                example1:
+                  value:
+                    message: "User deleted successfully"
+  /users/{userId}/fridges:
+    get:
+      tags:
+        - User
+      summary: Get fridges owned by user or shared within user's family
+      operationId: getUserFridges
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: The ID of the user requesting the fridges
+      responses:
+        '200':
+          description: List of fridges accessible by the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+              examples:
+                example1:
+                  value:
+                    - fridge_id: 1
+                      fridge_name: "Fridge Shared With Family"
+                      owner_id: 2
+                      shared_with_family: true
+                    - fridge_id: 2
+                      fridge_name: "Fridge Owned By User"
+                      owner_id: 1
+                      shared_with_family: false
+        '404':
+          description: User not found

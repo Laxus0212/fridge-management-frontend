@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/@openapitools/openapi-generator-cli/config.schema.json",
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.9.0",
+    "generators": {
+      "angular": {
+        "generatorName": "typescript-angular",
+        "output": "fridge-management/src/app/openapi/generated-angular-sdk",
+        "inputSpec": "fridge-management/src/app/openapi/spec.yaml",
+        "additionalProperties": {
+          "ngVersion": "12.0.0",
+          "useRxJS6": true,
+          "basePath": "${environment.BASE_URL}"
+        }
+      }
+    }
+  }
+}

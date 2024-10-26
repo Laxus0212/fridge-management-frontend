@@ -1,0 +1,66 @@
+paths:
+  /shelves:
+    post:
+      tags:
+        - Shelf
+      summary: Add a new shelf
+      operationId: addShelf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/fridge.yaml#/components/schemas/Shelf'
+      responses:
+        '201':
+          description: Shelf added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/fridge.yaml#/components/schemas/Shelf'
+              examples:
+                example1:
+                  value:
+                    shelf_id: 1
+                    shelf_name: "Top Shelf"
+                    fridge_id: 1
+
+  /shelves/{shelfId}:
+    get:
+      tags:
+        - Shelf
+      summary: Get shelf by ID
+      operationId: getShelfById
+      parameters:
+        - in: path
+          name: shelfId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Shelf details
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/fridge.yaml#/components/schemas/Shelf'
+              examples:
+                example1:
+                  value:
+                    shelf_id: 1
+                    shelf_name: "Top Shelf"
+                    fridge_id: 1
+    delete:
+      tags:
+        - Shelf
+      summary: Delete shelf
+      operationId: deleteShelf
+      parameters:
+        - in: path
+          name: shelfId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: Shelf deleted successfully

@@ -1,0 +1,72 @@
+paths:
+  /products:
+    post:
+      tags:
+        - Product
+      summary: Add a new product to a shelf
+      operationId: addProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/product.yaml#/components/schemas/Product'
+      responses:
+        '201':
+          description: Product added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/product.yaml#/components/schemas/Product'
+              examples:
+                example1:
+                  value:
+                    product_id: 1
+                    product_name: "Milk"
+                    quantity: 1.0
+                    unit: "L"
+                    expiration_date: "2023-12-01"
+                    shelf_id: 1
+
+  /products/{productId}:
+    get:
+      tags:
+        - Product
+      summary: Get product by ID
+      operationId: getProductById
+      parameters:
+        - in: path
+          name: productId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/product.yaml#/components/schemas/Product'
+              examples:
+                example1:
+                  value:
+                    product_id: 1
+                    product_name: "Milk"
+                    quantity: 1.0
+                    unit: "L"
+                    expiration_date: "2023-12-01"
+                    shelf_id: 1
+    delete:
+      tags:
+        - Product
+      summary: Delete product
+      operationId: deleteProduct
+      parameters:
+        - in: path
+          name: productId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: Product deleted successfully

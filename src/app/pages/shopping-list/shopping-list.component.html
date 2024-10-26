@@ -1,0 +1,191 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Shopping Lists</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="light" (click)="openAddShoppingListModal()">
+        <ion-icon slot="icon-only" name="add"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <!-- Shopping Lists -->
+    <ion-card *ngFor="let shoppingList of shoppingLists" class="shopping-list-card">
+      <ion-card-header class="shopping-list-header">
+        <ion-item lines="none">
+          <ion-label>
+            <h2>{{ shoppingList.name }}</h2>
+          </ion-label>
+          <ion-button slot="end" fill="clear" color="primary" (click)="openEditShoppingListModal(shoppingList)">Edit</ion-button>
+          <ion-button slot="end" fill="clear" color="danger" (click)="deleteShoppingList(shoppingList.id)">Delete</ion-button>
+          <ion-button slot="end" fill="clear" color="primary" (click)="toggleListExpansion(shoppingList.id)">
+            <ion-icon [name]="shoppingList.isExpanded ? 'chevron-up' : 'chevron-down'"></ion-icon>
+          </ion-button>
+        </ion-item>
+      </ion-card-header>
+
+      <!-- Shopping List Products -->
+      <ion-card-content *ngIf="shoppingList.isExpanded">
+        <ion-list class="shopping-list-products">
+          <ion-item *ngFor="let product of shoppingList.products" lines="full" class="shopping-list-products-item">
+            <ion-label>
+              <p style="color: greenyellow"><strong>{{ product.name }}</strong> - {{ product.quantity }} {{ product.unit }}</p>
+            </ion-label>
+            <ion-button slot="end" fill="outline" color="primary" (click)="toggleEditProduct(product, shoppingList.id)">Edit</ion-button>
+            <ion-button slot="end" fill="outline" color="danger" (click)="deleteProduct(product.id, shoppingList.id)">Delete</ion-button>
+          </ion-item>
+          <ion-button expand="block" color="secondary" (click)="openAddProductModal(shoppingList.id)">Add Product</ion-button>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
+
+  <!-- Modal to add shopping list -->
+  <ion-modal [isOpen]="isAddShoppingListModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Add New Shopping List</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddShoppingListModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-item>
+          <ion-label position="floating">Shopping List Name</ion-label>
+          <ion-input [(ngModel)]="newShoppingListName" type="text"></ion-input>
+        </ion-item>
+        <ion-button expand="block" [disabled]="!newShoppingListName" (click)="addShoppingList()">Add Shopping List</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal to edit shopping list -->
+  <ion-modal [isOpen]="isEditShoppingListModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Edit Shopping List</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeEditShoppingListModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-item>
+          <ion-label position="floating">Shopping List Name</ion-label>
+          <ion-input [(ngModel)]="editShoppingListName" type="text"></ion-input>
+        </ion-item>
+        <ion-button expand="block" [disabled]="!editShoppingListName" (click)="updateShoppingList()">Update Shopping List</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal to edit product -->
+  <ion-modal [isOpen]="isEditProductModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Edit Product</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeEditProductModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-item>
+          <ion-label position="floating">Product Name</ion-label>
+          <ion-input [(ngModel)]="editProductName" type="text"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Quantity</ion-label>
+          <ion-input [(ngModel)]="editProductQuantity" type="number"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Unit</ion-label>
+          <ion-select [(ngModel)]="editProductUnit">
+            <ion-select-option value="g">g</ion-select-option>
+            <ion-select-option value="kg">kg</ion-select-option>
+            <ion-select-option value="ml">ml</ion-select-option>
+            <ion-select-option value="l">l</ion-select-option>
+            <ion-select-option value="pcs">pcs</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-button expand="block" (click)="updateProduct()">Update Product</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal to add product to shopping list -->
+  <ion-modal [isOpen]="isAddProductModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Add Product to Shopping List</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddProductModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-item>
+          <ion-label position="floating">Product Name</ion-label>
+          <ion-input [(ngModel)]="newProductName" type="text"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Quantity</ion-label>
+          <ion-input [(ngModel)]="newProductQuantity" type="number"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Unit</ion-label>
+          <ion-select [(ngModel)]="newProductUnit">
+            <ion-select-option value="g">g</ion-select-option>
+            <ion-select-option value="kg">kg</ion-select-option>
+            <ion-select-option value="ml">ml</ion-select-option>
+            <ion-select-option value="l">l</ion-select-option>
+            <ion-select-option value="pcs">pcs</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-button expand="block" [disabled]="!newProductName || !newProductQuantity || !newProductUnit" (click)="addProductToShoppingList()">Add Product</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal to edit product -->
+  <ion-modal [isOpen]="isEditProductModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Edit Product</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeEditProductModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-item>
+          <ion-label position="floating">Product Name</ion-label>
+          <ion-input [(ngModel)]="editProductName" type="text"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Quantity</ion-label>
+          <ion-input [(ngModel)]="editProductQuantity" type="number"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Unit</ion-label>
+          <ion-select [(ngModel)]="editProductUnit">
+            <ion-select-option value="g">g</ion-select-option>
+            <ion-select-option value="kg">kg</ion-select-option>
+            <ion-select-option value="ml">ml</ion-select-option>
+            <ion-select-option value="l">l</ion-select-option>
+            <ion-select-option value="pcs">pcs</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-button expand="block" (click)="updateProduct()">Update Product</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

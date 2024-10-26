@@ -1,0 +1,65 @@
+openapi: 3.0.0
+info:
+  title: Fridge Management API
+  version: 1.0.0
+  description: API for managing users, fridges, shelves, products, shopping lists, recipes, ingredients, and messages.
+servers:
+  - url: http://localhost:4010
+    description: 'API server'
+
+paths:
+  /users:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users'
+  /users/{userId}:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}'
+  /users/{userId}/fridges:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}~1fridges'
+
+  /fridges:
+    $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges'
+  /fridges/{fridgeId}:
+    $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges~1{fridgeId}'
+
+  /shelves:
+    $ref: './swagger/services/shelf-service.yaml#/paths/~1shelves'
+  /shelves/{shelfId}:
+    $ref: './swagger/services/shelf-service.yaml#/paths/~1shelves~1{shelfId}'
+
+  /products:
+    $ref: './swagger/services/product-service.yaml#/paths/~1products'
+  /products/{productId}:
+    $ref: './swagger/services/product-service.yaml#/paths/~1products~1{productId}'
+
+  /shopping-lists:
+    $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists'
+  /shopping-lists/{listId}/items:
+    $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{listId}~1items'
+
+  /recipes:
+    $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes'
+  /recipes/{recipeId}/ingredients:
+    $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes~1{recipeId}~1ingredients'
+
+  /messages:
+    $ref: './swagger/services/message-service.yaml#/paths/~1messages'
+
+components:
+  schemas:
+    User:
+      $ref: './swagger/interfaces/user.yaml/#/components/schemas/User'
+    Fridge:
+      $ref: './swagger/interfaces/fridge.yaml#/components/schemas/Fridge'
+    Shelf:
+      $ref: './swagger/interfaces/fridge.yaml#/components/schemas/Shelf'
+    Product:
+      $ref: './swagger/interfaces/product.yaml#/components/schemas/Product'
+    ShoppingList:
+      $ref: './swagger/interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
+    ShoppingListItem:
+      $ref: './swagger/interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
+    Recipe:
+      $ref: './swagger/interfaces/recipe.yaml#/components/schemas/Recipe'
+    Ingredient:
+      $ref: './swagger/interfaces/recipe.yaml#/components/schemas/Ingredient'
+    Message:
+      $ref: './swagger/interfaces/message.yaml#/components/schemas/Message'
