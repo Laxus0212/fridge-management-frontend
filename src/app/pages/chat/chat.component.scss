@@ -1,0 +1,55 @@
+.message-container {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.sent-bubble, .received-bubble {
+  max-width: 70%;
+  margin: 5px;
+  padding: 10px 15px;
+  border-radius: 20px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.sent-bubble {
+  align-self: flex-end;
+  background-color: #0078fe;
+  color: #ffffff;
+  border-bottom-right-radius: 5px;
+}
+
+.received-bubble {
+  align-self: flex-start;
+  background-color: #e5e5ea;
+  color: #000000;
+  border-bottom-left-radius: 5px;
+}
+
+.bubble-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.bubble-content h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.bubble-content p {
+  margin: 5px 0;
+  font-size: 1rem;
+}
+
+.bubble-content small {
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.bubble-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

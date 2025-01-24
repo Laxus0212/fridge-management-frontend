@@ -1,0 +1,57 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button text="Back" icon="arrow-back-circle-outline"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ chatTitle }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Loading State -->
+  <ng-container *ngIf="isLoading; else messageList">
+    <ion-list>
+      <ion-item *ngFor="let i of [1, 2, 3]">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 80%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- Message List -->
+  <ng-template #messageList>
+    <div class="message-container">
+      <!-- Websocket Messages -->
+      <ng-container *ngFor="let messages of [prevWebsocketMessages, websocketMessages]">
+        <div
+          *ngFor="let message of messages"
+          [ngClass]="{'sent-bubble': isUserMessage(message), 'received-bubble': !isUserMessage(message)}"
+        >
+          <!-- Message Bubble -->
+          <div class="bubble-content" (click)="isUserMessage(message) ? presentAccountActionSheet(message) : null">
+            <h3 *ngIf="!isUserMessage(message)">{{ getMessageSenderName(message) }}</h3>
+            <p>{{ message.message }}</p>
+            <small>{{ message.sent_at | date: 'dd/MM/YY hh:mm' }}</small>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </ng-template>
+</ion-content>
+
+<!-- Message Input and Send Button -->
+<ion-footer>
+  <ion-toolbar>
+    <ion-item>
+      <ion-input
+        [(ngModel)]="newMessageText"
+        placeholder="Type a message..."
+        (keyup.enter)="sendMessage()"
+      ></ion-input>
+      <ion-button fill="clear" (click)="sendMessage()" [disabled]="!newMessageText">
+        <ion-icon slot="icon-only" name="send-outline" class="icon-large"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-toolbar>
+</ion-footer>
