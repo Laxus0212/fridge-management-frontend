@@ -25,6 +25,15 @@ paths:
                     recipe_name: "Pancakes"
                     meal_type: "reggeli"
                     shared_with_family: true
+                    ingredients: [
+                        {
+                            ingredient_id: 1,
+                            recipe_id: 1,
+                            product_name: "Flour",
+                            quantity: 2,
+                            unit: "dkg"
+                        }
+                    ]
 
   /recipes/{recipeId}/ingredients:
     post:

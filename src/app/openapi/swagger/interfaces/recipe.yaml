@@ -17,6 +17,10 @@ components:
           type: integer
         shared_with_family:
           type: boolean
+        ingredients:
+            type: array
+            items:
+              $ref: '../interfaces/recipe.yaml#/components/schemas/Ingredient'
 
     Ingredient:
       type: object
