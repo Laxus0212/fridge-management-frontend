@@ -61,6 +61,12 @@ paths:
     $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}~1users'
   /families/{familyId}/invite:
     $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}~1invite'
+  /families/invites:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites'
+  /families/invites/{inviteId}/accept:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites~1{inviteId}~1accept'
+  /families/invites/{inviteId}/decline:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites~1{inviteId}~1decline'
 
 
 components:
@@ -99,5 +105,7 @@ components:
       $ref: './swagger/interfaces/chat.yaml#/components/schemas/Chat'
     Family:
       $ref: './swagger/interfaces/family.yaml#/components/schemas/Family'
+    Invite:
+      $ref: './swagger/interfaces/family.yaml#/components/schemas/Invite'
     CreateFamilyReq:
       $ref: './swagger/interfaces/family.yaml#/components/schemas/CreateFamilyReq'
