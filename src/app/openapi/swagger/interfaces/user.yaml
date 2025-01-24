@@ -17,3 +17,50 @@ components:
         - email
         - username
         - password
+    LoginUserReq:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      required:
+        - email
+        - password
+    LoginUserResp:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token for authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: "#/components/schemas/User"
+    FamilyMember:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        username:
+          type: string
+        family_id:
+          type: integer
+      required:
+        - user_id
+        - username
+        - family_id
+    GetUserResp:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        username:
+          type: string
+        family_id:
+          type: integer
+      required:
+        - user_id
+        - username
+        - family_id
