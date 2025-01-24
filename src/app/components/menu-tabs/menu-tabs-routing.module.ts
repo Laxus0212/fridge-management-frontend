@@ -28,6 +28,10 @@ const routes: Routes = [
         loadChildren: () => import('../../pages/account/account.module').then(m => m.AccountModule)
       },
       {
+        path: 'family',
+        loadChildren: () => import('../../pages/family/family.module').then(m => m.FamilyModule)
+      },
+      {
         path: '',
         redirectTo: '/fridges',
         pathMatch: 'full'

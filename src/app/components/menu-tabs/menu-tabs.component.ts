@@ -35,6 +35,15 @@ export class MenuTabsComponent  implements OnInit {
           }
         },
         {
+          text: 'Family',
+          icon: 'people-circle-outline',
+          handler: () => {
+            // Navigálás a fiókbeállítások oldalra
+            this.commonService.navigateToPage(RoutePaths.Family, this.route);
+            console.log('Family clicked');
+          }
+        },
+        {
           text: 'Logout',
           role: 'destructive',
           icon: 'log-out',
