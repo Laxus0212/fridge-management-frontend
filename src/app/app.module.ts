@@ -19,9 +19,15 @@ import {MenuTabsModule} from "./components/menu-tabs/menu-tabs.module";
         BrowserModule,
         IonicModule.forRoot(),
         AppRoutingModule,
-        MenuTabsModule
+        MenuTabsModule,
     ],
-  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, provideHttpClient(withInterceptorsFromDi())],
+  providers: [
+    {
+      provide: RouteReuseStrategy,
+      useClass: IonicRouteStrategy
+    },
+    provideHttpClient(withInterceptorsFromDi()),
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {}
