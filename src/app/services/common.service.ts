@@ -8,8 +8,11 @@ import {RoutePaths} from "../enums/route-paths";
 })
 export class CommonService {
   shelfName = '';
-  fridgeName = '';
+  private _shelfId = -1;
+  selectedFridgeName = '';
+  private _selectedFridgeId = -1;
   familyName = '';
+  private _familyId = -1;
 
   constructor(
     private toastController: ToastController,
@@ -50,11 +53,11 @@ export class CommonService {
   }
 
   setFridgeName(name: string) {
-    this.fridgeName = name;
+    this.selectedFridgeName = name;
   }
 
   getFridgeName() {
-    return this.fridgeName;
+    return this.selectedFridgeName;
   }
 
   setFamilyName(name: string) {
@@ -63,5 +66,30 @@ export class CommonService {
 
   getFamilyName() {
     return this.familyName;
+  }
+
+
+  get shelfId(): number {
+    return this._shelfId;
+  }
+
+  set shelfId(value: number) {
+    this._shelfId = value;
+  }
+
+  get selectedFridgeId(): number {
+    return this._selectedFridgeId;
+  }
+
+  set selectedFridgeId(value: number) {
+    this._selectedFridgeId = value;
+  }
+
+  get familyId(): number {
+    return this._familyId;
+  }
+
+  set familyId(value: number) {
+    this._familyId = value;
   }
 }
