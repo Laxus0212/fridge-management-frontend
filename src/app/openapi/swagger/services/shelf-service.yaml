@@ -10,14 +10,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../interfaces/fridge.yaml#/components/schemas/Shelf'
+              $ref: '../interfaces/shelf.yaml#/components/schemas/Shelf'
       responses:
         '201':
           description: Shelf added successfully
           content:
             application/json:
               schema:
-                $ref: '../interfaces/fridge.yaml#/components/schemas/Shelf'
+                $ref: '../interfaces/shelf.yaml#/components/schemas/Shelf'
               examples:
                 example1:
                   value:
@@ -43,12 +43,42 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../interfaces/fridge.yaml#/components/schemas/Shelf'
+                $ref: '../interfaces/shelf.yaml#/components/schemas/Shelf'
               examples:
                 example1:
                   value:
                     shelf_id: 1
                     shelf_name: "Top Shelf"
+                    fridge_id: 1
+    put:
+      tags:
+        - Shelf
+      summary: Update shelf name
+      operationId: updateShelfName
+      parameters:
+        - in: path
+          name: shelfId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/shelf.yaml#/components/schemas/UpdateShelfNameRequest'
+      responses:
+        '200':
+          description: Shelf name updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/shelf.yaml#/components/schemas/Shelf'
+              examples:
+                example1:
+                  value:
+                    shelf_id: 1
+                    shelf_name: "Updated Shelf Name"
                     fridge_id: 1
     delete:
       tags:
@@ -64,3 +94,74 @@ paths:
       responses:
         '204':
           description: Shelf deleted successfully
+
+  /fridges/{fridgeId}/shelves:
+    get:
+      tags:
+        - Shelf
+      summary: Get shelves by fridge ID
+      operationId: getShelvesByFridgeId
+      parameters:
+        - in: path
+          name: fridgeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: List of shelves
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/shelf.yaml#/components/schemas/Shelf'
+              examples:
+                example1:
+                  value:
+                    - shelf_id: 1
+                      shelf_name: "Top Shelf"
+                      fridge_id: 1
+                      products:
+                        - product_id: 1
+                          product_name: "Milk"
+                          quantity: 1.5
+                          unit: "l"
+                          expiration_date: "2023-12-15"
+                          shelf_id: 1
+                        - product_id: 2
+                          product_name: "Eggs"
+                          quantity: 10
+                          unit: "pcs"
+                          expiration_date: "2023-12-31"
+                          shelf_id: 1
+                        - product_id: 3
+                          product_name: "Butter"
+                          quantity: 0.2
+                          unit: "kg"
+                          expiration_date: "2023-12-25"
+                          shelf_id: 1
+                    - shelf_id: 2
+                      shelf_name: "Bottom Shelf"
+                      fridge_id: 1
+                      products:
+                        - product_id: 4
+                          product_name: "Apple"
+                          quantity: 1.0
+                          unit: "kg"
+                          expiration_date: "2023-12-10"
+                          shelf_id: 2
+                        - product_id: 5
+                          product_name: "Banana"
+                          quantity: 1.5
+                          unit: "kg"
+                          expiration_date: "2023-12-20"
+                          shelf_id: 2
+                        - product_id: 6
+                          product_name: "Orange"
+                          quantity: 0.5
+                          unit: "kg"
+                          expiration_date: "2023-12-15"
+                          shelf_id: 2
+        '404':
+          description: Fridge not found

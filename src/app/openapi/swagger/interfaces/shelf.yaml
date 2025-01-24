@@ -1,0 +1,27 @@
+components:
+    schemas:
+      Shelf:
+        type: object
+        properties:
+          shelf_id:
+            type: integer
+          shelf_name:
+            type: string
+          fridge_id:
+            type: integer
+          products:
+            type: array
+            items:
+              $ref: '../interfaces/product.yaml#/components/schemas/Product'
+        required: [shelf_name, fridge_id]
+
+      UpdateShelfNameRequest:
+        type: object
+        properties:
+          shelf_id:
+            type: integer
+          shelf_name:
+            type: string
+          fridge_id:
+            type: integer
+        required: [ shelf_name ]
