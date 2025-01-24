@@ -2,10 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
-import {UserService} from "../../openapi/generated-angular-sdk";
 import {AuthService} from "../../services/auth.service";
 import {RoutePaths} from "../../enums/route-paths";
 import {CommonService} from "../../services/common.service";
+import {LoginUserReq, UserService} from '../../openapi/generated-src';
 
 @Component({
   selector: 'app-login',
@@ -35,15 +35,18 @@ export class LoginComponent implements OnInit {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      const { email, password } = this.loginForm.value;
-      this.userService.loginUser({ email, password }).subscribe({
+      const loginData: LoginUserReq = {
+        email: this.loginForm.value.email,
+        password: this.loginForm.value.password
+      };
+      this.userService.loginUser(loginData).subscribe({
         next: (resp) => {
           console.log('Login successful');
           void this.commonService.presentToast('Login successful!', 'success');
           this.authService.setToken(resp.token!); // Store token
           this.authService.setUsername(resp.user?.username!); // Store username
           this.authService.setUserFamilyId(resp.user?.family_id!); // Store family id
-          this.authService.setUserId(resp.user?.id!); // Store user id
+          this.authService.setUserId(resp.user?.user_id!); // Store user id
           void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful login
         },
         error: (resp) => {
