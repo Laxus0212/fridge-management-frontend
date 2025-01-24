@@ -6,7 +6,6 @@ export * from './loginUserResp';
 export * from './recipe';
 export * from './recipeCreate';
 export * from './recipeUpdate';
-export * from './shelf';
 export * from './shelfProduct';
 export * from './shoppingList';
 export * from './shoppingListCreate';
