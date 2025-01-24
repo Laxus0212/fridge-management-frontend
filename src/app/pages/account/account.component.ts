@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, Validators } from "@angular/forms";
 import {AuthService} from "../../services/auth.service";
 import {CommonService} from "../../services/common.service";
-import {User, UserService} from "../../openapi/generated-angular-sdk";
 import {PasswordValidator} from "../../components/validators/password-validator";
+import {User, UserService} from '../../openapi/generated-src';
 
 @Component({
   selector: 'app-account',
@@ -12,6 +12,7 @@ import {PasswordValidator} from "../../components/validators/password-validator"
 })
 export class AccountComponent implements OnInit {
   accountForm!: FormGroup;
+  originalPassword: string = '';
 
   // Error message variables
   emailErrorText = 'Email is required.';
@@ -24,11 +25,10 @@ export class AccountComponent implements OnInit {
     private formBuilder: NonNullableFormBuilder,
     private authService: AuthService,
     private commonService: CommonService,
-  ) {
-    this.initForm();
-  }
+  ) {}
 
   ngOnInit() {
+    this.initForm();
     this.loadUserData();
   }
 
@@ -53,8 +53,9 @@ export class AccountComponent implements OnInit {
         next: (userData: User) => {
           this.accountForm.patchValue({
             email: userData.email,
-            username: userData.username
+            username: userData.username,
           });
+          this.originalPassword = userData.password || '';
         },
         error: (error) => {
           console.error('Failed to load user data:', error);
@@ -105,15 +106,18 @@ export class AccountComponent implements OnInit {
 
   async updateAccount() {
     if (this.isAccountFormValid()) {
+      const userId = this.authService.getUserId();
       const { email, username, password } = this.accountForm.value;
+      const newPassword = password === '' ? this.originalPassword : password;
       const updatedUser: User = {
+        user_id: userId,
         email,
         username,
-        password_hash: password || undefined, // Ha jelszó nem változik, hagyjuk ki
+        password: newPassword,
         family_id: this.authService.getUserFamilyId(),
       };
 
-      this.userService.updateUserById(this.authService.getUserId(), updatedUser).subscribe({
+      this.userService.updateUserById(userId, updatedUser).subscribe({
         next: () => {
           this.commonService.presentToast('Account updated successfully.', 'success');
         },
