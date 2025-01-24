@@ -24,7 +24,7 @@ paths:
                     product_id: 1
                     product_name: "Milk"
                     quantity: 1.0
-                    unit: "L"
+                    unit: "l"
                     expiration_date: "2023-12-01"
                     shelf_id: 1
 
@@ -53,8 +53,41 @@ paths:
                     product_id: 1
                     product_name: "Milk"
                     quantity: 1.0
-                    unit: "L"
+                    unit: "l"
                     expiration_date: "2023-12-01"
+                    shelf_id: 1
+    put:
+      tags:
+        - Product
+      summary: Update product
+      operationId: updateProduct
+      parameters:
+        - in: path
+          name: productId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/product.yaml#/components/schemas/Product'
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/product.yaml#/components/schemas/Product'
+              examples:
+                example1:
+                  value:
+                    product_id: 1
+                    product_name: "Updated Milk"
+                    quantity: 1.5
+                    unit: "l"
+                    expiration_date: "2023-12-15"
                     shelf_id: 1
     delete:
       tags:
@@ -70,3 +103,86 @@ paths:
       responses:
         '204':
           description: Product deleted successfully
+
+  /shelves/{shelfId}/products:
+    get:
+      tags:
+        - Product
+      summary: Get products by shelf ID
+      operationId: getProductsByShelfId
+      parameters:
+        - in: path
+          name: shelfId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/product.yaml#/components/schemas/Product'
+              examples:
+                example1:
+                  value:
+                    - product_id: 1
+                      product_name: "Milk"
+                      quantity: 1
+                      unit: "l"
+                      expiration_date: "2023-12-01"
+                      shelf_id: 1
+                    - product_id: 2
+                      product_name: "Eggs"
+                      quantity: 12
+                      unit: "pcs"
+                      expiration_date: "2023-12-10"
+                      shelf_id: 1
+                    - product_id: 1
+                      product_name: "Carrots"
+                      quantity: 4
+                      unit: "pcs"
+                      expiration_date: "2023-12-01"
+                      shelf_id: 2
+                    - product_id: 2
+                      product_name: "Eggs"
+                      quantity: 12
+                      unit: "pcs"
+                      expiration_date: "2023-12-10"
+                      shelf_id: 2
+
+    put:
+      tags:
+        - Product
+      summary: Update product
+      operationId: updateProduct
+      parameters:
+        - in: path
+          name: productId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/product.yaml#/components/schemas/Product'
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/product.yaml#/components/schemas/Product'
+              examples:
+                example1:
+                  value:
+                    product_id: 1
+                    product_name: "Updated Milk"
+                    quantity: 1.5
+                    unit: "L"
+                    expiration_date: "2023-12-15"
+                    shelf_id: 1

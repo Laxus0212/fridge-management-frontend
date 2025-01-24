@@ -11,7 +11,14 @@ components:
           type: number
           format: decimal
         unit:
-          type: string
+          enum:
+            - kg
+            - g
+            - l
+            - ml
+            - pcs
+            - dkg
+            - dl
         expiration_date:
           type: string
           format: date
