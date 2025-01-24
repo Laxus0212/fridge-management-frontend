@@ -4,14 +4,14 @@ components:
       type: object
       properties:
         message_id:
+          type: string
+        chat_id:
           type: integer
         sender_id:
-          type: integer
-        family_id:
           type: integer
         message:
           type: string
         sent_at:
           type: string
           format: date-time
-      required: [sender_id, family_id, message]
+      required: [chat_id, message]
