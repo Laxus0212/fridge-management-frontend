@@ -1,0 +1,152 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Recipe Suggestions</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Ingredient Selection -->
+  <ion-item>
+    <ion-select
+      [(ngModel)]="selectedIngredients"
+      fill="solid"
+      label="Select Ingredients"
+      multiple="true"
+    >
+      <ion-select-option *ngFor="let ingredient of ingredientsList" [value]="ingredient.ingredient_name">
+        {{ ingredient.ingredient_name }}
+      </ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <!-- Custom Ingredient Input -->
+  <ion-item class="ion-align-items-center">
+    <ion-input
+      [(ngModel)]="newIngredientName"
+      placeholder="Ingredient name"
+      fill="solid"
+      label="Custom Ingredient"
+      labelPlacement="stacked"
+    ></ion-input>
+    <ion-button (click)="addCustomIngredient()" slot="end">
+      <ion-icon slot="icon-only" name="add"></ion-icon>
+    </ion-button>
+  </ion-item>
+
+  <!-- Meal Type Selection -->
+  <ion-item>
+    <ion-select
+      [(ngModel)]="selectedMealType"
+      fill="solid"
+      label="Meal Type"
+    >
+      <ion-select-option value="breakfast">
+        Breakfast
+      </ion-select-option>
+      <ion-select-option value="lunch">
+        Lunch
+      </ion-select-option>
+      <ion-select-option value="dinner">
+        Dinner
+      </ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <!-- Recipe Suggestions List -->
+  <ion-grid *ngIf="suggestedRecipes.length > 0 || suggestedRecipes.length > 0 && !loading">
+    <ion-row>
+      <ion-col size="12" size-md="6" size-lg="4" *ngFor="let recipe of suggestedRecipes">
+        <ion-card (click)="openRecipeModal(recipe)" class="recipe-card">
+          <ion-card-header>
+            <ion-icon name="restaurant-outline" class="recipe-icon"></ion-icon> <!-- Icon placeholder -->
+            <ion-card-title>{{ recipe.title }}</ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            <p *ngIf="recipe.mealType" class="meal-type">Meal Type: {{ recipe.mealType | titlecase }}</p>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- Loading Skeletons -->
+  <ion-grid *ngIf="loading">
+    <ion-row>
+      <ion-col size="12" size-md="6" size-lg="4" *ngFor="let i of [1, 2, 3]">
+        <ion-card class="recipe-card">
+          <ion-card-header style="width: 60%; height: 20%">
+            <ion-skeleton-text animated style="width: 60%; height: 20px;"></ion-skeleton-text>
+          </ion-card-header>
+          <ion-card-content style="width: 100%; height: 15%">
+            <ion-skeleton-text animated style="width: 100%; height: 15px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 80%; height: 15px;"></ion-skeleton-text>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- No Suggestions Message -->
+  <ion-text *ngIf="suggestedRecipes.length === 0 && searched && !loading">
+    <p>No recipe suggestions found with the selected ingredients and meal type.</p>
+  </ion-text>
+
+  <!-- Search Button -->
+  <ion-footer>
+    <ion-toolbar>
+      <ion-button expand="full" (click)="getRecipeSuggestions()">Search Recipes</ion-button>
+      <ion-button expand="full" *ngIf="searched" (click)="loadMoreRecipes()">Load More Recipes</ion-button>
+    </ion-toolbar>
+  </ion-footer>
+</ion-content>
+
+<!-- Recipe Modal -->
+<ion-modal [isOpen]="isRecipeModalOpen" (ionModalDidDismiss)="closeRecipeModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ selectedRecipe?.title }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeRecipeModal()">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <!-- Recipe Description Section -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-subtitle>Description</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <p>{{ selectedRecipe?.description || 'No description available' }}</p>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Recipe Ingredients Section -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-subtitle>Ingredients</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-list lines="none">
+            <ion-item *ngFor="let ingredient of selectedRecipe?.ingredients">
+              <ion-label>{{ ingredient }}</ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Recipe Instructions Section -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-subtitle>Instructions</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <p>{{ selectedRecipe?.instructions || 'No instructions provided' }}</p>
+        </ion-card-content>
+      </ion-card>
+    </ion-content>
+  </ng-template>
+</ion-modal>
