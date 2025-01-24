@@ -1,9 +1,9 @@
 # Leírás a projekt elindításához
 
-npm install ws szerveren a websockethez
+>npm install ws szerveren a websockethez
 
 ## Kódsorok lokális futtatásához
-### Frontend futtatásához szükség van a backend server futására
+> npm install
 
 //> cd fridge-management/src/app/openapi
 
@@ -12,8 +12,13 @@ npm install ws szerveren a websockethez
 
 //> cd ../..
 
-> ionic serve --configuration=development vagy ionic capacitor build android
+//> ionic serve --configuration=development vagy ionic capacitor build android
+> npm run start:dev
 
+## Prism mock szerver futtatása
+> cd .\src\app\openapi\
+
+> prism mock openapi.yaml
 
 ## Kódsorok prod futtatáshoz
 
