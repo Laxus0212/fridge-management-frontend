@@ -10,6 +10,8 @@ servers:
 paths:
   /users:
     $ref: './swagger/services/user-service.yaml#/paths/~1users'
+  /users/login:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1login'
   /users/{userId}:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}'
   /users/{userId}/fridges:
@@ -24,11 +26,15 @@ paths:
     $ref: './swagger/services/shelf-service.yaml#/paths/~1shelves'
   /shelves/{shelfId}:
     $ref: './swagger/services/shelf-service.yaml#/paths/~1shelves~1{shelfId}'
+  /fridges/{fridgeId}/shelves:
+    $ref: './swagger/services/shelf-service.yaml#/paths/~1fridges~1{fridgeId}~1shelves'
 
   /products:
     $ref: './swagger/services/product-service.yaml#/paths/~1products'
   /products/{productId}:
     $ref: './swagger/services/product-service.yaml#/paths/~1products~1{productId}'
+  /shelves/{shelfId}/products:
+    $ref: './swagger/services/product-service.yaml#/paths/~1shelves~1{shelfId}~1products'
 
   /shopping-lists:
     $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists'
@@ -42,15 +48,41 @@ paths:
 
   /messages:
     $ref: './swagger/services/message-service.yaml#/paths/~1messages'
+  /chats/{chat_id}/messages:
+    $ref: './swagger/services/message-service.yaml#/paths/~1chats~1{chat_id}~1messages'
+  /messages/{message_id}:
+    $ref: './swagger/services/message-service.yaml#/paths/~1messages~1{message_id}'
+
+  /families:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families'
+  /families/{familyId}:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}'
+  /families/{familyId}/users:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}~1users'
+  /families/{familyId}/invite:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}~1invite'
+
 
 components:
   schemas:
     User:
       $ref: './swagger/interfaces/user.yaml/#/components/schemas/User'
+    LoginUserReq:
+      $ref: './swagger/interfaces/user.yaml/#/components/schemas/LoginUserReq'
+    LoginUserResp:
+      $ref: './swagger/interfaces/user.yaml/#/components/schemas/LoginUserResp'
+    GetUserResp:
+      $ref: './swagger/interfaces/user.yaml/#/components/schemas/GetUserResp'
+    FamilyMember:
+      $ref: './swagger/interfaces/user.yaml#/components/schemas/FamilyMember'
     Fridge:
       $ref: './swagger/interfaces/fridge.yaml#/components/schemas/Fridge'
+    UpdateFridgeNameRequest:
+      $ref: './swagger/interfaces/fridge.yaml#/components/schemas/UpdateFridgeNameRequest'
     Shelf:
-      $ref: './swagger/interfaces/fridge.yaml#/components/schemas/Shelf'
+      $ref: './swagger/interfaces/shelf.yaml#/components/schemas/Shelf'
+    UpdateShelfNameRequest:
+      $ref: './swagger/interfaces/shelf.yaml#/components/schemas/UpdateShelfNameRequest'
     Product:
       $ref: './swagger/interfaces/product.yaml#/components/schemas/Product'
     ShoppingList:
@@ -63,3 +95,9 @@ components:
       $ref: './swagger/interfaces/recipe.yaml#/components/schemas/Ingredient'
     Message:
       $ref: './swagger/interfaces/message.yaml#/components/schemas/Message'
+    Chat:
+      $ref: './swagger/interfaces/chat.yaml#/components/schemas/Chat'
+    Family:
+      $ref: './swagger/interfaces/family.yaml#/components/schemas/Family'
+    CreateFamilyReq:
+      $ref: './swagger/interfaces/family.yaml#/components/schemas/CreateFamilyReq'
