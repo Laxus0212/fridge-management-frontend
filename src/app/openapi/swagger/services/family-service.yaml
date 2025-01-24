@@ -190,8 +190,67 @@ paths:
                 example1:
                   value:
                     - user_id: 1
-                      user_name: "John Doe"
+                      username: "John Doe"
                       family_id: 1
                     - user_id: 2
-                      user_name: "Jane Doe"
+                      username: "Jane Doe"
                       family_id: 1
+
+  /families/invites:
+    get:
+      tags:
+        - Family
+      summary: Get pending invites for the current user
+      operationId: getPendingInvites
+      responses:
+        '200':
+          description: List of pending invites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/family.yaml#/components/schemas/Invite'
+              examples:
+                example1:
+                  value:
+                    - invite_id: 1
+                      family_id: 1
+                      family_name: "Smith Family"
+                      inviter_email: "user@example.com"
+
+  /families/invites/{inviteId}/accept:
+    post:
+      tags:
+        - Family
+      summary: Accept a family invite
+      operationId: acceptInvite
+      parameters:
+        - in: path
+          name: inviteId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Invite accepted successfully
+        '404':
+          description: Invite not found
+
+  /families/invites/{inviteId}/decline:
+    post:
+      tags:
+        - Family
+      summary: Decline a family invite
+      operationId: declineInvite
+      parameters:
+        - in: path
+          name: inviteId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Invite declined successfully
+        '404':
+          description: Invite not found

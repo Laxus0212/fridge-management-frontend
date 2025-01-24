@@ -27,3 +27,20 @@ components:
           example: "Family Name"
           required:
             - name
+
+    Invite:
+      type: object
+      properties:
+        invite_id:
+          type: integer
+        family_id:
+          type: integer
+        family_name:
+          type: string
+        inviter_email:
+          type: string
+      required:
+        - invite_id
+        - family_id
+        - family_name
+        - inviter_email
