@@ -12,15 +12,20 @@ import { Fridge, FridgeService, UserService } from '../../openapi/generated-src'
 })
 export class FridgeComponent implements OnInit {
   fridges: Fridge[] = [];
-  filteredFridges: Fridge[] = []; // To hold the filtered list
+  filteredFridges: Fridge[] = [];
   userId: number = 0;
   userFamilyId?: number;
   newFridgeName: string = '';
+  newFridgeSharedWithFamily: boolean = false;
   isModalOpen: boolean = false;
   isUpdateModalOpen: boolean = false;
   selectedFridge: Fridge | null = null;
   selectedFridgeName: string = '';
-  filterOption: 'owned' | 'family' = 'owned'; // Filter option, defaulting to 'owned'
+  selectedFridgeSharedWithFamily: boolean = false;
+  filterOption: 'owned' | 'family' = 'owned';
+  isOwner: boolean = false; // Add this property
+  isLoading = true; // Add this line
+
 
   constructor(
     protected fridgeService: FridgeService,
@@ -38,20 +43,27 @@ export class FridgeComponent implements OnInit {
   }
 
   loadFridges() {
+    this.isLoading = true; // Set loading to true while fridges are being loaded
     this.userService.getUserFridges(this.userId).subscribe({
       next: (fridges: Fridge[]) => {
         this.fridges = fridges;
-        this.applyFilter(); // Apply the filter when fridges are loaded
+        this.applyFilter();
+        this.isLoading = false; // Set loading to false after fridges are loaded
       },
       error: (error) => {
         console.error('Failed to load fridges:', error);
-        void void this.commonService.presentToast(error.message, 'danger');
+        this.isLoading = false; // Set loading to false in case of error
+      },
+      complete: () => {
+        if (this.fridges.length === 0) {
+          void this.commonService.presentToast('You have no fridges yet. Click the + button to add one!', 'warning');
+        }
+        console.log(this.fridges);
       }
     });
   }
 
   applyFilter() {
-    // Apply filter based on the selected filterOption
     if (this.filterOption === 'owned') {
       this.filteredFridges = this.fridges.filter(fridge => fridge.owner_id === this.userId);
     } else if (this.filterOption === 'family' && this.userFamilyId) {
@@ -64,12 +76,14 @@ export class FridgeComponent implements OnInit {
   }
 
   openAddFridgeModal() {
+    this.isOwner = true; // Set isOwner to true for adding a fridge
     this.isModalOpen = true;
   }
 
   closeAddFridgeModal() {
     this.isModalOpen = false;
     this.newFridgeName = '';
+    this.newFridgeSharedWithFamily = false;
   }
 
   addFridge() {
@@ -78,18 +92,19 @@ export class FridgeComponent implements OnInit {
     const newFridge: Fridge = {
       fridge_name: this.newFridgeName,
       owner_id: this.userId,
-      shared_with_family: false
+      shared_with_family: this.newFridgeSharedWithFamily
     };
 
     this.fridgeService.addFridge(newFridge).subscribe({
       next: () => {
         this.loadFridges();
         this.newFridgeName = '';
-        void void this.commonService.presentToast('Fridge added successfully!', 'success');
+        this.newFridgeSharedWithFamily = false;
+        void this.commonService.presentToast('Fridge added successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to add fridge:', error);
-        void void this.commonService.presentToast(error.message, 'danger');
+        void this.commonService.presentToast(error.message, 'danger');
       },
       complete: () => {
         this.isModalOpen = false;
@@ -100,6 +115,8 @@ export class FridgeComponent implements OnInit {
   openUpdateFridgeModal(fridge: Fridge) {
     this.selectedFridge = fridge;
     this.selectedFridgeName = fridge.fridge_name;
+    this.selectedFridgeSharedWithFamily = fridge.shared_with_family ?? false;
+    this.isOwner = fridge.owner_id === this.userId; // Check if the current user is the owner
     this.isUpdateModalOpen = true;
   }
 
@@ -107,6 +124,7 @@ export class FridgeComponent implements OnInit {
     this.isUpdateModalOpen = false;
     this.selectedFridge = null;
     this.selectedFridgeName = '';
+    this.selectedFridgeSharedWithFamily = false;
   }
 
   updateFridge() {
@@ -114,17 +132,18 @@ export class FridgeComponent implements OnInit {
 
     const updatedFridge: Fridge = {
       ...this.selectedFridge,
-      fridge_name: this.selectedFridgeName
+      fridge_name: this.selectedFridgeName,
+      shared_with_family: this.selectedFridgeSharedWithFamily
     };
 
     this.fridgeService.updateFridgeName(updatedFridge.fridge_id!, updatedFridge).subscribe({
       next: () => {
         this.loadFridges();
-        void void this.commonService.presentToast('Fridge updated successfully!', 'success');
+        void this.commonService.presentToast('Fridge updated successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to update fridge:', error);
-        void void this.commonService.presentToast(error.message, 'danger');
+        void this.commonService.presentToast(error.message, 'danger');
       },
       complete: () => {
         this.closeUpdateFridgeModal();
