@@ -93,10 +93,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                fridge_name:
-                  type: string
+              $ref: '../interfaces/fridge.yaml#/components/schemas/UpdateFridgeNameRequest'
       responses:
         '200':
           description: Fridge name updated successfully
@@ -129,3 +126,4 @@ paths:
       responses:
         '204':
           description: Fridge deleted successfully
+

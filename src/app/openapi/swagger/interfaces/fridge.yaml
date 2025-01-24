@@ -12,14 +12,10 @@ components:
         shared_with_family:
           type: boolean
       required: [fridge_name]
-
-    Shelf:
+    UpdateFridgeNameRequest:
       type: object
       properties:
-        shelf_id:
-          type: integer
-        shelf_name:
+        fridge_name:
           type: string
-        fridge_id:
-          type: integer
-      required: [shelf_name, fridge_id]
+      required: [fridge_name]
+
