@@ -3,26 +3,71 @@
     <ion-buttons slot="start">
       <ion-back-button text="Back" icon="arrow-back-circle-outline"></ion-back-button>
     </ion-buttons>
-    <ion-title>{{commonService.getFridgeName()}}'s Shelves</ion-title>
+    <ion-title class="ion-text-center">Shelves</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <ion-fab horizontal="end" vertical="bottom" slot="fixed">
-    <ion-fab-button>
-      <ion-icon name="add" (click)="openAddShelfModal()"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
+  <ion-searchbar [(ngModel)]="searchQuery" (ionInput)="searchProducts($event)"></ion-searchbar>
 
-  <ion-list>
-    <ion-item *ngFor="let shelf of shelves">
-      <ion-label (click)="navigateToProductPage(shelf.id!)">{{ shelf.name }}</ion-label>
-      <ion-button slot="end" color="primary" (click)="openUpdateShelfModal(shelf)">Edit</ion-button>
-      <ion-button slot="end" color="danger" (click)="deleteShelf(shelf.id)">Delete</ion-button>
-    </ion-item>
-  </ion-list>
+  <ng-container *ngIf="isLoading">
+    <ion-list>
+      <ion-item *ngFor="let i of [1, 2, 3]">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
 
-  <!-- Modal a polc hozzáadásához -->
+
+
+  <ng-container *ngIf="!isLoading">
+      <ion-fab horizontal="end" vertical="bottom" slot="fixed">
+        <ion-fab-button>
+          <ion-icon name="add" (click)="openAddShelfModal()"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+    <ion-accordion-group expand="inset">
+      <ion-accordion *ngFor="let shelf of shelves" [value]="shelf.shelf_id">
+        <ion-item slot="header" color="light" class="large-row">
+          <ion-label>{{ shelf.shelf_name }}</ion-label>
+          <ion-button slot="end" color="primary" (click)="openUpdateShelfModal(shelf); $event.stopPropagation()">
+            <ion-icon name="pencil-outline" class="large-icon"></ion-icon>
+          </ion-button>
+          <ion-button slot="end" color="danger" (click)="deleteShelf(shelf.shelf_id); $event.stopPropagation()">
+            <ion-icon name="trash-outline" class="large-icon"></ion-icon>
+          </ion-button>
+        </ion-item>
+        <div class="ion-padding" slot="content">
+          <ion-list>
+            <ion-item *ngFor="let product of shelf.products">
+              <ion-label>
+                <h2>{{ product.product_name }}</h2>
+                <p>Quantity: {{ product.quantity }}</p>
+                <p>Unit: {{ product.unit }}</p>
+                <p>Expiration Date: {{ product.expiration_date | date: 'yyyy-MM-dd' }}</p>
+                <p>Opened Date: {{ product.opened_date | date: 'yyyy-MM-dd' }}</p>
+              </ion-label>
+              <ion-button slot="end" color="primary" (click)="openUpdateProductModal(product); $event.stopPropagation()">
+                <ion-icon name="pencil-outline" class="large-icon"></ion-icon>
+              </ion-button>
+              <ion-button slot="end" color="danger" (click)="deleteProduct(product.product_id!); $event.stopPropagation()">
+                <ion-icon name="trash-outline" class="large-icon"></ion-icon>
+              </ion-button>
+            </ion-item>
+            <ion-item lines="none" (click)="openAddProductModal(shelf)">
+              <ion-button fill="clear" class="add-product-button">
+                <ion-icon slot="icon-only" name="add-circle-outline" class="large-icon"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </ion-list>
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+  </ng-container>
+
+  <!-- Modal for adding a shelf -->
   <ion-modal [isOpen]="isAddModalOpen">
     <ng-template>
       <ion-header>
@@ -44,7 +89,7 @@
     </ng-template>
   </ion-modal>
 
-  <!-- Modal a polc szerkesztéséhez -->
+  <!-- Modal for updating a shelf -->
   <ion-modal [isOpen]="isUpdateModalOpen">
     <ng-template>
       <ion-header>
@@ -65,5 +110,197 @@
     </ng-template>
   </ion-modal>
 
+  <!-- Modal for adding a product -->
+  <ion-modal [isOpen]="isAddProductModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Add New Product</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddProductModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
 
+      <ion-content>
+        <ion-item>
+          <ion-input
+            [(ngModel)]="newProduct.product_name"
+            type="text"
+            required
+            minlength="1"
+            maxlength="100"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Product Name"
+          ></ion-input>
+          <ion-button slot="end" (click)="startScan(true)">
+            <ion-icon name="barcode-outline" class="large-icon"></ion-icon>
+          </ion-button>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            type="number"
+            [(ngModel)]="newProduct.quantity"
+            required
+            min="1"
+            max="1000"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Quantity"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-select
+            [(ngModel)]="newProduct.unit"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Unit"
+          >
+            <ion-select-option *ngFor="let unit of ['g', 'kg', 'ml', 'l', 'pcs']">{{ unit }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            value="{{ newProduct.expiration_date | date: 'yyyy-MM-dd' }}"
+            id="date"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Expiration Date"
+          ></ion-input>
+          <ion-popover trigger="date">
+            <ng-template>
+              <ion-datetime presentation="date" [(ngModel)]="newProduct.expiration_date"></ion-datetime>
+            </ng-template>
+          </ion-popover>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            value="{{ newProduct.opened_date | date: 'yyyy-MM-dd' }}"
+            id="newOpenDate"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Opened Date"
+          ></ion-input>
+          <ion-popover trigger="newOpenDate">
+            <ng-template>
+              <ion-datetime presentation="date" [(ngModel)]="newProduct.opened_date"></ion-datetime>
+            </ng-template>
+          </ion-popover>
+        </ion-item>
+
+        <ion-button
+          expand="block"
+          [disabled]="
+        !newProduct.product_name ||
+        !newProduct.quantity ||
+        !newProduct.unit ||
+        !newProduct.expiration_date ||
+        !newProduct.opened_date"
+          (click)="addProduct()"
+        >Add Product</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal for updating a product -->
+  <ion-modal [isOpen]="isUpdateProductModalOpen">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Update Product</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeUpdateProductModal()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content>
+        <ion-item>
+          <ion-input
+            [(ngModel)]="selectedProduct.product_name"
+            type="text"
+            required
+            minlength="1"
+            maxlength="100"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Product Name"
+          ></ion-input>
+          <ion-button slot="end" (click)="startScan(false)">
+            <ion-icon name="barcode-outline" class="large-icon"></ion-icon>
+          </ion-button>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            type="number"
+            [(ngModel)]="selectedProduct.quantity"
+            required
+            min="1"
+            max="1000"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Quantity"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-select
+            [(ngModel)]="selectedProduct.unit"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Unit"
+          >
+            <ion-select-option *ngFor="let unit of ['g', 'kg', 'ml', 'l', 'pcs']">{{ unit }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            value="{{ selectedProduct.expiration_date | date: 'yyyy-MM-dd' }}"
+            id="updateDate"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Expiration Date"
+          ></ion-input>
+          <ion-popover trigger="updateDate">
+            <ng-template>
+              <ion-datetime presentation="date" [(ngModel)]="selectedProduct.expiration_date"></ion-datetime>
+            </ng-template>
+          </ion-popover>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            value="{{ selectedProduct.opened_date | date: 'yyyy-MM-dd' }}"
+            id="updateOpenDate"
+            fill="solid"
+            labelPlacement="stacked"
+            label="Opened Date"
+          ></ion-input>
+          <ion-popover trigger="updateOpenDate">
+            <ng-template>
+              <ion-datetime presentation="date" [(ngModel)]="selectedProduct.opened_date"></ion-datetime>
+            </ng-template>
+          </ion-popover>
+        </ion-item>
+
+        <ion-button
+          expand="block"
+          [disabled]="
+        !selectedProduct.product_name ||
+        !selectedProduct.quantity ||
+        !selectedProduct.unit ||
+        !selectedProduct.expiration_date ||
+        !selectedProduct.opened_date"
+          (click)="updateProduct()"
+        >Update Product</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

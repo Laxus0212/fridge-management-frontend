@@ -1,0 +1,23 @@
+.large-row {
+  height: 70px; /* Adjust the height as needed */
+  font-size: 1.2em; /* Adjust the font size as needed */
+}
+
+.large-icon {
+  font-size: 2em; /* Adjust the icon size as needed */
+}
+.add-product-button {
+  --icon-size: 24px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  height: 24px;
+  width: 24px;
+  margin: 0 auto;
+  display: block;
+}
+
+.highlight {
+  background-color: yellow !important;
+}
