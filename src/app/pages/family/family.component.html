@@ -22,7 +22,16 @@
   <div *ngIf="family">
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ family.family_name }}</ion-card-title>
+        <ion-card-title>
+          {{ family.family_name }}
+          <ion-icon
+            class="leave-icon"
+            name="log-out-outline"
+            color="danger"
+            style="float: right; cursor: pointer;"
+            (click)="leaveFamily()"
+          ></ion-icon>
+        </ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-list>
@@ -56,10 +65,8 @@
               slot="end">
             </ion-icon>
           </ion-item>
-          <ion-button expand="full" (click)="inviteToFamily()">Invite</ion-button>
+          <ion-button expand="block" (click)="inviteToFamily()">Invite</ion-button>
         </ion-list>
-
-        <ion-button expand="full" color="danger" (click)="leaveFamily()">Leave Family</ion-button>
       </ion-card-content>
     </ion-card>
   </div>
@@ -72,8 +79,8 @@
       </ion-card-header>
       <ion-card-content>
         <p>You have been invited to join the family: {{ pendingInvite.family_name }}</p>
-        <ion-button expand="full" (click)="acceptInvite()">Accept</ion-button>
-        <ion-button expand="full" color="danger" (click)="declineInvite()">Decline</ion-button>
+        <ion-button expand="block" (click)="acceptInvite()">Accept</ion-button>
+        <ion-button expand="block" color="danger" (click)="declineInvite()">Decline</ion-button>
       </ion-card-content>
     </ion-card>
   </div>
