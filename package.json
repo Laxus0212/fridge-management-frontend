@@ -9,7 +9,9 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "generate:swagger": "openapi-generator-cli generate -i ./src/app/openapi/openapi.yaml -g typescript-angular -o ./src/app/openapi/generated-src",
+    "serve:dev": "ionic serve --configuration=development --no-open"
   },
   "private": true,
   "dependencies": {
@@ -22,16 +24,20 @@
     "@angular/platform-browser-dynamic": "^18.0.0",
     "@angular/router": "^18.0.0",
     "@capacitor-community/barcode-scanner": "^4.0.1",
-    "@capacitor/android": "^5.7.8",
+    "@capacitor/android": "5.7.8",
     "@capacitor/app": "^5.0.8",
     "@capacitor/core": "^5.7.8",
     "@capacitor/haptics": "^5.0.8",
     "@capacitor/keyboard": "^5.0.9",
     "@capacitor/status-bar": "^5.0.8",
     "@ionic/angular": "^8.0.0",
+    "@ionic/utils-process": "^2.1.12",
     "ionicons": "^7.0.0",
+    "openai": "^4.68.4",
     "rxjs": "^7.8.1",
     "tslib": "^2.3.0",
+    "uuid": "^11.0.5",
+    "ws": "^8.18.0",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
@@ -44,7 +50,7 @@
     "@angular/cli": "^18.0.0",
     "@angular/compiler-cli": "^18.0.0",
     "@angular/language-service": "^18.0.0",
-    "@capacitor/cli": "6.1.1",
+    "@capacitor/cli": "^5.7.8",
     "@ionic/angular-toolkit": "^11.0.1",
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
