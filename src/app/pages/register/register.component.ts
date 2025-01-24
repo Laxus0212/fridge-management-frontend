@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CreateFamilyReq, Family, FamilyService, User, UserService } from "../../openapi/generated-angular-sdk";
 import { ToastController } from "@ionic/angular";
 import { FormGroup, NonNullableFormBuilder, Validators } from "@angular/forms";
 import { PasswordValidator } from "../../components/validators/password-validator";
 import {AuthService} from "../../services/auth.service";
 import {RoutePaths} from "../../enums/route-paths";
 import {CommonService} from "../../services/common.service";
+import {CreateFamilyReq, Family, FamilyService, User, UserService} from '../../openapi/generated-src';
+import {shareReplay} from 'rxjs';
 
 @Component({
   selector: 'app-register',
@@ -34,9 +35,7 @@ export class RegisterComponent implements OnInit {
     this.initForm();
   }
 
-  ngOnInit() {
-    this.loadFamilies();
-  }
+  ngOnInit() { }
 
   initForm() {
     this.registerForm = this.formBuilder.group({
@@ -46,15 +45,35 @@ export class RegisterComponent implements OnInit {
       confirmPassword: this.formBuilder.control('', { validators: [Validators.required, PasswordValidator.areNotEqual], updateOn: 'blur' }),
       isNewFamily: this.formBuilder.control(false, { validators: [Validators.required] }),
       familyId: this.formBuilder.control('', { validators: [Validators.required], updateOn: 'blur' }),
-      newFamilyName: this.formBuilder.control('', {validators: [Validators.required], updateOn: 'blur'}),
+      newFamilyName: this.formBuilder.control('', { updateOn: 'blur' }),
     }, {
       validators: PasswordValidator.areNotEqual
+    });
+
+    // Figyeljük az isNewFamily változását
+    this.registerForm.get('isNewFamily')?.valueChanges.subscribe((isNewFamily) => {
+      this.toggleNewFamilyNameValidation(isNewFamily);
     });
 
     // Call validation on form changes
     this.registerForm.valueChanges.subscribe(() => {
       this.checkValidation();
     });
+  }
+
+  toggleNewFamilyNameValidation(isNewFamily: boolean) {
+    const newFamilyNameControl = this.registerForm.get('newFamilyName');
+
+    if (isNewFamily) {
+      // if want to make a new family, then the new family name is required
+      newFamilyNameControl?.setValidators([Validators.required]);
+    } else {
+      // if don't want to make a new family, then the new family name is not required
+      newFamilyNameControl?.clearValidators();
+    }
+
+    // Update validation
+    newFamilyNameControl?.updateValueAndValidity();
   }
 
   checkValidation() {
@@ -98,67 +117,54 @@ export class RegisterComponent implements OnInit {
     // Check family selection
     const isNewFamilyControl = this.registerForm.get('isNewFamily');
     const newFamilyNameControl = this.registerForm.get('newFamilyName');
-    if (isNewFamilyControl?.value && newFamilyNameControl?.touched && newFamilyNameControl?.invalid){
+
+    if (isNewFamilyControl?.value === true && newFamilyNameControl?.touched && newFamilyNameControl?.invalid) {
       this.familyErrorText = 'Family name is required.';
+    } else {
+      this.familyErrorText = ''; // Delete error message if there is no error
     }
   }
 
-  private loadFamilies() {
-    this.familyService.getFamilies().subscribe(
-      {
-        next: (families) => {
-          this.families = families;
-          if (this.families.length > 0) {
-            this.registerForm.get('familyId')?.setValue(this.families[0].id);
-          }else {
-            this.registerForm.get('isNewFamily')?.setValue(true);
-          }
-        },
-        error: (resp) => {
-          console.error('Error fetching families:', resp);
-          void this.commonService.presentToast(resp.error.message, 'danger');
-        }
-      });
-  }
 
   isRegisterFormValid(): boolean {
-    let valid = false;
-    const { isNewFamily, newFamilyName, familyId } = this.registerForm.value;
+    let isValid = false;
+    const { isNewFamily, newFamilyName } = this.registerForm.value;
     const isEmailValid = this.registerForm.get('email')?.valid ?? false;
     const isUsernameValid = this.registerForm.get('username')?.valid ?? false;
     const isPasswordValid = this.registerForm.get('password')?.valid ?? false;
     const isConfirmPasswordValid = this.registerForm.get('confirmPassword')?.valid ?? false;
     const isPasswordMatchValid = !this.registerForm.errors?.['passwordMismatch'] ?? false;
-    const isFamilyValid = isNewFamily ? newFamilyName : familyId;
-    valid = isEmailValid && isUsernameValid && isPasswordValid && isConfirmPasswordValid && isPasswordMatchValid && !!isFamilyValid;
-    return valid;
+
+    // check only if new family is selected
+    const isFamilyValid = isNewFamily ? newFamilyName : true;
+
+    isValid = isEmailValid && isUsernameValid && isPasswordValid && isConfirmPasswordValid && isPasswordMatchValid && isFamilyValid;
+    return isValid;
   }
 
   register() {
     if (this.isRegisterFormValid()) {
-      const { isNewFamily, newFamilyName, familyId } = this.registerForm.value;
+      const { isNewFamily, newFamilyName } = this.registerForm.value;
       if (isNewFamily && newFamilyName) {
         const createFamilyReqObj: CreateFamilyReq = { name: newFamilyName };
         this.familyService.createFamily(createFamilyReqObj).subscribe({
-          next: (family) => this.createUser(family.id),
+          next: (family) => this.createUser(family.family_id),
           error: (resp) => void this.commonService.presentToast(resp.error.message, 'danger')
         });
-      } else if (familyId) {
-        this.createUser(familyId);
       } else {
-        void this.commonService.presentToast('Please select or create a family.', 'danger');
+        this.createUser();
       }
     } else {
       void this.commonService.presentToast('Please fill out the form correctly.', 'danger');
     }
   }
 
-  createUser(familyId: number) {
+  createUser(familyId?: number) {
     const { email, username, password } = this.registerForm.value;
     const userData: User = {
       email: email,
       username: username,
-      password_hash: password,
+      password: password,
       family_id: familyId,
     };
 
@@ -172,8 +178,8 @@ export class RegisterComponent implements OnInit {
               this.authService.setToken(resp.token!); // Store token
               this.authService.setUsername(resp.user?.username!); // Store username
               this.authService.setUserFamilyId(resp.user?.family_id!); // Store family id
-              this.authService.setUserId(resp.user?.id!); // Store user id
-              void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful login
+              this.authService.setUserId(resp.user?.user_id!); // Store user id
+              void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful registration
             },
             error: (resp) => {
               console.error('Login failed:', resp.error.message);
@@ -185,7 +191,7 @@ export class RegisterComponent implements OnInit {
           console.error('Registration failed:', resp);
           void this.commonService.presentToast(resp.error.message, 'danger');
         }
-      }
+      },
     );
   }
 }

@@ -102,17 +102,8 @@
 
       <!-- Family kiválasztása -->
       <ion-item-divider>Family</ion-item-divider>
-      <ion-item *ngIf="families.length > 0">
-        <ion-select formControlName="isNewFamily">
-          <ion-select-option [value]="false">Join Existing</ion-select-option>
-          <ion-select-option [value]="true">Create New</ion-select-option>
-        </ion-select>
-      </ion-item>
-
-      <ion-item *ngIf="registerForm.get('isNewFamily')?.value === false">
-        <ion-select formControlName="familyId" label="Choose Family">
-          <ion-select-option *ngFor="let family of families" [value]="family.id">{{ family.name }}</ion-select-option>
-        </ion-select>
+      <ion-item>
+        <ion-checkbox formControlName="isNewFamily">Create new family</ion-checkbox>
       </ion-item>
 
       <ion-item *ngIf="registerForm.get('isNewFamily')?.value === true">
