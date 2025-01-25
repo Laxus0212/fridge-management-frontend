@@ -40,8 +40,8 @@
             <ion-label>
               <h2>{{ shoppingList.name }}</h2>
             </ion-label>
-            <ion-button slot="end" fill="clear" color="primary" (click)="openEditShoppingListModal(shoppingList)">Edit</ion-button>
-            <ion-button slot="end" fill="clear" color="danger" (click)="deleteShoppingList(shoppingList.list_id!)">Delete</ion-button>
+            <ion-button *ngIf="filterOption === 'owned'" slot="end" fill="clear" color="primary" (click)="openEditShoppingListModal(shoppingList)">Edit</ion-button>
+            <ion-button *ngIf="filterOption === 'owned'" slot="end" fill="clear" color="danger" (click)="deleteShoppingList(shoppingList.list_id!)">Delete</ion-button>
             <ion-button slot="end" fill="clear" color="primary" (click)="isExpanded[shoppingList.list_id!] = !isExpanded[shoppingList.list_id!]">
               <ion-icon [name]="isExpanded[shoppingList.list_id!] ? 'chevron-up' : 'chevron-down'"></ion-icon>
             </ion-button>
