@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import {ShoppingList, ShoppingListItem, ShoppingListService} from '../../openapi/generated-src';
+import {Product, ShoppingList, ShoppingListItem, ShoppingListService} from '../../openapi/generated-src';
 import { AuthService } from '../../services/auth.service';
 import { CommonService } from '../../services/common.service';
 import { ToastController } from '@ionic/angular';
+import UnitEnum = Product.UnitEnum;
 
 @Component({
   selector: 'app-shopping-list',
@@ -23,6 +24,21 @@ export class ShoppingListComponent implements OnInit {
   selectedShoppingListSharedWithFamily: boolean = false;
   filterOption: 'owned' | 'family' = 'owned';
   isLoading = true;
+
+  editProductName: string = '';
+  editProductQuantity: number | null = null;
+  editProductUnit?: UnitEnum;
+  currentEditingProductId: number | null = null;
+
+
+  currentEditingShoppingListId: number | null = null;
+  newProductName: string = '';
+  newProductQuantity: number | null = null;
+  newProductUnit: UnitEnum | undefined;
+  isAddProductModalOpen: boolean = false;
+  public isExpanded: { [listId: number]: boolean } = {};
+  public selectedProduct?: ShoppingListItem;
+  public isEditProductModalOpen: boolean = false;
 
   constructor(
     private shoppingListService: ShoppingListService,
@@ -65,13 +81,12 @@ export class ShoppingListComponent implements OnInit {
 
   applyFilter() {
     if (this.filterOption === 'owned') {
-      this.filteredShoppingLists = this.shoppingLists.filter(list => !list.family_id);
-    } else if (this.filterOption === 'family') {
-      this.filteredShoppingLists = this.shoppingLists.filter(list => list.family_id);
+      this.filteredShoppingLists = this.shoppingLists;
     } else {
-      this.filteredShoppingLists = [];
+      this.filteredShoppingLists = this.shoppingLists.filter(list => list.family_id);
     }
   }
+
   openAddShoppingListModal() {
     this.isModalOpen = true;
   }
@@ -158,7 +173,7 @@ export class ShoppingListComponent implements OnInit {
     this.isAddProductModalOpen = false;
     this.newProductName = '';
     this.newProductQuantity = null;
-    this.newProductUnit = '';
+    this.newProductUnit = undefined;
   }
 
   addProductToShoppingList() {
@@ -195,4 +210,66 @@ export class ShoppingListComponent implements OnInit {
       },
     });
   }
+
+  // Modal ablak megnyitása a termék szerkesztéséhez
+  openEditProductModal(product: ShoppingListItem, listId: number) {
+    if (!product.product_name || !product.quantity || !product.unit) {
+      return;
+    }
+    this.editProductName = product.product_name;
+    this.editProductQuantity = product.quantity;
+    this.editProductUnit = product.unit;
+    this.currentEditingShoppingListId = listId;
+    this.currentEditingProductId = product.item_id!;
+    this.isEditProductModalOpen = true;
+  }
+
+  // Modal ablak bezárása
+  closeEditProductModal() {
+    this.isEditProductModalOpen = false;
+    this.editProductName = '';
+    this.editProductQuantity = null;
+    this.editProductUnit = undefined;
+    this.currentEditingShoppingListId = null;
+    this.currentEditingProductId = null;
+  }
+
+  // Termék frissítése
+  updateProduct() {
+    if (
+      this.currentEditingShoppingListId &&
+      this.currentEditingProductId &&
+      this.editProductName &&
+      this.editProductQuantity !== null &&
+      this.editProductUnit
+    ) {
+      const updatedProduct: ShoppingListItem = {
+        item_id: this.currentEditingProductId,
+        list_id: this.currentEditingShoppingListId,
+        product_name: this.editProductName,
+        quantity: this.editProductQuantity,
+        unit: this.editProductUnit,
+      };
+
+      this.shoppingListService
+        .updateShoppingListItem(this.currentEditingShoppingListId, this.currentEditingProductId, updatedProduct)
+        .subscribe({
+          next: () => {
+            this.closeEditProductModal();
+            this.loadShoppingLists(); // Frissíti a bevásárlólistákat
+            void this.presentToast('Product updated successfully', 'success');
+          },
+          error: (error) => {
+            console.error('Failed to update product:', error);
+            void this.presentToast('Failed to update product', 'danger');
+          },
+        });
+    }
+  }
+
+  public hasSelectedProduct(): boolean {
+    return !!this.selectedProduct;
+  }
+
+  protected readonly ShoppingListItem = ShoppingListItem;
 }

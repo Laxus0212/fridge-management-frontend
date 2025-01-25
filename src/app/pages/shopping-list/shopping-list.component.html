@@ -7,47 +7,70 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+  <ion-toolbar color="primary">
+    <ion-segment [(ngModel)]="filterOption" (ionChange)="applyFilter()">
+      <ion-segment-button value="owned">
+        <ion-label>Owned</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="family">
+        <ion-label>Family-Shared</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <ion-list>
-    <!-- Shopping Lists -->
-    <ion-card *ngFor="let shoppingList of shoppingLists" class="shopping-list-card">
-      <ion-card-header class="shopping-list-header">
-        <ion-item lines="none">
-          <ion-label>
-            <h2>{{ shoppingList.name }}</h2>
-          </ion-label>
-          <ion-button slot="end" fill="clear" color="primary" (click)="openEditShoppingListModal(shoppingList)">Edit</ion-button>
-          <ion-button slot="end" fill="clear" color="danger" (click)="deleteShoppingList(shoppingList.id)">Delete</ion-button>
-          <ion-button slot="end" fill="clear" color="primary" (click)="toggleListExpansion(shoppingList.id)">
-            <ion-icon [name]="shoppingList.isExpanded ? 'chevron-up' : 'chevron-down'"></ion-icon>
-          </ion-button>
-        </ion-item>
-      </ion-card-header>
+  <!-- Loading state -->
+  <ng-container *ngIf="isLoading; else shoppingListContent">
+    <ion-list>
+      <ion-item *ngFor="let i of [1, 2, 3]">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 80%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
 
-      <!-- Shopping List Products -->
-      <ion-card-content *ngIf="shoppingList.isExpanded">
-        <ion-list class="shopping-list-products">
-          <ion-item *ngFor="let product of shoppingList.products" lines="full" class="shopping-list-products-item">
+  <!-- Shopping list content -->
+  <ng-template #shoppingListContent>
+    <ion-list>
+      <ion-card *ngFor="let shoppingList of filteredShoppingLists" class="shopping-list-card">
+        <ion-card-header class="shopping-list-header">
+          <ion-item lines="none">
             <ion-label>
-              <p style="color: greenyellow"><strong>{{ product.name }}</strong> - {{ product.quantity }} {{ product.unit }}</p>
+              <h2>{{ shoppingList.name }}</h2>
             </ion-label>
-            <ion-button slot="end" fill="outline" color="primary" (click)="toggleEditProduct(product, shoppingList.id)">Edit</ion-button>
-            <ion-button slot="end" fill="outline" color="danger" (click)="deleteProduct(product.id, shoppingList.id)">Delete</ion-button>
+            <ion-button slot="end" fill="clear" color="primary" (click)="openEditShoppingListModal(shoppingList)">Edit</ion-button>
+            <ion-button slot="end" fill="clear" color="danger" (click)="deleteShoppingList(shoppingList.list_id!)">Delete</ion-button>
+            <ion-button slot="end" fill="clear" color="primary" (click)="isExpanded[shoppingList.list_id!] = !isExpanded[shoppingList.list_id!]">
+              <ion-icon [name]="isExpanded[shoppingList.list_id!] ? 'chevron-up' : 'chevron-down'"></ion-icon>
+            </ion-button>
           </ion-item>
-          <ion-button expand="block" color="secondary" (click)="openAddProductModal(shoppingList.id)">Add Product</ion-button>
-        </ion-list>
-      </ion-card-content>
-    </ion-card>
-  </ion-list>
+        </ion-card-header>
 
-  <!-- Modal to add shopping list -->
-  <ion-modal [isOpen]="isAddShoppingListModalOpen">
+        <!-- Expanded content for shopping list items -->
+        <ion-card-content *ngIf="isExpanded[shoppingList.list_id!]">
+          <ion-list class="shopping-list-products">
+            <ion-item *ngFor="let product of shoppingList.items" lines="full" class="shopping-list-products-item">
+              <ion-label>
+                <p style="color: greenyellow"><strong>{{ product.product_name }}</strong> - {{ product.quantity }} {{ product.unit }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="outline" color="primary" (click)="openEditProductModal(product, shoppingList.list_id!)">Edit</ion-button>
+              <ion-button slot="end" fill="outline" color="danger" (click)="deleteProduct(shoppingList.list_id!, product.item_id!)">Delete</ion-button>
+            </ion-item>
+            <ion-button expand="block" color="secondary" (click)="openAddProductModal(shoppingList.list_id!)">Add Product</ion-button>
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
+    </ion-list>
+  </ng-template>
+
+  <!-- Add Shopping List Modal -->
+  <ion-modal [isOpen]="isModalOpen" (ionModalDidDismiss)="closeAddShoppingListModal()">
     <ng-template>
       <ion-header>
         <ion-toolbar>
-          <ion-title>Add New Shopping List</ion-title>
+          <ion-title>Add Shopping List</ion-title>
           <ion-buttons slot="end">
             <ion-button (click)="closeAddShoppingListModal()">Close</ion-button>
           </ion-buttons>
@@ -58,13 +81,17 @@
           <ion-label position="floating">Shopping List Name</ion-label>
           <ion-input [(ngModel)]="newShoppingListName" type="text"></ion-input>
         </ion-item>
+        <ion-item>
+          <ion-label>Share with Family</ion-label>
+          <ion-toggle [(ngModel)]="newShoppingListSharedWithFamily"></ion-toggle>
+        </ion-item>
         <ion-button expand="block" [disabled]="!newShoppingListName" (click)="addShoppingList()">Add Shopping List</ion-button>
       </ion-content>
     </ng-template>
   </ion-modal>
 
-  <!-- Modal to edit shopping list -->
-  <ion-modal [isOpen]="isEditShoppingListModalOpen">
+  <!-- Edit Shopping List Modal -->
+  <ion-modal [isOpen]="isUpdateModalOpen" (ionModalDidDismiss)="closeEditShoppingListModal()">
     <ng-template>
       <ion-header>
         <ion-toolbar>
@@ -77,54 +104,23 @@
       <ion-content>
         <ion-item>
           <ion-label position="floating">Shopping List Name</ion-label>
-          <ion-input [(ngModel)]="editShoppingListName" type="text"></ion-input>
+          <ion-input [(ngModel)]="selectedShoppingListName" type="text"></ion-input>
         </ion-item>
-        <ion-button expand="block" [disabled]="!editShoppingListName" (click)="updateShoppingList()">Update Shopping List</ion-button>
+        <ion-item>
+          <ion-label>Share with Family</ion-label>
+          <ion-toggle [(ngModel)]="selectedShoppingListSharedWithFamily"></ion-toggle>
+        </ion-item>
+        <ion-button expand="block" [disabled]="!selectedShoppingListName" (click)="updateShoppingList()">Update Shopping List</ion-button>
       </ion-content>
     </ng-template>
   </ion-modal>
 
-  <!-- Modal to edit product -->
-  <ion-modal [isOpen]="isEditProductModalOpen">
+  <!-- Add Product Modal -->
+  <ion-modal [isOpen]="isAddProductModalOpen" (ionModalDidDismiss)="closeAddProductModal()">
     <ng-template>
       <ion-header>
         <ion-toolbar>
-          <ion-title>Edit Product</ion-title>
-          <ion-buttons slot="end">
-            <ion-button (click)="closeEditProductModal()">Close</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content>
-        <ion-item>
-          <ion-label position="floating">Product Name</ion-label>
-          <ion-input [(ngModel)]="editProductName" type="text"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="floating">Quantity</ion-label>
-          <ion-input [(ngModel)]="editProductQuantity" type="number"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="floating">Unit</ion-label>
-          <ion-select [(ngModel)]="editProductUnit">
-            <ion-select-option value="g">g</ion-select-option>
-            <ion-select-option value="kg">kg</ion-select-option>
-            <ion-select-option value="ml">ml</ion-select-option>
-            <ion-select-option value="l">l</ion-select-option>
-            <ion-select-option value="pcs">pcs</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-button expand="block" (click)="updateProduct()">Update Product</ion-button>
-      </ion-content>
-    </ng-template>
-  </ion-modal>
-
-  <!-- Modal to add product to shopping list -->
-  <ion-modal [isOpen]="isAddProductModalOpen">
-    <ng-template>
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>Add Product to Shopping List</ion-title>
+          <ion-title>Add Product</ion-title>
           <ion-buttons slot="end">
             <ion-button (click)="closeAddProductModal()">Close</ion-button>
           </ion-buttons>
@@ -141,12 +137,14 @@
         </ion-item>
         <ion-item>
           <ion-label position="floating">Unit</ion-label>
-          <ion-select [(ngModel)]="newProductUnit">
-            <ion-select-option value="g">g</ion-select-option>
+          <ion-select [(ngModel)]="newProductUnit" interface="action-sheet">
             <ion-select-option value="kg">kg</ion-select-option>
-            <ion-select-option value="ml">ml</ion-select-option>
+            <ion-select-option value="g">g</ion-select-option>
             <ion-select-option value="l">l</ion-select-option>
+            <ion-select-option value="ml">ml</ion-select-option>
             <ion-select-option value="pcs">pcs</ion-select-option>
+            <ion-select-option value="dkg">dkg</ion-select-option>
+            <ion-select-option value="dl">dl</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-button expand="block" [disabled]="!newProductName || !newProductQuantity || !newProductUnit" (click)="addProductToShoppingList()">Add Product</ion-button>
@@ -154,8 +152,8 @@
     </ng-template>
   </ion-modal>
 
-  <!-- Modal to edit product -->
-  <ion-modal [isOpen]="isEditProductModalOpen">
+  <!-- Edit Product Modal -->
+  <ion-modal [isOpen]="isEditProductModalOpen" (ionModalDidDismiss)="selectedProduct = undefined; isEditProductModalOpen = false">
     <ng-template>
       <ion-header>
         <ion-toolbar>
