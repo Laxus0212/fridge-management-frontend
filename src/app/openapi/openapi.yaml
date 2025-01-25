@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Fridge Management API
   version: 1.0.0
-  description: API for managing users, fridges, shelves, products, shopping lists, recipes, ingredients, and messages.
+  description: API for managing users, fridges, shelves, items, shopping lists, recipes, ingredients, and messages.
 servers:
   - url: http://localhost:4010
     description: 'API server'
@@ -38,8 +38,14 @@ paths:
 
   /shopping-lists:
     $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists'
+  /shopping-lists/{listId}:
+    $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{listId}'
   /shopping-lists/{listId}/items:
     $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{listId}~1items'
+  /shopping-lists/{listId}/items/{itemId}:
+    $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{listId}~1items~1{itemId}'
+  /shopping-lists/{familyId}/family-shopping-lists:
+    $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{familyId}~1family-shopping-lists'
 
   /recipes:
     $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes'
@@ -69,16 +75,17 @@ paths:
     $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites~1{inviteId}~1decline'
 
 
+
 components:
   schemas:
     User:
-      $ref: './swagger/interfaces/user.yaml/#/components/schemas/User'
+      $ref: './swagger/interfaces/user.yaml#/components/schemas/User'
     LoginUserReq:
-      $ref: './swagger/interfaces/user.yaml/#/components/schemas/LoginUserReq'
+      $ref: './swagger/interfaces/user.yaml#/components/schemas/LoginUserReq'
     LoginUserResp:
-      $ref: './swagger/interfaces/user.yaml/#/components/schemas/LoginUserResp'
+      $ref: './swagger/interfaces/user.yaml#/components/schemas/LoginUserResp'
     GetUserResp:
-      $ref: './swagger/interfaces/user.yaml/#/components/schemas/GetUserResp'
+      $ref: './swagger/interfaces/user.yaml#/components/schemas/GetUserResp'
     FamilyMember:
       $ref: './swagger/interfaces/user.yaml#/components/schemas/FamilyMember'
     Fridge:
