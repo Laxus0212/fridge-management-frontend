@@ -1,69 +1,5 @@
 paths:
   /shopping-lists:
-    get:
-      summary: Get shopping lists by family ID
-      description: Returns a list of shopping lists for the user, filtered by family ID.
-      operationId: getShoppingListsByFamilyId
-      parameters:
-        - name: family_id
-          in: query
-          description: The family ID to filter shopping lists by. If not provided, returns all lists for the user.
-          required: false
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: A list of shopping lists
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
-              examples:
-                example1:
-                  value:
-                    - list_id: 1
-                    - name: "Grocery"
-                    - items: [
-                      {
-                        item_id: 1,
-                        list_id: 1,
-                        product_name: "Bread",
-                        quantity: 2,
-                        unit: "pcs"
-                      },
-                      {
-                        item_id: 2,
-                        list_id: 1,
-                        product_name: "Milk",
-                        quantity: 1,
-                        unit: "l"
-                      }
-                    ]
-                    - family_id: 1,
-                    - list_id: 2
-                    - name: "Hardware store"
-                    - items: [
-                      {
-                        item_id: 3,
-                        list_id: 2,
-                        product_name: "Screwdriver",
-                        quantity: 1,
-                        unit: "pcs"
-                      },
-                      {
-                        item_id: 4,
-                        list_id: 2,
-                        product_name: "Hammer",
-                        quantity: 1,
-                        unit: "pcs"
-                      }
-                    ]
-        '400':
-          description: Invalid family ID supplied
-        '404':
-          description: No shopping lists found
     post:
       tags:
         - ShoppingList
@@ -153,6 +89,41 @@ paths:
         '404':
           description: Shopping list not found
 
+  /shopping-lists/{listId}/items:
+    post:
+      tags:
+        - ShoppingList
+      summary: Add item to shopping list
+      operationId: addItemToShoppingList
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          description: ID of the shopping list
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
+      responses:
+        '201':
+          description: Item added to shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
+              examples:
+                example1:
+                  value:
+                    item_id: 1
+                    list_id: 1
+                    product_name: "Bread"
+                    quantity: 2
+                    unit: "pcs"
+
   /shopping-lists/{listId}/items/{itemId}:
     put:
       tags:
@@ -212,3 +183,71 @@ paths:
           description: Shopping list item deleted successfully
         '404':
           description: Shopping list or item not found
+
+  /shopping-lists/{familyId}/family-shopping-lists:
+    get:
+      tags:
+        - ShoppingList
+      summary: Get shopping lists by family ID
+      description: Returns a list of shopping lists for the user, filtered by family ID.
+      operationId: getShoppingListsByFamilyId
+      parameters:
+        - name: family_id
+          in: path
+          description: The family ID to filter shopping lists by. If not provided, returns all lists for the user.
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of shopping lists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
+              examples:
+                example1:
+                  value:
+                    - list_id: 1
+                    - name: "Grocery"
+                    - items: [
+                      {
+                        item_id: 1,
+                        list_id: 1,
+                        product_name: "Bread",
+                        quantity: 2,
+                        unit: "pcs"
+                      },
+                      {
+                        item_id: 2,
+                        list_id: 1,
+                        product_name: "Milk",
+                        quantity: 1,
+                        unit: "l"
+                      }
+                    ]
+                    - family_id: 1,
+                    - list_id: 2
+                    - name: "Hardware store"
+                    - items: [
+                      {
+                        item_id: 3,
+                        list_id: 2,
+                        product_name: "Screwdriver",
+                        quantity: 1,
+                        unit: "pcs"
+                      },
+                      {
+                        item_id: 4,
+                        list_id: 2,
+                        product_name: "Hammer",
+                        quantity: 1,
+                        unit: "pcs"
+                      }
+                    ]
+        '400':
+          description: Invalid family ID supplied
+        '404':
+          description: No shopping lists found
