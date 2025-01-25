@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonService } from '../../services/common.service';
-import { RoutePaths } from '../../enums/route-paths';
-import { ActivatedRoute } from '@angular/router';
-import { Product, ProductService, Shelf, ShelfService } from 'src/app/openapi/generated-src';
-import {formatDate} from '@angular/common';
+import {Component, OnInit} from '@angular/core';
+import {CommonService} from '../../services/common.service';
+import {RoutePaths} from '../../enums/route-paths';
+import {ActivatedRoute} from '@angular/router';
+import {Product, ProductService, Shelf, ShelfService} from 'src/app/openapi/generated-src';
 import {BarcodeScanner} from '@capacitor-community/barcode-scanner';
 
 @Component({
@@ -21,15 +20,26 @@ export class ShelfComponent implements OnInit {
   isAddProductModalOpen: boolean = false;
   isUpdateProductModalOpen: boolean = false;
   fridgeId: number | undefined;
-  newProduct: Product = { product_name: '', quantity: 0, unit: Product.UnitEnum.G, opened_date: '', expiration_date: '', shelf_id: 0 };
-  selectedProduct: Product = { product_name: '', quantity: 0, unit: Product.UnitEnum.G, opened_date: '', expiration_date: '', shelf_id: 0 };
+  newProduct: Product = {
+    product_name: '',
+    quantity: 0,
+    unit: Product.UnitEnum.G,
+    opened_date: '',
+    expiration_date: '',
+    shelf_id: 0
+  };
+  selectedProduct: Product = {
+    product_name: '',
+    quantity: 0,
+    unit: Product.UnitEnum.G,
+    opened_date: '',
+    expiration_date: '',
+    shelf_id: 0
+  };
   isLoading: boolean = false; // Add this line
   searchQuery: string = '';
   highlightedProducts: { [key: number]: boolean } = {};
   expandedShelfId: number | null = null;
-
-
-
 
 
   constructor(
@@ -37,7 +47,8 @@ export class ShelfComponent implements OnInit {
     public commonService: CommonService,
     private route: ActivatedRoute,
     private productService: ProductService
-  ) { }
+  ) {
+  }
 
   ngOnInit() {
     this.fridgeId = Number.parseInt(sessionStorage.getItem('selectedFridgeId') ?? '');
@@ -99,7 +110,7 @@ export class ShelfComponent implements OnInit {
   }
 
   async startScan(isNewProduct: boolean) {
-    await BarcodeScanner.checkPermission({ force: true });
+    await BarcodeScanner.checkPermission({force: true});
     await BarcodeScanner.hideBackground(); // Make background transparent
     const result = await BarcodeScanner.startScan(); // Start scanning
 
@@ -130,7 +141,7 @@ export class ShelfComponent implements OnInit {
   }
 
   openUpdateProductModal(product: Product) {
-    this.selectedProduct = { ...product };
+    this.selectedProduct = {...product};
     this.isUpdateProductModalOpen = true;
     this.selectedShelf = this.shelves.find(shelf => shelf.shelf_id === product.shelf_id) ?? null;
   }
@@ -189,7 +200,7 @@ export class ShelfComponent implements OnInit {
   updateShelf() {
     if (!this.selectedShelf || !this.selectedShelfName) return;
 
-    const updatedShelf: Shelf = { ...this.selectedShelf, shelf_name: this.selectedShelfName };
+    const updatedShelf: Shelf = {...this.selectedShelf, shelf_name: this.selectedShelfName};
 
     this.shelfService.updateShelfName(this.selectedShelf.shelf_id!, updatedShelf).subscribe({
       next: () => {
@@ -233,7 +244,14 @@ export class ShelfComponent implements OnInit {
 
   closeAddProductModal() {
     this.isAddProductModalOpen = false;
-    this.newProduct = { product_name: '', quantity: 0, unit: Product.UnitEnum.G, opened_date: '' ,expiration_date: '', shelf_id: 0 };
+    this.newProduct = {
+      product_name: '',
+      quantity: 0,
+      unit: Product.UnitEnum.G,
+      opened_date: '',
+      expiration_date: '',
+      shelf_id: 0
+    };
   }
 
   addProduct() {
@@ -245,7 +263,10 @@ export class ShelfComponent implements OnInit {
       return;
     }
     this.newProduct.unit = this.newProduct.unit as Product.UnitEnum;
-    this.newProduct.expiration_date = this.formatExpirationDate(this.newProduct.expiration_date);
+    this.newProduct.expiration_date = this.formatDate(this.newProduct.expiration_date);
+    if (this.newProduct.opened_date){
+      this.newProduct.opened_date = this.formatDate(this.newProduct.opened_date);
+    }
     const newProduct: Product = {
       ...this.newProduct,
       shelf_id: this.selectedShelf.shelf_id
@@ -266,12 +287,22 @@ export class ShelfComponent implements OnInit {
 
   closeUpdateProductModal() {
     this.isUpdateProductModalOpen = false;
-    this.selectedProduct = { product_name: '', quantity: 0, unit: Product.UnitEnum.G, expiration_date: '', shelf_id: 0 };
+    this.selectedProduct = {
+      product_name: '',
+      quantity: 0,
+      unit: Product.UnitEnum.G,
+      opened_date: '',
+      expiration_date: '',
+      shelf_id: 0
+    };
   }
 
   updateProduct() {
     if (!this.selectedProduct) return;
-    this.selectedProduct.expiration_date = this.formatExpirationDate(this.selectedProduct.expiration_date);
+    this.selectedProduct.expiration_date = this.formatDate(this.selectedProduct.expiration_date);
+    if (this.selectedProduct.opened_date) {
+      this.selectedProduct.opened_date = this.formatDate(this.selectedProduct.opened_date);
+    }
 
     this.productService.updateProduct(this.selectedProduct.product_id!, this.selectedProduct).subscribe({
       next: () => {
@@ -287,7 +318,7 @@ export class ShelfComponent implements OnInit {
   }
 
   // Function to format the date
-  formatExpirationDate(date: string | Date): string {
+  formatDate(date: string | Date): string {
     return new Date(date).toISOString().split('T')[0];
   }
 }
