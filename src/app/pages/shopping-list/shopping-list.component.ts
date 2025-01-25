@@ -1,18 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-
-interface Product {
-  id: number;
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
-interface ShoppingList {
-  id: number;
-  name: string;
-  isExpanded: boolean;
-  products: Product[];
-}
+import {ShoppingList, ShoppingListItem, ShoppingListService} from '../../openapi/generated-src';
+import { AuthService } from '../../services/auth.service';
+import { CommonService } from '../../services/common.service';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-shopping-list',
@@ -21,85 +11,149 @@ interface ShoppingList {
 })
 export class ShoppingListComponent implements OnInit {
   shoppingLists: ShoppingList[] = [];
+  filteredShoppingLists: ShoppingList[] = [];
+  userId: number = 0;
+  userFamilyId: number = 0;
   newShoppingListName: string = '';
-  newProductName: string = '';
-  newProductQuantity: number | null = null;
-  newProductUnit: string = '';
-  editShoppingListName: string = '';
-  editProductName: string = '';
-  editProductQuantity: number | null = null;
-  editProductUnit: string = '';
-  isAddShoppingListModalOpen: boolean = false;
-  isAddProductModalOpen: boolean = false;
-  isEditShoppingListModalOpen: boolean = false;
-  isEditProductModalOpen: boolean = false;
-  currentEditingShoppingListId: number | null = null;
-  currentEditingProduct: { productId: number; shoppingListId: number } | null = null;
+  newShoppingListSharedWithFamily: boolean = false;
+  isModalOpen: boolean = false;
+  isUpdateModalOpen: boolean = false;
+  selectedShoppingList: ShoppingList | null = null;
+  selectedShoppingListName: string = '';
+  selectedShoppingListSharedWithFamily: boolean = false;
+  filterOption: 'owned' | 'family' = 'owned';
+  isLoading = true;
+
+  constructor(
+    private shoppingListService: ShoppingListService,
+    private authService: AuthService,
+    private commonService: CommonService,
+    private toastController: ToastController
+  ) {
+  }
 
   ngOnInit() {
-    // Initialize with mock data
-    this.shoppingLists = [
-      {
-        id: 1,
-        name: 'Weekly Groceries',
-        isExpanded: false,
-        products: [
-          { id: 1, name: 'Milk', quantity: 2, unit: 'l' },
-          { id: 2, name: 'Bread', quantity: 1, unit: 'pcs' },
-        ],
-      },
-      {
-        id: 2,
-        name: 'Party Supplies',
-        isExpanded: false,
-        products: [
-          { id: 3, name: 'Chips', quantity: 3, unit: 'pcs' },
-          { id: 4, name: 'Soda', quantity: 5, unit: 'l' },
-        ],
-      },
-    ];
+    this.userId = this.authService.getUserId();
+    this.userFamilyId = this.authService.getUserFamilyId();
+    this.loadShoppingLists();
   }
 
-  // Toggle list expansion
-  toggleListExpansion(shoppingListId: number) {
-    const shoppingList = this.shoppingLists.find(list => list.id === shoppingListId);
-    if (shoppingList) {
-      shoppingList.isExpanded = !shoppingList.isExpanded;
+  async presentToast(message: string, color: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 3000,
+      color: color,
+      position: 'top',
+    });
+    await toast.present();
+  }
+  loadShoppingLists() {
+    this.isLoading = true;
+    this.shoppingListService.getShoppingListsByFamilyId(this.userFamilyId).subscribe({
+      next: (lists: ShoppingList[]) => {
+        this.shoppingLists = lists;
+        this.applyFilter();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Failed to load shopping lists:', error);
+        this.isLoading = false;
+        void this.presentToast('Failed to load shopping lists', 'danger');
+      },
+    });
+  }
+
+  applyFilter() {
+    if (this.filterOption === 'owned') {
+      this.filteredShoppingLists = this.shoppingLists.filter(list => !list.family_id);
+    } else if (this.filterOption === 'family') {
+      this.filteredShoppingLists = this.shoppingLists.filter(list => list.family_id);
+    } else {
+      this.filteredShoppingLists = [];
     }
   }
-
-  // Open add shopping list modal
   openAddShoppingListModal() {
-    this.isAddShoppingListModalOpen = true;
+    this.isModalOpen = true;
   }
 
-  // Close add shopping list modal
   closeAddShoppingListModal() {
-    this.isAddShoppingListModalOpen = false;
+    this.isModalOpen = false;
     this.newShoppingListName = '';
+    this.newShoppingListSharedWithFamily = false;
   }
 
-  // Add a new shopping list
   addShoppingList() {
-    if (this.newShoppingListName.trim()) {
-      const newList: ShoppingList = {
-        id: this.shoppingLists.length + 1,
-        name: this.newShoppingListName,
-        isExpanded: false,
-        products: [],
-      };
-      this.shoppingLists.push(newList);
-      this.closeAddShoppingListModal();
-    }
+    if (!this.newShoppingListName) return;
+
+    const newList: ShoppingList = {
+      name: this.newShoppingListName,
+      family_id: this.newShoppingListSharedWithFamily ? this.userFamilyId : undefined,
+    };
+
+    this.shoppingListService.createShoppingList(newList).subscribe({
+      next: () => {
+        this.loadShoppingLists();
+        this.closeAddShoppingListModal();
+        void this.presentToast('Shopping list added successfully', 'success');
+      },
+      error: (error) => {
+        console.error('Failed to add shopping list:', error);
+        void this.presentToast('Failed to add shopping list', 'danger');
+      },
+    });
+  }
+  openEditShoppingListModal(shoppingList: ShoppingList) {
+    this.selectedShoppingList = shoppingList;
+    this.selectedShoppingListName = shoppingList.name || '';
+    this.selectedShoppingListSharedWithFamily = !!shoppingList.family_id;
+    this.isUpdateModalOpen = true;
   }
 
-  // Open add product modal
-  openAddProductModal(shoppingListId: number) {
-    this.currentEditingShoppingListId = shoppingListId;
+  closeEditShoppingListModal() {
+    this.isUpdateModalOpen = false;
+    this.selectedShoppingList = null;
+    this.selectedShoppingListName = '';
+    this.selectedShoppingListSharedWithFamily = false;
+  }
+
+  updateShoppingList() {
+    if (!this.selectedShoppingList || !this.selectedShoppingListName) return;
+
+    const updatedList: ShoppingList = {
+      ...this.selectedShoppingList,
+      name: this.selectedShoppingListName,
+      family_id: this.selectedShoppingListSharedWithFamily ? this.userFamilyId : undefined,
+    };
+
+    this.shoppingListService.updateShoppingList(this.selectedShoppingList.list_id!, updatedList).subscribe({
+      next: () => {
+        this.loadShoppingLists();
+        this.closeEditShoppingListModal();
+        void this.presentToast('Shopping list updated successfully', 'success');
+      },
+      error: (error) => {
+        console.error('Failed to update shopping list:', error);
+        void this.presentToast('Failed to update shopping list', 'danger');
+      },
+    });
+  }
+  deleteShoppingList(listId: number) {
+    this.shoppingListService.deleteShoppingList(listId).subscribe({
+      next: () => {
+        this.loadShoppingLists();
+        void this.presentToast('Shopping list deleted successfully', 'success');
+      },
+      error: (error) => {
+        console.error('Failed to delete shopping list:', error);
+        void this.presentToast('Failed to delete shopping list', 'danger');
+      },
+    });
+  }
+  openAddProductModal(listId: number) {
+    this.currentEditingShoppingListId = listId;
     this.isAddProductModalOpen = true;
   }
 
-  // Close add product modal
   closeAddProductModal() {
     this.isAddProductModalOpen = false;
     this.newProductName = '';
@@ -107,92 +161,38 @@ export class ShoppingListComponent implements OnInit {
     this.newProductUnit = '';
   }
 
-  // Add a product to shopping list
   addProductToShoppingList() {
-    if (this.currentEditingShoppingListId && this.newProductName.trim() && this.newProductQuantity && this.newProductUnit) {
-      const shoppingList = this.shoppingLists.find(list => list.id === this.currentEditingShoppingListId);
-      if (shoppingList) {
-        const newProduct: Product = {
-          id: shoppingList.products.length + 1,
-          name: this.newProductName,
-          quantity: this.newProductQuantity,
-          unit: this.newProductUnit,
-        };
-        shoppingList.products.push(newProduct);
-      }
-      this.closeAddProductModal();
+    if (this.currentEditingShoppingListId && this.newProductName && this.newProductQuantity && this.newProductUnit) {
+      const newProduct: ShoppingListItem = {
+        product_name: this.newProductName,
+        quantity: this.newProductQuantity,
+        unit: this.newProductUnit,
+      };
+
+      this.shoppingListService.addItemToShoppingList(this.currentEditingShoppingListId, newProduct).subscribe({
+        next: () => {
+          this.loadShoppingLists();
+          this.closeAddProductModal();
+          void this.presentToast('Product added successfully', 'success');
+        },
+        error: (error) => {
+          console.error('Failed to add product:', error);
+          void this.presentToast('Failed to add product', 'danger');
+        },
+      });
     }
   }
 
-  // Open edit shopping list modal
-  openEditShoppingListModal(shoppingList: ShoppingList) {
-    this.currentEditingShoppingListId = shoppingList.id;
-    this.editShoppingListName = shoppingList.name;
-    this.isEditShoppingListModalOpen = true;
-  }
-
-  // Close edit shopping list modal
-  closeEditShoppingListModal() {
-    this.isEditShoppingListModalOpen = false;
-    this.editShoppingListName = '';
-    this.currentEditingShoppingListId = null;
-  }
-
-  // Update shopping list name
-  updateShoppingList() {
-    if (this.currentEditingShoppingListId && this.editShoppingListName.trim()) {
-      const shoppingList = this.shoppingLists.find(list => list.id === this.currentEditingShoppingListId);
-      if (shoppingList) {
-        shoppingList.name = this.editShoppingListName;
-      }
-      this.closeEditShoppingListModal();
-    }
-  }
-
-  // Toggle edit product modal
-  toggleEditProduct(product: Product, shoppingListId: number) {
-    this.currentEditingProduct = { productId: product.id, shoppingListId };
-    this.editProductName = product.name;
-    this.editProductQuantity = product.quantity;
-    this.editProductUnit = product.unit;
-    this.isEditProductModalOpen = true;
-  }
-
-  // Close edit product modal
-  closeEditProductModal() {
-    this.isEditProductModalOpen = false;
-    this.editProductName = '';
-    this.editProductQuantity = null;
-    this.editProductUnit = '';
-    this.currentEditingProduct = null;
-  }
-
-  // Update product in shopping list
-  updateProduct() {
-    if (this.currentEditingProduct && this.editProductName.trim() && this.editProductQuantity && this.editProductUnit) {
-      const shoppingList = this.shoppingLists.find(list => list.id === this.currentEditingProduct?.shoppingListId);
-      if (shoppingList) {
-        const product = shoppingList.products.find(prod => prod.id === this.currentEditingProduct?.productId);
-        if (product) {
-          product.name = this.editProductName;
-          product.quantity = this.editProductQuantity;
-          product.unit = this.editProductUnit;
-        }
-      }
-      this.closeEditProductModal();
-    }
-  }
-
-  // Delete shopping list
-  deleteShoppingList(shoppingListId: number) {
-    this.shoppingLists = this.shoppingLists.filter(list => list.id !== shoppingListId);
-  }
-
-  // Delete product from shopping list
-  deleteProduct(productId: number, shoppingListId: number) {
-    const shoppingList = this.shoppingLists.find(list => list.id === shoppingListId);
-    if (shoppingList) {
-      shoppingList.products = shoppingList.products.filter(product => product.id !== productId);
-    }
+  deleteProduct(listId: number, itemId: number) {
+    this.shoppingListService.deleteShoppingListItem(listId, itemId).subscribe({
+      next: () => {
+        this.loadShoppingLists();
+        void this.presentToast('Product deleted successfully', 'success');
+      },
+      error: (error) => {
+        console.error('Failed to delete product:', error);
+        void this.presentToast('Failed to delete product', 'danger');
+      },
+    });
   }
 }
