@@ -211,8 +211,8 @@ paths:
                 example1:
                   value:
                     - list_id: 1
-                    - name: "Grocery"
-                    - items: [
+                      name: "Grocery"
+                      items: [
                       {
                         item_id: 1,
                         list_id: 1,
@@ -229,9 +229,9 @@ paths:
                       }
                     ]
                     - family_id: 1,
-                    - list_id: 2
-                    - name: "Hardware store"
-                    - items: [
+                      list_id: 2
+                      name: "Hardware store"
+                      items: [
                       {
                         item_id: 3,
                         list_id: 2,
