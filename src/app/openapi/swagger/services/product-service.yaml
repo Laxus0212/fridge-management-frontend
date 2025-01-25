@@ -108,7 +108,7 @@ paths:
     get:
       tags:
         - Product
-      summary: Get products by shelf ID
+      summary: Get items by shelf ID
       operationId: getProductsByShelfId
       parameters:
         - in: path
@@ -118,7 +118,7 @@ paths:
           required: true
       responses:
         '200':
-          description: List of products
+          description: List of items
           content:
             application/json:
               schema:
