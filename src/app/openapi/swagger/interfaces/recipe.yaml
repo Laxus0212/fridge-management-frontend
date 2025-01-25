@@ -20,7 +20,7 @@ components:
         ingredients:
             type: array
             items:
-              $ref: '../interfaces/recipe.yaml#/components/schemas/Ingredient'
+              $ref: '#/components/schemas/Ingredient'
 
     Ingredient:
       type: object
@@ -31,7 +31,6 @@ components:
           type: string
         quantity:
           type: number
-          format: decimal
         unit:
           type: string
         recipe_id:
