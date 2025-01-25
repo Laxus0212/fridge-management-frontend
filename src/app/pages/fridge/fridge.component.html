@@ -33,7 +33,7 @@
             <ion-card-header>
               <ion-card-title>{{ fridge.fridge_name }}</ion-card-title>
             </ion-card-header>
-            <ion-card-content>
+            <ion-card-content *ngIf="filterOption === 'owned'">
               <ion-button color="primary" expand="block" (click)="openUpdateFridgeModal(fridge); $event.stopPropagation()">Update</ion-button>
               <ion-button color="danger" expand="block" (click)="deleteFridge(fridge.fridge_id); $event.stopPropagation()">Delete</ion-button>
             </ion-card-content>
@@ -69,6 +69,10 @@
           <ion-label position="floating">Fridge Name</ion-label>
           <ion-input [(ngModel)]="newFridgeName"></ion-input>
         </ion-item>
+        <ion-item>
+          <ion-label>Share with Family</ion-label>
+          <ion-toggle [(ngModel)]="newFridgeSharedWithFamily"></ion-toggle>
+        </ion-item>
         <ion-button expand="block" [disabled]="!newFridgeName" (click)="addFridge()">Add Fridge</ion-button>
       </ion-content>
     </ng-template>
@@ -90,6 +94,10 @@
         <ion-item>
           <ion-label position="floating">Fridge Name</ion-label>
           <ion-input [(ngModel)]="selectedFridgeName"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label>Share with Family</ion-label>
+          <ion-toggle [(ngModel)]="selectedFridgeSharedWithFamily"></ion-toggle>
         </ion-item>
         <ion-button expand="block" [disabled]="!selectedFridgeName" (click)="updateFridge()">Update Fridge</ion-button>
       </ion-content>
