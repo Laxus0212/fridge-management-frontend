@@ -205,5 +205,9 @@ paths:
                       fridge_name: "Fridge Owned By User"
                       owner_id: 1
                       shared_with_family: false
+                    - fridge_id: 3
+                      fridge_name: "Fridge Owned By User But Shared"
+                      owner_id: 1
+                      shared_with_family: true
         '404':
           description: User not found
