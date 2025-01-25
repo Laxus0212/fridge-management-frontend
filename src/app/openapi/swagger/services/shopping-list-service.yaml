@@ -1,5 +1,69 @@
 paths:
   /shopping-lists:
+    get:
+      summary: Get shopping lists by family ID
+      description: Returns a list of shopping lists for the user, filtered by family ID.
+      operationId: getShoppingListsByFamilyId
+      parameters:
+        - name: family_id
+          in: query
+          description: The family ID to filter shopping lists by. If not provided, returns all lists for the user.
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of shopping lists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
+              examples:
+                example1:
+                  value:
+                    - list_id: 1
+                    - name: "Grocery"
+                    - items: [
+                      {
+                        item_id: 1,
+                        list_id: 1,
+                        product_name: "Bread",
+                        quantity: 2,
+                        unit: "pcs"
+                      },
+                      {
+                        item_id: 2,
+                        list_id: 1,
+                        product_name: "Milk",
+                        quantity: 1,
+                        unit: "l"
+                      }
+                    ]
+                    - family_id: 1,
+                    - list_id: 2
+                    - name: "Hardware store"
+                    - items: [
+                      {
+                        item_id: 3,
+                        list_id: 2,
+                        product_name: "Screwdriver",
+                        quantity: 1,
+                        unit: "pcs"
+                      },
+                      {
+                        item_id: 4,
+                        list_id: 2,
+                        product_name: "Hammer",
+                        quantity: 1,
+                        unit: "pcs"
+                      }
+                    ]
+        '400':
+          description: Invalid family ID supplied
+        '404':
+          description: No shopping lists found
     post:
       tags:
         - ShoppingList
@@ -22,14 +86,92 @@ paths:
                 example1:
                   value:
                     list_id: 1
+                    name: "Grocery"
+                    items: [
+                      {
+                        item_id: 1,
+                        list_id: 1,
+                        product_name: "Bread",
+                        quantity: 2,
+                        unit: "pcs"
+                      },
+                      {
+                        item_id: 2,
+                        list_id: 1,
+                        product_name: "Milk",
+                        quantity: 1,
+                        unit: "l"
+                      }
+                    ]
                     family_id: 1
 
-  /shopping-lists/{listId}/items:
-    post:
+  /shopping-lists/{listId}:
+    put:
       tags:
         - ShoppingList
-      summary: Add item to shopping list
-      operationId: addItemToShoppingList
+      summary: Update a shopping list
+      operationId: updateShoppingList
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          description: ID of the shopping list to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
+      responses:
+        '200':
+          description: Shopping list updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingList'
+        '400':
+          description: Invalid input supplied
+        '404':
+          description: Shopping list not found
+    delete:
+      tags:
+        - ShoppingList
+      summary: Delete a shopping list
+      operationId: deleteShoppingList
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          description: ID of the shopping list to delete
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Shopping list deleted successfully
+        '404':
+          description: Shopping list not found
+
+  /shopping-lists/{listId}/items/{itemId}:
+    put:
+      tags:
+        - ShoppingList
+      summary: Update a shopping list item
+      operationId: updateShoppingListItem
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          description: ID of the shopping list containing the item
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          description: ID of the item to update
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -37,17 +179,36 @@ paths:
             schema:
               $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
       responses:
-        '201':
-          description: Item added to shopping list
+        '200':
+          description: Shopping list item updated successfully
           content:
             application/json:
               schema:
                 $ref: '../interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
-              examples:
-                example1:
-                  value:
-                    item_id: 1
-                    list_id: 1
-                    product_name: "Bread"
-                    quantity: 2
-                    unit: "pcs"
+        '400':
+          description: Invalid input supplied
+        '404':
+          description: Shopping list or item not found
+    delete:
+      tags:
+        - ShoppingList
+      summary: Delete a shopping list item
+      operationId: deleteShoppingListItem
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          description: ID of the shopping list containing the item
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          description: ID of the item to delete
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Shopping list item deleted successfully
+        '404':
+          description: Shopping list or item not found

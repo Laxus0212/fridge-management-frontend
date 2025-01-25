@@ -5,6 +5,12 @@ components:
       properties:
         list_id:
           type: integer
+        name:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShoppingListItem'
         family_id:
           type: integer
 
@@ -21,4 +27,11 @@ components:
           type: number
           format: decimal
         unit:
-          type: string
+          enum:
+            - kg
+            - g
+            - l
+            - ml
+            - pcs
+            - dkg
+            - dl
