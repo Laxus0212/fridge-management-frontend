@@ -60,7 +60,16 @@ export class FridgeComponent implements OnInit {
           if (this.userFamilyId) {
             this.fridgeService.getFamilyFridges(this.userFamilyId).subscribe({
               next: (familyFridges: Fridge[]) => {
-                this.fridges = this.fridges.concat(familyFridges);
+                this.fridges
+                  .concat(
+                    familyFridges
+                      .filter(fridge =>
+                        !this.fridges
+                          .some(ownedFridge =>
+                            ownedFridge.fridgeId === fridge.fridgeId
+                          )
+                      )
+                  );
                 this.applyFilter();
                 this.isLoading = false; // Set loading to false after fridges are loaded
               },
@@ -141,8 +150,7 @@ export class FridgeComponent implements OnInit {
   openUpdateFridgeModal(fridge: Fridge) {
     this.selectedFridge = fridge;
     this.selectedFridgeName = fridge.fridgeName;
-    //TODO átírni a sharedWithFamily-t a familyId kompatibilisre
-    this.selectedFridgeSharedWithFamily = true ?? false;
+    this.selectedFridgeSharedWithFamily = !!fridge.familyId ?? false;
     this.isOwner = fridge.ownerId === this.userId; // Check if the current user is the owner
     this.isUpdateModalOpen = true;
   }
@@ -158,13 +166,14 @@ export class FridgeComponent implements OnInit {
     if (!this.selectedFridge || !this.selectedFridgeName) return;
 
     if (this.selectedFridge.fridgeId) {
+      const updateFridgeFamily = this.selectedFridgeSharedWithFamily ? this.userFamilyId : undefined;
       const updatedFridge: UpdateFridgeReq = {
         fridgeId: this.selectedFridge.fridgeId,
         fridgeName: this.selectedFridgeName,
-        familyId: this.userFamilyId
+        familyId: updateFridgeFamily
       };
 
-      this.fridgeService.updateFridgeName(updatedFridge.fridgeId!, updatedFridge).subscribe({
+      this.fridgeService.updateFridge(updatedFridge.fridgeId!, updatedFridge).subscribe({
         next: () => {
           this.loadFridges();
           void this.commonService.presentToast('Fridge updated successfully!', 'success');
@@ -177,7 +186,7 @@ export class FridgeComponent implements OnInit {
           this.closeUpdateFridgeModal();
         }
       });
-    }else {
+    } else {
       void this.commonService.presentToast('User not found', 'danger');
     }
   }
