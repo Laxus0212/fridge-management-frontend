@@ -92,4 +92,13 @@ export class CommonService {
   set familyId(value: number) {
     this._familyId = value;
   }
+
+  clearUserData() {
+    this.shelfName = '';
+    this._shelfId = -1;
+    this.selectedFridgeName = '';
+    this._selectedFridgeId = -1;
+    this.familyName = '';
+    this._familyId = -1;
+  }
 }
