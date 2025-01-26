@@ -1,0 +1,10 @@
+version: '3'
+services:
+  node-server:
+    build: ./node-server
+    ports:
+      - "8080:8080"  # HTTP port
+      - "8081:8081"  # Websocket port (ha külön portot használsz)
+    volumes:
+      - ./node-server:/app
+      - /app/node_modules

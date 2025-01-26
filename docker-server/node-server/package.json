@@ -1,0 +1,18 @@
+{
+  "name": "node-server",
+  "version": "1.0.0",
+  "description": "Node.js szerver a fridge-management alkalmazáshoz",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "cors": "^2.8.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
