@@ -1,9 +1,8 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import {User, Message, MessageService, UserService} from '../../openapi/generated-src';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Message, MessageService, User, UserService} from '../../openapi/generated-src';
 import {ActivatedRoute} from '@angular/router';
 import {CommonService} from '../../services/common.service';
 import {AuthService} from '../../services/auth.service';
-import {RoutePaths} from '../../enums/route-paths';
 import {ActionSheetController} from '@ionic/angular';
 import {MessageWebsocketService} from '../../services/message.websocket.service';
 import {WebsocketChat} from '../../models/websocket-chat';
@@ -14,7 +13,7 @@ import {v4 as uuidv4} from 'uuid';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
 })
-export class ChatComponent  implements OnInit {
+export class ChatComponent implements OnInit, OnDestroy {
   chatId: number;
   chatTitle = 'Family Chat';
   prevWebsocketMessages: Message[] = [];
@@ -23,6 +22,8 @@ export class ChatComponent  implements OnInit {
   isLoading = true;
   editingMessageId: string | null = null;
   messageParticipants: User[] = [];
+  userId?: number;
+  familyId?: number;
 
   constructor(
     private route: ActivatedRoute,
@@ -33,21 +34,27 @@ export class ChatComponent  implements OnInit {
     private userService: UserService,
     public websocketService: MessageWebsocketService,
   ) {
-    this.chatId = parseInt(this.route.snapshot.paramMap.get('chat_id') || '1', 10);
+    this.chatId = parseInt(this.route.snapshot.paramMap.get('chatId') || '1', 10);
   }
 
   ngOnInit() {
-    // Websocket connection open
-    this.websocketService.openWebsocketConnection(this.authService.getUserFamilyId());
+    const uId = this.authService.getUserId();
+    this.userId = uId ? uId : undefined;
+    const fId = this.authService.getUserFamilyId();
+    this.familyId = fId ? fId : undefined;
+    if (this.userId) {
+      // Websocket connection open
+      this.websocketService.openWebsocketConnection(this.userId);
 
-    this.loadMessages();
+      this.loadMessages();
 
-    // Websocket message subscription
-    this.websocketService.websocketMessages$.subscribe((messages: WebsocketChat[]) => {
-      this.websocketMessages = messages.map((msg) => this.convertWebsocketChatToMessage(msg));
+      // Websocket message subscription
+      this.websocketService.websocketMessages$.subscribe((messages: WebsocketChat[]) => {
+        this.websocketMessages = messages.map((msg) => this.convertWebsocketChatToMessage(msg));
 
-      console.log('Websocket messages:', this.websocketMessages);
-    });
+        console.log('Websocket messages:', this.websocketMessages);
+      });
+    }
   }
 
   ngOnDestroy() {
@@ -67,29 +74,30 @@ export class ChatComponent  implements OnInit {
       return;
     }
 
-    const websocketMessage: WebsocketChat = {
-      userId: this.authService.getUserId(),
-      chatId: this.chatId,
-      username: this.authService.getUsername(),
-      message: this.newMessageText,
-      familyId: this.authService.getUserFamilyId(),
-    };
-
+    if (this.userId && this.familyId) {
+      const websocketMessage: WebsocketChat = {
+        userId: this.userId,
+        chatId: this.chatId,
+        username: this.authService.getUsername(),
+        message: this.newMessageText,
+        familyId: this.familyId,
+      };
     // Send the message through the websocket
     this.websocketService.sendWebsocketMessage(websocketMessage);
 
     // Delete the message from the input field
     this.newMessageText = '';
+    }
   }
 
   // WebsocketChat object to Message object conversion
   private convertWebsocketChatToMessage(websocketChat: WebsocketChat): Message {
     return {
-      message_id: uuidv4(),
-      chat_id: websocketChat.chatId,
-      sender_id: websocketChat.userId,
+      messageId: uuidv4(),
+      chatId: websocketChat.chatId,
+      senderId: websocketChat.userId,
       message: websocketChat.message,
-      sent_at: new Date().toISOString(), // Current time
+      sentAt: new Date().toISOString(), // Current time
     };
   }
 
@@ -115,7 +123,7 @@ export class ChatComponent  implements OnInit {
   deleteMessage(messageId: string) {
     this.messageService.deleteMessage(messageId).subscribe({
       next: () => {
-        this.websocketMessages = this.websocketMessages.filter(msg => msg.message_id !== messageId);
+        this.websocketMessages = this.websocketMessages.filter(msg => msg.messageId !== messageId);
         void this.commonService.presentToast('Message deleted successfully!', 'success');
       },
       error: (error) => {
@@ -133,12 +141,12 @@ export class ChatComponent  implements OnInit {
 
   // Check if a message is currently being edited
   isEditingMessage(message: Message): boolean {
-    return this.editingMessageId === message.message_id;
+    return this.editingMessageId === message.messageId;
   }
 
   // Check if the message was sent by the current user
   isUserMessage(message: Message): boolean {
-    return message.sender_id === this.authService.getUserId();
+    return message.senderId === this.authService.getUserId();
   }
 
   async presentAccountActionSheet(message: Message) {
@@ -150,7 +158,7 @@ export class ChatComponent  implements OnInit {
           role: 'destructive',
           icon: 'trash-outline',
           handler: () => {
-            this.deleteMessage(message.message_id!);
+            this.deleteMessage(message.messageId!);
             console.log('Delete message clicked');
           }
         },
@@ -168,12 +176,12 @@ export class ChatComponent  implements OnInit {
   }
 
   getMessageSenderName(message: Message): string {
-    const user = this.messageParticipants.find(user => user.user_id === message.sender_id);
+    const user = this.messageParticipants.find(user => user.userId === message.senderId);
     return user ? user.username : 'User';
   }
 
   getMessageSenderDetails(message: Message) {
-    this.userService.getUserById(message.sender_id!).subscribe(
+    this.userService.getUserById(message.senderId!).subscribe(
       {
         next: user => {
           this.messageParticipants.push(user)

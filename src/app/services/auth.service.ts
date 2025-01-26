@@ -8,8 +8,8 @@ import {RoutePaths} from "../enums/route-paths";
 export class AuthService {
   private tokenKey = 'auth_token'; // Store token in localStorage
   private usernameKey = 'username'; // Store username in localStorage
-  private userFamilyId = 'user_family_id'; // Store family id in localStorage
-  private userId = 'user_id'; // Store user id in localStorage
+  private userFamilyId = 'user_familyId'; // Store family id in localStorage
+  private userId = 'userId'; // Store user id in localStorage
 
   constructor(private router: Router) {}
 
@@ -25,16 +25,18 @@ export class AuthService {
     localStorage.setItem(this.userFamilyId, familyId.toString()); // Store familyId
   }
 
-  getUserFamilyId(): number {
-    return Number.parseInt(localStorage.getItem(this.userFamilyId) || '-1'); // Get familyId from storage
+  getUserFamilyId(): number | null {
+    const familyId = localStorage.getItem(this.userFamilyId);
+    return familyId ? Number.parseInt(familyId) : null; // Return null if familyId is not found
   }
 
   setUserId(userId: number) {
     localStorage.setItem(this.userId, userId.toString()); // Store familyId
   }
 
-  getUserId(): number {
-    return Number.parseInt(localStorage.getItem(this.userId) || '-1'); // Get userId from storage
+  getUserId(): number | null {
+    const userId = localStorage.getItem(this.userId);
+    return userId ? Number.parseInt(userId) : null; // Return null if userId is not found
   }
 
   setToken(token: string) {

@@ -1,6 +1,14 @@
 import {Component, OnInit} from '@angular/core';
 import {ToastController} from '@ionic/angular';
-import {Family, FamilyMember, FamilyService, Invite} from '../../openapi/generated-src';
+import {
+  Family,
+  FamilyMember,
+  FamilyService,
+  Invite,
+  UpdateUserReq,
+  User,
+  UserService
+} from '../../openapi/generated-src';
 import {AuthService} from '../../services/auth.service';
 
 @Component({
@@ -14,16 +22,23 @@ export class FamilyComponent implements OnInit {
   inviteEmail: string = ''; // Meghívandó email
   pendingInvite: any = null; // Függőben lévő meghívó
   inviteEmailErrorText: string = '';
+  userId?: number;
+  familyId?: number;
 
 
   constructor(
     private familyService: FamilyService,
     private authService: AuthService,
+    private userService: UserService,
     private toastController: ToastController
   ) {
   }
 
   ngOnInit() {
+    const uId = this.authService.getUserId();
+    this.userId = uId ? uId : undefined;
+    const fId = this.authService.getUserFamilyId();
+    this.familyId = fId ? fId : undefined;
     this.loadFamilyData();
     this.checkPendingInvites();
   }
@@ -40,9 +55,8 @@ export class FamilyComponent implements OnInit {
 
   // Családi adatok betöltése
   async loadFamilyData() {
-    const familyId = this.authService.getUserFamilyId();
-    if (familyId !== -1) {
-      this.familyService.getFamilyById(familyId).subscribe({
+    if (this.familyId) {
+      this.familyService.getFamilyById(this.familyId).subscribe({
           next: (family: Family) => {
             this.family = family;
             this.loadFamilyMembers();
@@ -52,21 +66,26 @@ export class FamilyComponent implements OnInit {
           }
         }
       );
+    } else {
+      this.showToast('Failed to load family data.', 'danger');
     }
   }
 
   // Családtagok betöltése
   async loadFamilyMembers() {
-    const familyId = this.authService.getUserFamilyId();
-    this.familyService.getFamilyMembers(familyId).subscribe({
-        next: (members: FamilyMember[]) => {
-          this.familyMembers = members;
-        },
-        error: (error) => {
-          this.showToast('Failed to load family members.', 'danger');
+    if (this.familyId) {
+      this.familyService.getFamilyMembers(this.familyId).subscribe({
+          next: (members: FamilyMember[]) => {
+            this.familyMembers = members;
+          },
+          error: (error) => {
+            this.showToast('Failed to load family members.', 'danger');
+          }
         }
-      }
-    );
+      );
+    } else {
+      this.showToast('Failed to load family members.', 'danger');
+    }
   }
 
 // Függőben lévő meghívók lekérése
@@ -88,9 +107,18 @@ export class FamilyComponent implements OnInit {
     if (familyName) {
       this.familyService.createFamily({name: familyName}).subscribe({
           next: (family: Family) => {
-            this.family = family;
-            this.authService.setUserFamilyId(family.family_id);
-            this.showToast('Family created successfully!', 'success');
+            if (this.userId && this.familyId) {
+              const updatedUser: UpdateUserReq = {
+                userId: this.userId,
+                familyId: family.familyId
+              }
+              this.userService.updateUserById(this.userId, updatedUser).subscribe();
+              this.family = family;
+              this.authService.setUserFamilyId(family.familyId);
+              this.showToast('Family created successfully!', 'success');
+            }else {
+              this.showToast('Failed to create family.', 'danger');
+            }
           },
           error: (error) => {
             this.showToast('Failed to create family.', 'danger');
@@ -103,7 +131,7 @@ export class FamilyComponent implements OnInit {
   // Meghívó küldése
   async inviteToFamily() {
     if (this.inviteEmail) {
-      this.familyService.inviteUserToFamily(this.family.family_id, {email: this.inviteEmail}).subscribe({
+      this.familyService.inviteUserToFamily(this.family.familyId, {email: this.inviteEmail}).subscribe({
           next: (response) => {
             this.showToast('Invitation sent successfully!', 'success');
             this.inviteEmail = '';
@@ -119,7 +147,7 @@ export class FamilyComponent implements OnInit {
 // Meghívó elfogadása
   async acceptInvite() {
     if (this.pendingInvite) {
-      this.familyService.acceptInvite(this.pendingInvite.invite_id).subscribe({
+      this.familyService.acceptInvite(this.pendingInvite.inviteId).subscribe({
           next: () => {
             this.pendingInvite = null;
             this.loadFamilyData(); // Frissítsd a családi adatokat
@@ -136,7 +164,7 @@ export class FamilyComponent implements OnInit {
 // Meghívó elutasítása
   async declineInvite() {
     if (this.pendingInvite) {
-      this.familyService.declineInvite(this.pendingInvite.invite_id).subscribe({
+      this.familyService.declineInvite(this.pendingInvite.inviteId).subscribe({
           next: () => {
             this.pendingInvite = null;
             this.showToast('Invitation declined.', 'warning');
@@ -153,7 +181,7 @@ export class FamilyComponent implements OnInit {
   async leaveFamily() {
     const isConfirmed = confirm('Are you sure you want to leave the family?');
     if (isConfirmed) {
-      this.familyService.deleteFamily(this.family.family_id).subscribe({
+      this.familyService.deleteFamily(this.family.familyId).subscribe({
           next: () => {
             this.family = null;
             this.authService.setUserFamilyId(-1);

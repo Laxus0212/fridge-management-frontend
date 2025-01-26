@@ -45,8 +45,8 @@ export class LoginComponent implements OnInit {
           void this.commonService.presentToast('Login successful!', 'success');
           this.authService.setToken(resp.token!); // Store token
           this.authService.setUsername(resp.user?.username!); // Store username
-          this.authService.setUserFamilyId(resp.user?.family_id!); // Store family id
-          this.authService.setUserId(resp.user?.user_id!); // Store user id
+          this.authService.setUserFamilyId(resp.user?.familyId!); // Store family id
+          this.authService.setUserId(resp.user?.userId!); // Store user id
           void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful login
         },
         error: (resp) => {

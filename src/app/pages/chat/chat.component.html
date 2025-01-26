@@ -32,7 +32,7 @@
           <div class="bubble-content" (click)="isUserMessage(message) ? presentAccountActionSheet(message) : null">
             <h3 *ngIf="!isUserMessage(message)">{{ getMessageSenderName(message) }}</h3>
             <p>{{ message.message }}</p>
-            <small>{{ message.sent_at | date: 'dd/MM/YY hh:mm' }}</small>
+            <small>{{ message.sentAt | date: 'dd/MM/YY hh:mm' }}</small>
           </div>
         </div>
       </ng-container>

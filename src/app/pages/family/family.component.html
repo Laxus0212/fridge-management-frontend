@@ -23,7 +23,7 @@
     <ion-card>
       <ion-card-header>
         <ion-card-title>
-          {{ family.family_name }}
+          {{ family.familyName }}
           <ion-icon
             class="leave-icon"
             name="log-out-outline"
@@ -78,7 +78,7 @@
         <ion-card-title>Pending Invitation</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <p>You have been invited to join the family: {{ pendingInvite.family_name }}</p>
+        <p>You have been invited to join the family: {{ pendingInvite.familyName }}</p>
         <ion-button expand="block" (click)="acceptInvite()">Accept</ion-button>
         <ion-button expand="block" color="danger" (click)="declineInvite()">Decline</ion-button>
       </ion-card-content>

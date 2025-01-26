@@ -21,20 +21,20 @@ export class ShelfComponent implements OnInit {
   isUpdateProductModalOpen: boolean = false;
   fridgeId: number | undefined;
   newProduct: Product = {
-    product_name: '',
+    productName: '',
     quantity: 0,
     unit: Product.UnitEnum.G,
     opened_date: '',
-    expiration_date: '',
-    shelf_id: 0
+    expirationDate: '',
+    shelfId: 0
   };
   selectedProduct: Product = {
-    product_name: '',
+    productName: '',
     quantity: 0,
     unit: Product.UnitEnum.G,
     opened_date: '',
-    expiration_date: '',
-    shelf_id: 0
+    expirationDate: '',
+    shelfId: 0
   };
   isLoading: boolean = false; // Add this line
   searchQuery: string = '';
@@ -75,12 +75,12 @@ export class ShelfComponent implements OnInit {
   }
 
   loadProductsForShelf(shelf: Shelf) {
-    this.productService.getProductsByShelfId(shelf.shelf_id!).subscribe({
+    this.productService.getProductsByShelfId(shelf.shelfId!).subscribe({
       next: (products: Product[]) => {
         shelf.products = products;
       },
       error: (error) => {
-        console.error(`Failed to load products for shelf ${shelf.shelf_id}:`, error);
+        console.error(`Failed to load products for shelf ${shelf.shelfId}:`, error);
         void this.commonService.presentToast(error.error.message, 'danger');
       }
     });
@@ -94,13 +94,13 @@ export class ShelfComponent implements OnInit {
     this.shelves.forEach(shelf => {
       let shelfExpanded = false;
       shelf.products?.forEach(product => {
-        if (product.product_name.toLowerCase().includes(query)) {
+        if (product.productName.toLowerCase().includes(query)) {
           shelfExpanded = true;
-          this.highlightedProducts[product.product_id!] = true;
+          this.highlightedProducts[product.productId!] = true;
         }
       });
       if (shelfExpanded) {
-        this.expandedShelfId = shelf.shelf_id!;
+        this.expandedShelfId = shelf.shelfId!;
       }
     });
   }
@@ -117,16 +117,16 @@ export class ShelfComponent implements OnInit {
     if (result.hasContent) {
       const productDetails = JSON.parse(result.content);
       if (isNewProduct) {
-        this.newProduct.product_name = productDetails.product_name;
+        this.newProduct.productName = productDetails.productName;
         this.newProduct.quantity = productDetails.quantity;
         this.newProduct.unit = productDetails.unit;
-        this.newProduct.expiration_date = productDetails.expiration_date;
+        this.newProduct.expirationDate = productDetails.expirationDate;
         this.newProduct.opened_date = productDetails.opened_date;
       } else {
-        this.selectedProduct.product_name = productDetails.product_name;
+        this.selectedProduct.productName = productDetails.productName;
         this.selectedProduct.quantity = productDetails.quantity;
         this.selectedProduct.unit = productDetails.unit;
-        this.selectedProduct.expiration_date = productDetails.expiration_date;
+        this.selectedProduct.expirationDate = productDetails.expirationDate;
         this.selectedProduct.opened_date = productDetails.opened_date;
       }
     }
@@ -143,7 +143,7 @@ export class ShelfComponent implements OnInit {
   openUpdateProductModal(product: Product) {
     this.selectedProduct = {...product};
     this.isUpdateProductModalOpen = true;
-    this.selectedShelf = this.shelves.find(shelf => shelf.shelf_id === product.shelf_id) ?? null;
+    this.selectedShelf = this.shelves.find(shelf => shelf.shelfId === product.shelfId) ?? null;
   }
 
   deleteProduct(id: number) {
@@ -168,8 +168,8 @@ export class ShelfComponent implements OnInit {
     if (!this.newShelfName || !this.fridgeId) return;
 
     const newShelf: Shelf = {
-      shelf_name: this.newShelfName,
-      fridge_id: this.fridgeId
+      shelfName: this.newShelfName,
+      fridgeId: this.fridgeId
     };
 
     this.shelfService.addShelf(newShelf).subscribe({
@@ -187,7 +187,7 @@ export class ShelfComponent implements OnInit {
 
   openUpdateShelfModal(shelf: Shelf) {
     this.selectedShelf = shelf;
-    this.selectedShelfName = shelf.shelf_name;
+    this.selectedShelfName = shelf.shelfName;
     this.isUpdateModalOpen = true;
   }
 
@@ -200,9 +200,9 @@ export class ShelfComponent implements OnInit {
   updateShelf() {
     if (!this.selectedShelf || !this.selectedShelfName) return;
 
-    const updatedShelf: Shelf = {...this.selectedShelf, shelf_name: this.selectedShelfName};
+    const updatedShelf: Shelf = {...this.selectedShelf, shelfName: this.selectedShelfName};
 
-    this.shelfService.updateShelfName(this.selectedShelf.shelf_id!, updatedShelf).subscribe({
+    this.shelfService.updateShelfName(this.selectedShelf.shelfId!, updatedShelf).subscribe({
       next: () => {
         this.loadShelves();
         this.closeUpdateShelfModal();
@@ -233,7 +233,7 @@ export class ShelfComponent implements OnInit {
   navigateToProductPage(shelfId: number) {
     sessionStorage.removeItem('selectedShelfId');
     sessionStorage.setItem('selectedShelfId', shelfId.toString());
-    this.commonService.setShelfName(this.shelves.find(shelf => shelf.shelf_id === shelfId)?.shelf_name ?? '');
+    this.commonService.setShelfName(this.shelves.find(shelf => shelf.shelfId === shelfId)?.shelfName ?? '');
     this.commonService.navigateToPage(RoutePaths.ShelfProduct, this.route);
   }
 
@@ -245,17 +245,17 @@ export class ShelfComponent implements OnInit {
   closeAddProductModal() {
     this.isAddProductModalOpen = false;
     this.newProduct = {
-      product_name: '',
+      productName: '',
       quantity: 0,
       unit: Product.UnitEnum.G,
       opened_date: '',
-      expiration_date: '',
-      shelf_id: 0
+      expirationDate: '',
+      shelfId: 0
     };
   }
 
   addProduct() {
-    if (!this.selectedShelf || !this.newProduct?.product_name || !this.newProduct.quantity || !this.newProduct.unit || !this.newProduct.expiration_date) return;
+    if (!this.selectedShelf || !this.newProduct?.productName || !this.newProduct.quantity || !this.newProduct.unit || !this.newProduct.expirationDate) return;
 
     //check unit in Product.UnitEnum enum and set it to newProduct.unit
     if (!Object.values(Product.UnitEnum).includes(this.newProduct.unit)) {
@@ -263,13 +263,13 @@ export class ShelfComponent implements OnInit {
       return;
     }
     this.newProduct.unit = this.newProduct.unit as Product.UnitEnum;
-    this.newProduct.expiration_date = this.formatDate(this.newProduct.expiration_date);
+    this.newProduct.expirationDate = this.formatDate(this.newProduct.expirationDate);
     if (this.newProduct.opened_date){
       this.newProduct.opened_date = this.formatDate(this.newProduct.opened_date);
     }
     const newProduct: Product = {
       ...this.newProduct,
-      shelf_id: this.selectedShelf.shelf_id
+      shelfId: this.selectedShelf.shelfId
     };
 
     this.productService.addProduct(newProduct).subscribe({
@@ -288,23 +288,23 @@ export class ShelfComponent implements OnInit {
   closeUpdateProductModal() {
     this.isUpdateProductModalOpen = false;
     this.selectedProduct = {
-      product_name: '',
+      productName: '',
       quantity: 0,
       unit: Product.UnitEnum.G,
       opened_date: '',
-      expiration_date: '',
-      shelf_id: 0
+      expirationDate: '',
+      shelfId: 0
     };
   }
 
   updateProduct() {
     if (!this.selectedProduct) return;
-    this.selectedProduct.expiration_date = this.formatDate(this.selectedProduct.expiration_date);
+    this.selectedProduct.expirationDate = this.formatDate(this.selectedProduct.expirationDate);
     if (this.selectedProduct.opened_date) {
       this.selectedProduct.opened_date = this.formatDate(this.selectedProduct.opened_date);
     }
 
-    this.productService.updateProduct(this.selectedProduct.product_id!, this.selectedProduct).subscribe({
+    this.productService.updateProduct(this.selectedProduct.productId!, this.selectedProduct).subscribe({
       next: () => {
         this.loadProductsForShelf(this.selectedShelf!);
         this.closeUpdateProductModal();

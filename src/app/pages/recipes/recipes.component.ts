@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
-import { Fridge, Ingredient, ShelfService, UserService } from '../../openapi/generated-src';
-import { CommonService } from 'src/app/services/common.service';
-import { AuthService } from 'src/app/services/auth.service';
-import { CustomRecipeService } from '../../services/custom-recipe.service';
+import {Component, OnInit} from '@angular/core';
+import {ModalController} from '@ionic/angular';
+import {Fridge, FridgeService, Ingredient, ShelfService} from '../../openapi/generated-src';
+import {CommonService} from 'src/app/services/common.service';
+import {AuthService} from 'src/app/services/auth.service';
+import {CustomRecipeService} from '../../services/custom-recipe.service';
 
 @Component({
   selector: 'app-recipes',
@@ -24,17 +24,21 @@ export class RecipesComponent implements OnInit {
   isRecipeModalOpen = false;
   selectedRecipe: any = null;
   loading = false; // Add loading state
+  userId?: number;
 
   constructor(
     private recipeService: CustomRecipeService,
     private shelfProductService: ShelfService,
     private commonService: CommonService,
     private authService: AuthService,
-    private userService: UserService,
+    private fridgeService: FridgeService,
     private modalController: ModalController
-  ) {}
+  ) {
+  }
 
   ngOnInit() {
+    const uId = this.authService.getUserId();
+    this.userId = uId ? uId : undefined;
     this.loadFridgeIngredients();
   }
 
@@ -43,28 +47,32 @@ export class RecipesComponent implements OnInit {
   }
 
   private loadUserFridges() {
-    this.userService.getUserFridges(this.authService.getUserId()).subscribe({
-      next: (fridges: Fridge[]) => {
-        if (fridges.length === 0) {
-          void void this.commonService.presentToast('No fridge found', 'warning');
-          return;
-        }
-        fridges.forEach(fridge => {
-          this.loadShelvesByFridgeId(fridge);
-        });
-      },
-      error: (err) => void this.commonService.presentToast('Error loading fridge', 'danger')
-    });
+    if (this.userId) {
+      this.fridgeService.getUserFridges(this.userId).subscribe({
+        next: (fridges: Fridge[]) => {
+          if (fridges.length === 0) {
+            void void this.commonService.presentToast('No fridge found', 'warning');
+            return;
+          }
+          fridges.forEach(fridge => {
+            this.loadShelvesByFridgeId(fridge);
+          });
+        },
+        error: (err) => void this.commonService.presentToast('Error loading fridge', 'danger')
+      });
+    }else {
+      void this.commonService.presentToast('User not found', 'danger');
+    }
   }
 
   loadShelvesByFridgeId(fridge: Fridge) {
-    this.shelfProductService.getShelvesByFridgeId(fridge.fridge_id!).subscribe({
+    this.shelfProductService.getShelvesByFridgeId(fridge.fridgeId!).subscribe({
       next: (shelves) => {
         shelves.map(shelf => {
           shelf.products?.map(product => {
-            if (this.ingredientsList.findIndex(i => i.ingredient_name === product.product_name) === -1) {
+            if (this.ingredientsList.findIndex(i => i.ingredient_name === product.productName) === -1) {
               this.ingredientsList.push({
-                ingredient_name: product.product_name
+                ingredient_name: product.productName
               });
             }
           });

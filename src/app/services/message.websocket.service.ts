@@ -70,10 +70,10 @@ export class MessageWebsocketService {
       console.error('Websocket is not connected.');
     }
     this.messageService.sendMessage({
-      chat_id: message.chatId,
-      sender_id: message.userId,
+      chatId: message.chatId,
+      senderId: message.userId,
       message: message.message,
-      sent_at: new Date().toISOString(),
+      sentAt: new Date().toISOString(),
     }).subscribe({
       next: () => {
         console.log('Message saved to database');

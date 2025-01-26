@@ -1,13 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { ToastController } from "@ionic/angular";
-import { FormGroup, NonNullableFormBuilder, Validators } from "@angular/forms";
-import { PasswordValidator } from "../../components/validators/password-validator";
+import {Component, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
+import {FormGroup, NonNullableFormBuilder, Validators} from "@angular/forms";
+import {PasswordValidator} from "../../components/validators/password-validator";
 import {AuthService} from "../../services/auth.service";
 import {RoutePaths} from "../../enums/route-paths";
 import {CommonService} from "../../services/common.service";
 import {CreateFamilyReq, Family, FamilyService, User, UserService} from '../../openapi/generated-src';
-import {shareReplay} from 'rxjs';
 
 @Component({
   selector: 'app-register',
@@ -35,17 +33,27 @@ export class RegisterComponent implements OnInit {
     this.initForm();
   }
 
-  ngOnInit() { }
+  ngOnInit() {
+  }
 
   initForm() {
     this.registerForm = this.formBuilder.group({
-      email: this.formBuilder.control('', { validators: [Validators.required, Validators.email], updateOn: 'blur' }),
-      username: this.formBuilder.control('', { validators: [Validators.required, Validators.minLength(4)], updateOn: 'blur' }),
-      password: this.formBuilder.control('', { validators: [Validators.required, Validators.minLength(6)], updateOn: 'blur' }),
-      confirmPassword: this.formBuilder.control('', { validators: [Validators.required, PasswordValidator.areNotEqual], updateOn: 'blur' }),
-      isNewFamily: this.formBuilder.control(false, { validators: [Validators.required] }),
-      familyId: this.formBuilder.control('', { validators: [Validators.required], updateOn: 'blur' }),
-      newFamilyName: this.formBuilder.control('', { updateOn: 'blur' }),
+      email: this.formBuilder.control('', {validators: [Validators.required, Validators.email], updateOn: 'blur'}),
+      username: this.formBuilder.control('', {
+        validators: [Validators.required, Validators.minLength(4)],
+        updateOn: 'blur'
+      }),
+      password: this.formBuilder.control('', {
+        validators: [Validators.required, Validators.minLength(6)],
+        updateOn: 'blur'
+      }),
+      confirmPassword: this.formBuilder.control('', {
+        validators: [Validators.required, PasswordValidator.areNotEqual],
+        updateOn: 'blur'
+      }),
+      isNewFamily: this.formBuilder.control(false, {validators: [Validators.required]}),
+      familyId: this.formBuilder.control('', {validators: [Validators.required], updateOn: 'blur'}),
+      newFamilyName: this.formBuilder.control('', {updateOn: 'blur'}),
     }, {
       validators: PasswordValidator.areNotEqual
     });
@@ -110,7 +118,7 @@ export class RegisterComponent implements OnInit {
     // Check confirm password validity
     const confirmPasswordControl = this.registerForm.get('confirmPassword');
     if (confirmPasswordControl?.dirty && this.registerForm.hasError('passwordMismatch')) {
-      confirmPasswordControl.setErrors({ passwordMismatch: true });
+      confirmPasswordControl.setErrors({passwordMismatch: true});
       this.confirmPasswordErrorText = 'Passwords do not match.';
     }
 
@@ -128,7 +136,7 @@ export class RegisterComponent implements OnInit {
 
   isRegisterFormValid(): boolean {
     let isValid = false;
-    const { isNewFamily, newFamilyName } = this.registerForm.value;
+    const {isNewFamily, newFamilyName} = this.registerForm.value;
     const isEmailValid = this.registerForm.get('email')?.valid ?? false;
     const isUsernameValid = this.registerForm.get('username')?.valid ?? false;
     const isPasswordValid = this.registerForm.get('password')?.valid ?? false;
@@ -144,11 +152,11 @@ export class RegisterComponent implements OnInit {
 
   register() {
     if (this.isRegisterFormValid()) {
-      const { isNewFamily, newFamilyName } = this.registerForm.value;
+      const {isNewFamily, newFamilyName} = this.registerForm.value;
       if (isNewFamily && newFamilyName) {
-        const createFamilyReqObj: CreateFamilyReq = { name: newFamilyName };
+        const createFamilyReqObj: CreateFamilyReq = {name: newFamilyName};
         this.familyService.createFamily(createFamilyReqObj).subscribe({
-          next: (family) => this.createUser(family.family_id),
+          next: (family) => this.createUser(family.familyId),
           error: (resp) => void this.commonService.presentToast(resp.error.message, 'danger')
         });
       } else {
@@ -160,25 +168,27 @@ export class RegisterComponent implements OnInit {
   }
 
   createUser(familyId?: number) {
-    const { email, username, password } = this.registerForm.value;
+    const {email, username, password} = this.registerForm.value;
     const userData: User = {
       email: email,
       username: username,
       password: password,
-      family_id: familyId,
+      familyId: familyId,
     };
 
     this.userService.registerUser(userData).subscribe({
         next: () => {
           console.log('Registration successful');
           void this.commonService.presentToast('Registration successful!', 'success');
-          this.userService.loginUser({ email, password }).subscribe({
+          this.userService.loginUser({email, password}).subscribe({
             next: (resp) => {
               console.log('Login successful');
               this.authService.setToken(resp.token!); // Store token
               this.authService.setUsername(resp.user?.username!); // Store username
-              this.authService.setUserFamilyId(resp.user?.family_id!); // Store family id
-              this.authService.setUserId(resp.user?.user_id!); // Store user id
+              if (resp.user?.familyId) {
+                this.authService.setUserFamilyId(resp.user.familyId); // Store family id
+              }
+              this.authService.setUserId(resp.user?.userId!); // Store user id
               void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful registration
             },
             error: (resp) => {

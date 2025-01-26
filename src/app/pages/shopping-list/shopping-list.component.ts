@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {Product, ShoppingList, ShoppingListItem, ShoppingListService} from '../../openapi/generated-src';
-import { AuthService } from '../../services/auth.service';
-import { CommonService } from '../../services/common.service';
-import { ToastController } from '@ionic/angular';
+import {AuthService} from '../../services/auth.service';
+import {CommonService} from '../../services/common.service';
+import {ToastController} from '@ionic/angular';
 import UnitEnum = Product.UnitEnum;
 
 @Component({
@@ -13,8 +13,8 @@ import UnitEnum = Product.UnitEnum;
 export class ShoppingListComponent implements OnInit {
   shoppingLists: ShoppingList[] = [];
   filteredShoppingLists: ShoppingList[] = [];
-  userId: number = 0;
-  userFamilyId: number = 0;
+  userId?: number;
+  userFamilyId?: number;
   newShoppingListName: string = '';
   newShoppingListSharedWithFamily: boolean = false;
   isModalOpen: boolean = false;
@@ -49,8 +49,10 @@ export class ShoppingListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.userId = this.authService.getUserId();
-    this.userFamilyId = this.authService.getUserFamilyId();
+    const uId = this.authService.getUserId();
+    this.userId = uId ? uId : undefined;
+    const fId = this.authService.getUserFamilyId();
+    this.userFamilyId = fId ? fId : undefined;
     this.loadShoppingLists();
   }
 
@@ -63,27 +65,32 @@ export class ShoppingListComponent implements OnInit {
     });
     await toast.present();
   }
+
   loadShoppingLists() {
-    this.isLoading = true;
-    this.shoppingListService.getShoppingListsByFamilyId(this.userFamilyId).subscribe({
-      next: (lists: ShoppingList[]) => {
-        this.shoppingLists = lists;
-        this.applyFilter();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Failed to load shopping lists:', error);
-        this.isLoading = false;
-        void this.presentToast('Failed to load shopping lists', 'danger');
-      },
-    });
+    if (this.userId) {
+      this.isLoading = true;
+      this.shoppingListService.getShoppingListsByUserId(this.userId).subscribe({
+        next: (lists: ShoppingList[]) => {
+          this.shoppingLists = lists;
+          this.applyFilter();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Failed to load shopping lists:', error);
+          this.isLoading = false;
+          void this.presentToast('Failed to load shopping lists', 'danger');
+        },
+      });
+    }else {
+      void this.commonService.presentToast('Failed to load user', 'danger');
+    }
   }
 
   applyFilter() {
     if (this.filterOption === 'owned') {
       this.filteredShoppingLists = this.shoppingLists;
     } else {
-      this.filteredShoppingLists = this.shoppingLists.filter(list => list.family_id);
+      this.filteredShoppingLists = this.shoppingLists.filter(list => list.familyId);
     }
   }
 
@@ -102,7 +109,7 @@ export class ShoppingListComponent implements OnInit {
 
     const newList: ShoppingList = {
       name: this.newShoppingListName,
-      family_id: this.newShoppingListSharedWithFamily ? this.userFamilyId : undefined,
+      familyId: this.newShoppingListSharedWithFamily ? this.userFamilyId : undefined,
     };
 
     this.shoppingListService.createShoppingList(newList).subscribe({
@@ -117,10 +124,11 @@ export class ShoppingListComponent implements OnInit {
       },
     });
   }
+
   openEditShoppingListModal(shoppingList: ShoppingList) {
     this.selectedShoppingList = shoppingList;
     this.selectedShoppingListName = shoppingList.name || '';
-    this.selectedShoppingListSharedWithFamily = !!shoppingList.family_id;
+    this.selectedShoppingListSharedWithFamily = !!shoppingList.familyId;
     this.isUpdateModalOpen = true;
   }
 
@@ -137,10 +145,10 @@ export class ShoppingListComponent implements OnInit {
     const updatedList: ShoppingList = {
       ...this.selectedShoppingList,
       name: this.selectedShoppingListName,
-      family_id: this.selectedShoppingListSharedWithFamily ? this.userFamilyId : undefined,
+      familyId: this.selectedShoppingListSharedWithFamily ? this.userFamilyId : undefined,
     };
 
-    this.shoppingListService.updateShoppingList(this.selectedShoppingList.list_id!, updatedList).subscribe({
+    this.shoppingListService.updateShoppingList(this.selectedShoppingList.listId!, updatedList).subscribe({
       next: () => {
         this.loadShoppingLists();
         this.closeEditShoppingListModal();
@@ -152,6 +160,7 @@ export class ShoppingListComponent implements OnInit {
       },
     });
   }
+
   deleteShoppingList(listId: number) {
     this.shoppingListService.deleteShoppingList(listId).subscribe({
       next: () => {
@@ -164,6 +173,7 @@ export class ShoppingListComponent implements OnInit {
       },
     });
   }
+
   openAddProductModal(listId: number) {
     this.currentEditingShoppingListId = listId;
     this.isAddProductModalOpen = true;
@@ -179,7 +189,7 @@ export class ShoppingListComponent implements OnInit {
   addProductToShoppingList() {
     if (this.currentEditingShoppingListId && this.newProductName && this.newProductQuantity && this.newProductUnit) {
       const newProduct: ShoppingListItem = {
-        product_name: this.newProductName,
+        productName: this.newProductName,
         quantity: this.newProductQuantity,
         unit: this.newProductUnit,
       };
@@ -213,14 +223,14 @@ export class ShoppingListComponent implements OnInit {
 
   // Modal ablak megnyitása a termék szerkesztéséhez
   openEditProductModal(product: ShoppingListItem, listId: number) {
-    if (!product.product_name || !product.quantity || !product.unit) {
+    if (!product.productName || !product.quantity || !product.unit) {
       return;
     }
-    this.editProductName = product.product_name;
+    this.editProductName = product.productName;
     this.editProductQuantity = product.quantity;
     this.editProductUnit = product.unit;
     this.currentEditingShoppingListId = listId;
-    this.currentEditingProductId = product.item_id!;
+    this.currentEditingProductId = product.itemId!;
     this.isEditProductModalOpen = true;
   }
 
@@ -244,9 +254,9 @@ export class ShoppingListComponent implements OnInit {
       this.editProductUnit
     ) {
       const updatedProduct: ShoppingListItem = {
-        item_id: this.currentEditingProductId,
-        list_id: this.currentEditingShoppingListId,
-        product_name: this.editProductName,
+        itemId: this.currentEditingProductId,
+        listId: this.currentEditingShoppingListId,
+        productName: this.editProductName,
         quantity: this.editProductQuantity,
         unit: this.editProductUnit,
       };

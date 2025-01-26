@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { FormGroup, NonNullableFormBuilder, Validators } from "@angular/forms";
+import {Component, OnInit} from '@angular/core';
+import {FormGroup, NonNullableFormBuilder, Validators} from "@angular/forms";
 import {AuthService} from "../../services/auth.service";
 import {CommonService} from "../../services/common.service";
 import {PasswordValidator} from "../../components/validators/password-validator";
@@ -13,6 +13,8 @@ import {User, UserService} from '../../openapi/generated-src';
 export class AccountComponent implements OnInit {
   accountForm!: FormGroup;
   originalPassword: string = '';
+  userId?: number;
+  familyId?: number;
 
   // Error message variables
   emailErrorText = 'Email is required.';
@@ -25,20 +27,28 @@ export class AccountComponent implements OnInit {
     private formBuilder: NonNullableFormBuilder,
     private authService: AuthService,
     private commonService: CommonService,
-  ) {}
+  ) {
+  }
 
   ngOnInit() {
     this.initForm();
     this.loadUserData();
+    const uId = this.authService.getUserId();
+    this.userId = uId ? uId : undefined;
+    const fId = this.authService.getUserFamilyId();
+    this.familyId = fId ? fId : undefined
   }
 
   initForm() {
     this.accountForm = this.formBuilder.group({
-      email: this.formBuilder.control('', { validators: [Validators.required, Validators.email], updateOn: 'blur' }),
-      username: this.formBuilder.control('', { validators: [Validators.required, Validators.minLength(4)], updateOn: 'blur' }),
-      password: this.formBuilder.control('', { validators: [Validators.minLength(6)], updateOn: 'blur' }),
-      password_repeat: this.formBuilder.control('', { updateOn: 'blur' })
-    }, { validators: PasswordValidator.areNotEqual });
+      email: this.formBuilder.control('', {validators: [Validators.required, Validators.email], updateOn: 'blur'}),
+      username: this.formBuilder.control('', {
+        validators: [Validators.required, Validators.minLength(4)],
+        updateOn: 'blur'
+      }),
+      password: this.formBuilder.control('', {validators: [Validators.minLength(6)], updateOn: 'blur'}),
+      password_repeat: this.formBuilder.control('', {updateOn: 'blur'})
+    }, {validators: PasswordValidator.areNotEqual});
 
     this.accountForm.valueChanges.subscribe(() => {
       this.checkValidation();
@@ -47,21 +57,23 @@ export class AccountComponent implements OnInit {
 
   loadUserData() {
     // Példa alapján felhasználó ID-t feltételezünk
-    const userId = this.authService.getUserId(); // Ezt később dinamikussá teheted, pl. az AuthService-ből
-    this.userService.getUserById(userId).subscribe(
-      {
-        next: (userData: User) => {
-          this.accountForm.patchValue({
-            email: userData.email,
-            username: userData.username,
-          });
-          this.originalPassword = userData.password || '';
-        },
-        error: (error) => {
-          console.error('Failed to load user data:', error);
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.userService.getUserById(userId).subscribe(
+        {
+          next: (userData: User) => {
+            this.accountForm.patchValue({
+              email: userData.email,
+              username: userData.username,
+            });
+            this.originalPassword = userData.password || '';
+          },
+          error: (error) => {
+            console.error('Failed to load user data:', error);
+          }
         }
-      }
-    );
+      );
+    }
   }
 
   checkValidation() {
@@ -106,26 +118,27 @@ export class AccountComponent implements OnInit {
 
   async updateAccount() {
     if (this.isAccountFormValid()) {
-      const userId = this.authService.getUserId();
-      const { email, username, password } = this.accountForm.value;
+      const {email, username, password} = this.accountForm.value;
       const newPassword = password === '' ? this.originalPassword : password;
       const updatedUser: User = {
-        user_id: userId,
+        userId: this.userId,
         email,
         username,
         password: newPassword,
-        family_id: this.authService.getUserFamilyId(),
+        familyId: this.familyId,
       };
 
-      this.userService.updateUserById(userId, updatedUser).subscribe({
-        next: () => {
-          this.commonService.presentToast('Account updated successfully.', 'success');
-        },
-        error: (error) => {
-          this.commonService.presentToast(error.error.message, 'danger');
-        },
-      });
-    }else {
+      if (this.userId) {
+        this.userService.updateUserById(this.userId, updatedUser).subscribe({
+          next: () => {
+            this.commonService.presentToast('Account updated successfully.', 'success');
+          },
+          error: (error) => {
+            this.commonService.presentToast(error.error.message, 'danger');
+          },
+        });
+      }
+    } else {
       await this.commonService.presentToast('Please fill out the form correctly.', 'danger');
     }
   }
