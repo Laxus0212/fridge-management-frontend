@@ -21,9 +21,9 @@ paths:
               examples:
                 example1:
                   value:
-                    shelf_id: 1
-                    shelf_name: "Top Shelf"
-                    fridge_id: 1
+                    shelfId: 1
+                    shelfName: "Top Shelf"
+                    fridgeId: 1
 
   /shelves/{shelfId}:
     get:
@@ -47,9 +47,9 @@ paths:
               examples:
                 example1:
                   value:
-                    shelf_id: 1
-                    shelf_name: "Top Shelf"
-                    fridge_id: 1
+                    shelfId: 1
+                    shelfName: "Top Shelf"
+                    fridgeId: 1
     put:
       tags:
         - Shelf
@@ -77,9 +77,9 @@ paths:
               examples:
                 example1:
                   value:
-                    shelf_id: 1
-                    shelf_name: "Updated Shelf Name"
-                    fridge_id: 1
+                    shelfId: 1
+                    shelfName: "Updated Shelf Name"
+                    fridgeId: 1
     delete:
       tags:
         - Shelf
@@ -95,7 +95,7 @@ paths:
         '204':
           description: Shelf deleted successfully
 
-  /fridges/{fridgeId}/shelves:
+  /shelves/{fridgeId}/user-shelves:
     get:
       tags:
         - Shelf
@@ -119,49 +119,49 @@ paths:
               examples:
                 example1:
                   value:
-                    - shelf_id: 1
-                      shelf_name: "Top Shelf"
-                      fridge_id: 1
+                    - shelfId: 1
+                      shelfName: "Top Shelf"
+                      fridgeId: 1
                       products:
-                        - product_id: 1
-                          product_name: "Milk"
+                        - productId: 1
+                          productName: "Milk"
                           quantity: 1.5
                           unit: "l"
-                          expiration_date: "2023-12-15"
-                          shelf_id: 1
-                        - product_id: 2
-                          product_name: "Eggs"
+                          expirationDate: "2023-12-15"
+                          shelfId: 1
+                        - productId: 2
+                          productName: "Eggs"
                           quantity: 10
                           unit: "pcs"
-                          expiration_date: "2023-12-31"
-                          shelf_id: 1
-                        - product_id: 3
-                          product_name: "Butter"
+                          expirationDate: "2023-12-31"
+                          shelfId: 1
+                        - productId: 3
+                          productName: "Butter"
                           quantity: 0.2
                           unit: "kg"
-                          expiration_date: "2023-12-25"
-                          shelf_id: 1
-                    - shelf_id: 2
-                      shelf_name: "Bottom Shelf"
-                      fridge_id: 1
+                          expirationDate: "2023-12-25"
+                          shelfId: 1
+                    - shelfId: 2
+                      shelfName: "Bottom Shelf"
+                      fridgeId: 1
                       products:
-                        - product_id: 4
-                          product_name: "Apple"
+                        - productId: 4
+                          productName: "Apple"
                           quantity: 1.0
                           unit: "kg"
-                          expiration_date: "2023-12-10"
-                          shelf_id: 2
-                        - product_id: 5
-                          product_name: "Banana"
+                          expirationDate: "2023-12-10"
+                          shelfId: 2
+                        - productId: 5
+                          productName: "Banana"
                           quantity: 1.5
                           unit: "kg"
-                          expiration_date: "2023-12-20"
-                          shelf_id: 2
-                        - product_id: 6
-                          product_name: "Orange"
+                          expirationDate: "2023-12-20"
+                          shelfId: 2
+                        - productId: 6
+                          productName: "Orange"
                           quantity: 0.5
                           unit: "kg"
-                          expiration_date: "2023-12-15"
-                          shelf_id: 2
+                          expirationDate: "2023-12-15"
+                          shelfId: 2
         '404':
           description: Fridge not found

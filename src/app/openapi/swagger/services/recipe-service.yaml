@@ -21,15 +21,15 @@ paths:
               examples:
                 example1:
                   value:
-                    recipe_id: 1
-                    recipe_name: "Pancakes"
-                    meal_type: "reggeli"
-                    shared_with_family: true
+                    recipeId: 1
+                    recipeName: "Pancakes"
+                    mealType: "reggeli"
+                    sharedWithFamily: true
                     ingredients: [
                         {
-                            ingredient_id: 1,
-                            recipe_id: 1,
-                            product_name: "Flour",
+                            ingredientId: 1,
+                            recipeId: 1,
+                            productName: "Flour",
                             quantity: 2,
                             unit: "dkg"
                         }
@@ -41,6 +41,12 @@ paths:
         - Recipe
       summary: Add ingredient to a recipe
       operationId: addIngredientToRecipe
+      parameters:
+        - in: path
+          name: recipeId
+          schema:
+              type: integer
+          required: true
       requestBody:
         required: true
         content:
@@ -57,8 +63,8 @@ paths:
               examples:
                 example1:
                   value:
-                    ingredient_id: 1
-                    recipe_id: 1
-                    product_name: "Flour"
+                    ingredientId: 1
+                    recipeId: 1
+                    productName: "Flour"
                     quantity: 2
                     unit: "dkg"

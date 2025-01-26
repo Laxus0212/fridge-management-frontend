@@ -3,25 +3,25 @@ components:
       Shelf:
         type: object
         properties:
-          shelf_id:
+          shelfId:
             type: integer
-          shelf_name:
+          shelfName:
             type: string
-          fridge_id:
+          fridgeId:
             type: integer
           products:
             type: array
             items:
               $ref: '../interfaces/product.yaml#/components/schemas/Product'
-        required: [shelf_name, fridge_id]
+        required: [shelfName, fridgeId]
 
       UpdateShelfNameRequest:
         type: object
         properties:
-          shelf_id:
+          shelfId:
             type: integer
-          shelf_name:
+          shelfName:
             type: string
-          fridge_id:
+          fridgeId:
             type: integer
-        required: [ shelf_name ]
+        required: [ shelfName ]

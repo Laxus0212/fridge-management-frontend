@@ -3,11 +3,11 @@ components:
     Recipe:
       type: object
       properties:
-        recipe_id:
+        recipeId:
           type: integer
-        recipe_name:
+        recipeName:
           type: string
-        meal_type:
+        mealType:
           type: string
           enum:
             - reggeli
@@ -15,7 +15,7 @@ components:
             - vacsora
         saved_by:
           type: integer
-        shared_with_family:
+        sharedWithFamily:
           type: boolean
         ingredients:
             type: array
@@ -25,7 +25,7 @@ components:
     Ingredient:
       type: object
       properties:
-        ingredient_id:
+        ingredientId:
           type: integer
         ingredient_name:
           type: string
@@ -33,5 +33,5 @@ components:
           type: number
         unit:
           type: string
-        recipe_id:
+        recipeId:
           type: integer

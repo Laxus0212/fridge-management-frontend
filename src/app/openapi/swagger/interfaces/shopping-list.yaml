@@ -3,7 +3,7 @@ components:
     ShoppingList:
       type: object
       properties:
-        list_id:
+        listId:
           type: integer
         name:
           type: string
@@ -11,17 +11,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ShoppingListItem'
-        family_id:
+        familyId:
           type: integer
 
     ShoppingListItem:
       type: object
       properties:
-        item_id:
+        itemId:
           type: integer
-        list_id:
+        listId:
           type: integer
-        product_name:
+        productName:
           type: string
         quantity:
           type: number

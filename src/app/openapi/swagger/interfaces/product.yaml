@@ -3,9 +3,9 @@ components:
     Product:
       type: object
       properties:
-        product_id:
+        productId:
           type: integer
-        product_name:
+        productName:
           type: string
         quantity:
           type: number
@@ -18,14 +18,14 @@ components:
             - pcs
             - dkg
             - dl
-        expiration_date:
+        expirationDate:
           type: string
           format: date
         opened_date:
           type: string
           format: date
-        shelf_id:
+        shelfId:
           type: integer
         barcode:
           type: string
-      required: [product_name, quantity, unit, expiration_date]
+      required: [productName, quantity, unit, expirationDate]

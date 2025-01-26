@@ -17,12 +17,12 @@ paths:
               examples:
                 example1:
                   value:
-                    - family_id: 1
-                      family_name: "Smith"
-                      invitation_code: "ABC123"
-                    - family_id: 2
-                      family_name: "Johnson"
-                      invitation_code: "XYZ789"
+                    - familyId: 1
+                      familyName: "Smith"
+                      invitationCode: "ABC123"
+                    - familyId: 2
+                      familyName: "Johnson"
+                      invitationCode: "XYZ789"
     post:
       tags:
         - Family
@@ -37,7 +37,7 @@ paths:
             examples:
               example1:
                 value:
-                  family_name: "Doe"
+                  familyName: "Doe"
       responses:
         '201':
           description: Family created successfully
@@ -48,9 +48,9 @@ paths:
               examples:
                 example1:
                   value:
-                    family_id: 3
-                    family_name: "Doe"
-                    invitation_code: "LMN456"
+                    familyId: 3
+                    familyName: "Doe"
+                    invitationCode: "LMN456"
 
   /families/{familyId}:
     get:
@@ -74,9 +74,9 @@ paths:
               examples:
                 example1:
                   value:
-                    family_id: 1
-                    family_name: "Smith"
-                    invitation_code: "ABC123"
+                    familyId: 1
+                    familyName: "Smith"
+                    invitationCode: "ABC123"
     put:
       tags:
         - Family
@@ -97,9 +97,9 @@ paths:
             examples:
               example1:
                 value:
-                  family_id: 1
-                  family_name: "Smith Updated"
-                  invitation_code: "ABC123"
+                  familyId: 1
+                  familyName: "Smith Updated"
+                  invitationCode: "ABC123"
       responses:
         '200':
           description: Family updated successfully
@@ -110,9 +110,9 @@ paths:
               examples:
                 example1:
                   value:
-                    family_id: 1
-                    family_name: "Smith Updated"
-                    invitation_code: "ABC123"
+                    familyId: 1
+                    familyName: "Smith Updated"
+                    invitationCode: "ABC123"
     delete:
       tags:
         - Family
@@ -189,12 +189,12 @@ paths:
               examples:
                 example1:
                   value:
-                    - user_id: 1
+                    - userId: 1
                       username: "John Doe"
-                      family_id: 1
-                    - user_id: 2
+                      familyId: 1
+                    - userId: 2
                       username: "Jane Doe"
-                      family_id: 1
+                      familyId: 1
 
   /families/invites:
     get:
@@ -214,9 +214,9 @@ paths:
               examples:
                 example1:
                   value:
-                    - invite_id: 1
-                      family_id: 1
-                      family_name: "Smith Family"
+                    - inviteId: 1
+                      familyId: 1
+                      familyName: "Smith Family"
                       inviter_email: "user@example.com"
 
   /families/invites/{inviteId}/accept:

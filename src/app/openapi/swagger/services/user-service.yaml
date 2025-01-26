@@ -17,10 +17,10 @@ paths:
               examples:
                 example1:
                   value:
-                    - user_id: 1
+                    - userId: 1
                       email: "user1@example.com"
                       username: "user1"
-                    - user_id: 2
+                    - userId: 2
                       email: "user2@example.com"
                       username: "user2"
     post:
@@ -44,7 +44,7 @@ paths:
               examples:
                 example1:
                   value:
-                    user_id: 3
+                    userId: 3
                     email: "newuser@example.com"
                     username: "newuser"
 
@@ -77,11 +77,11 @@ paths:
                   value:
                     token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
                     user:
-                      user_id: 1
+                      userId: 1
                       email: "exampleuser@teszt.hu"
                       username: "exampleuser"
                       password: "password"
-                      family_id: 1
+                      familyId: 1
         '400':
           description: "Invalid email or password"
         '500':
@@ -109,11 +109,11 @@ paths:
               examples:
                 example1:
                   value:
-                    user_id: 1
+                    userId: 1
                     email: "exampleuser@teszt.hu"
                     username: "exampleuser"
                     password: "password"
-                    family_id: 1
+                    familyId: 1
     put:
       tags:
         - User
@@ -130,13 +130,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../interfaces/user.yaml#/components/schemas/User'
+              $ref: '../interfaces/user.yaml#/components/schemas/UpdateUserReq'
             example:
-              user_id: 3
+              userId: 3
               email: "newuser@example.com"
               username: "newuser"
               password: "password"
-              family_id: 1
+              familyId: 1
       responses:
         '200':
           description: User updated
@@ -145,7 +145,7 @@ paths:
               schema:
                 $ref: '../interfaces/user.yaml#/components/schemas/User'
               example:
-                user_id: 3
+                userId: 3
                 email: "newuser@example.com"
                 username: "newuser"
         '404':
@@ -172,42 +172,3 @@ paths:
                 example1:
                   value:
                     message: "User deleted successfully"
-  /users/{userId}/fridges:
-    get:
-      tags:
-        - User
-      summary: Get fridges owned by user or shared within user's family
-      operationId: getUserFridges
-      parameters:
-        - in: path
-          name: userId
-          schema:
-            type: integer
-          required: true
-          description: The ID of the user requesting the fridges
-      responses:
-        '200':
-          description: List of fridges accessible by the user
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
-              examples:
-                example1:
-                  value:
-                    - fridge_id: 1
-                      fridge_name: "Fridge Shared With Family"
-                      owner_id: 2
-                      shared_with_family: true
-                    - fridge_id: 2
-                      fridge_name: "Fridge Owned By User"
-                      owner_id: 1
-                      shared_with_family: false
-                    - fridge_id: 3
-                      fridge_name: "Fridge Owned By User But Shared"
-                      owner_id: 1
-                      shared_with_family: true
-        '404':
-          description: User not found

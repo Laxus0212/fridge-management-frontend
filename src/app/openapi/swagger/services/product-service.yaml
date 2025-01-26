@@ -21,12 +21,12 @@ paths:
               examples:
                 example1:
                   value:
-                    product_id: 1
-                    product_name: "Milk"
+                    productId: 1
+                    productName: "Milk"
                     quantity: 1.0
                     unit: "l"
-                    expiration_date: "2023-12-01"
-                    shelf_id: 1
+                    expirationDate: "2023-12-01"
+                    shelfId: 1
 
   /products/{productId}:
     get:
@@ -50,12 +50,12 @@ paths:
               examples:
                 example1:
                   value:
-                    product_id: 1
-                    product_name: "Milk"
+                    productId: 1
+                    productName: "Milk"
                     quantity: 1.0
                     unit: "l"
-                    expiration_date: "2023-12-01"
-                    shelf_id: 1
+                    expirationDate: "2023-12-01"
+                    shelfId: 1
     put:
       tags:
         - Product
@@ -83,12 +83,12 @@ paths:
               examples:
                 example1:
                   value:
-                    product_id: 1
-                    product_name: "Updated Milk"
+                    productId: 1
+                    productName: "Updated Milk"
                     quantity: 1.5
                     unit: "l"
-                    expiration_date: "2023-12-15"
-                    shelf_id: 1
+                    expirationDate: "2023-12-15"
+                    shelfId: 1
     delete:
       tags:
         - Product
@@ -104,7 +104,7 @@ paths:
         '204':
           description: Product deleted successfully
 
-  /shelves/{shelfId}/products:
+  /products/{shelfId}/shelf-products:
     get:
       tags:
         - Product
@@ -128,61 +128,27 @@ paths:
               examples:
                 example1:
                   value:
-                    - product_id: 1
-                      product_name: "Milk"
+                    - productId: 1
+                      productName: "Milk"
                       quantity: 1
                       unit: "l"
-                      expiration_date: "2023-12-01"
-                      shelf_id: 1
-                    - product_id: 2
-                      product_name: "Eggs"
+                      expirationDate: "2023-12-01"
+                      shelfId: 1
+                    - productId: 2
+                      productName: "Eggs"
                       quantity: 12
                       unit: "pcs"
-                      expiration_date: "2023-12-10"
-                      shelf_id: 1
-                    - product_id: 1
-                      product_name: "Carrots"
+                      expirationDate: "2023-12-10"
+                      shelfId: 1
+                    - productId: 1
+                      productName: "Carrots"
                       quantity: 4
                       unit: "pcs"
-                      expiration_date: "2023-12-01"
-                      shelf_id: 2
-                    - product_id: 2
-                      product_name: "Eggs"
+                      expirationDate: "2023-12-01"
+                      shelfId: 2
+                    - productId: 2
+                      productName: "Eggs"
                       quantity: 12
                       unit: "pcs"
-                      expiration_date: "2023-12-10"
-                      shelf_id: 2
-
-    put:
-      tags:
-        - Product
-      summary: Update product
-      operationId: updateProduct
-      parameters:
-        - in: path
-          name: productId
-          schema:
-            type: integer
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '../interfaces/product.yaml#/components/schemas/Product'
-      responses:
-        '200':
-          description: Product updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '../interfaces/product.yaml#/components/schemas/Product'
-              examples:
-                example1:
-                  value:
-                    product_id: 1
-                    product_name: "Updated Milk"
-                    quantity: 1.5
-                    unit: "L"
-                    expiration_date: "2023-12-15"
-                    shelf_id: 1
+                      expirationDate: "2023-12-10"
+                      shelfId: 2

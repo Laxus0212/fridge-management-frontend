@@ -17,14 +17,14 @@ paths:
               examples:
                 example1:
                   value:
-                    - fridge_id: 1
-                      fridge_name: "Main Fridge"
-                      owner_id: 1
-                      shared_with_family: true
-                    - fridge_id: 2
-                      fridge_name: "Second Fridge"
-                      owner_id: 2
-                      shared_with_family: false
+                    - fridgeId: 1
+                      fridgeName: "Main Fridge"
+                      ownerId: 1
+                      sharedWithFamily: true
+                    - fridgeId: 2
+                      fridgeName: "Second Fridge"
+                      ownerId: 2
+                      sharedWithFamily: false
     post:
       tags:
         - Fridge
@@ -46,10 +46,10 @@ paths:
               examples:
                 example1:
                   value:
-                    fridge_id: 3
-                    fridge_name: "Office Fridge"
-                    owner_id: 1
-                    shared_with_family: true
+                    fridgeId: 3
+                    fridgeName: "Office Fridge"
+                    ownerId: 1
+                    sharedWithFamily: true
 
   /fridges/{fridgeId}:
     get:
@@ -73,10 +73,10 @@ paths:
               examples:
                 example1:
                   value:
-                    fridge_id: 1
-                    fridge_name: "Main Fridge"
-                    owner_id: 1
-                    shared_with_family: true
+                    fridgeId: 1
+                    fridgeName: "Main Fridge"
+                    ownerId: 1
+                    sharedWithFamily: true
     put:
       tags:
         - Fridge
@@ -93,7 +93,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../interfaces/fridge.yaml#/components/schemas/UpdateFridgeNameRequest'
+              $ref: '../interfaces/fridge.yaml#/components/schemas/UpdateFridgeReq'
       responses:
         '200':
           description: Fridge name updated successfully
@@ -104,10 +104,10 @@ paths:
               examples:
                 example1:
                   value:
-                    fridge_id: 1
-                    fridge_name: "Updated Fridge Name"
-                    owner_id: 1
-                    shared_with_family: true
+                    fridgeId: 1
+                    fridgeName: "Updated Fridge Name"
+                    ownerId: 1
+                    sharedWithFamily: true
         '400':
           description: Invalid input
         '404':
@@ -127,3 +127,77 @@ paths:
         '204':
           description: Fridge deleted successfully
 
+  /fridges/{userId}/user-fridges:
+    get:
+      tags:
+        - Fridge
+      summary: Get fridges owned by user
+      operationId: getUserFridges
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: The ID of the user requesting the fridges
+      responses:
+        '200':
+          description: List of fridges accessible by the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+              examples:
+                example1:
+                  value:
+                    - fridgeId: 2
+                      fridgeName: "Fridge Owned By User"
+                      ownerId: 1
+                    - fridgeId: 3
+                      fridgeName: "Fridge Owned By User But Shared"
+                      ownerId: 1
+                      familyId: 1
+        '404':
+          description: User not found
+
+  /fridges/{familyId}/family-fridges:
+    get:
+      tags:
+        - Fridge
+      summary: Get fridges owned by family
+      operationId: getFamilyFridges
+      parameters:
+        - in: path
+          name: familyId
+          schema:
+            type: integer
+          required: true
+          description: The ID of the family requesting the fridges
+      responses:
+        '200':
+          description: List of fridges accessible by the family
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/fridge.yaml#/components/schemas/Fridge'
+              examples:
+                example1:
+                  value:
+                    - fridgeId: 1
+                      fridgeName: "Fridge Shared With Family"
+                      ownerId: 2
+                      familyId: 1
+                    - fridgeId: 2
+                      fridgeName: "Fridge Owned By Another User"
+                      ownerId: 3
+                      familyId: 1
+                    - fridgeId: 3
+                      fridgeName: "Fridge Owned By User But Shared"
+                      ownerId: 1
+                      familyId: 1
+        '404':
+          description: User not found

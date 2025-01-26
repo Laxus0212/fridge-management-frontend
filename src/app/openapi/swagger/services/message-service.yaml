@@ -21,20 +21,20 @@ paths:
               examples:
                 example1:
                   value:
-                    message_id: asldnfln234234asdnkls23
-                    chat_id: 1
-                    sender_id: 1
+                    messageId: asldnfln234234asdnkls23
+                    chatId: 1
+                    senderId: 1
                     message: "Hello, family!"
-                    sent_at: "2023-11-01T10:00:00Z"
+                    sentAt: "2023-11-01T10:00:00Z"
 
-  /chats/{chat_id}/messages:
+  /chats/{chatId}/messages:
     get:
       tags:
         - Message
       summary: Get all messages for a chat
       operationId: getMessagesForChat
       parameters:
-        - name: chat_id
+        - name: chatId
           in: path
           required: true
           schema:
@@ -51,25 +51,25 @@ paths:
               examples:
                 example1:
                   value:
-                    - message_id: alskfnlak2314j14jkafs2
-                      chat_id: 1
-                      sender_id: 1
+                    - messageId: alskfnlak2314j14jkafs2
+                      chatId: 1
+                      senderId: 1
                       message: "Hello, family!"
-                      sent_at: "2023-11-01T10:00:00Z"
-                    - message_id: 2
-                      chat_id: 1
-                      sender_id: 2
+                      sentAt: "2023-11-01T10:00:00Z"
+                    - messageId: 2
+                      chatId: 1
+                      senderId: 2
                       message: "Hi there!"
-                      sent_at: "2023-11-01T10:05:00Z"
+                      sentAt: "2023-11-01T10:05:00Z"
 
-  /messages/{message_id}:
+  /messages/{messageId}:
     get:
       tags:
         - Message
       summary: Get a specific message
       operationId: getMessage
       parameters:
-        - name: message_id
+        - name: messageId
           in: path
           required: true
           schema:
@@ -84,11 +84,11 @@ paths:
               examples:
                 example1:
                   value:
-                    message_id: akjsdfhg234z98234sd
-                    chat_id: 1
-                    sender_id: 1
+                    messageId: akjsdfhg234z98234sd
+                    chatId: 1
+                    senderId: 1
                     message: "Hello, family!"
-                    sent_at: "2023-11-01T10:00:00Z"
+                    sentAt: "2023-11-01T10:00:00Z"
 
     put:
       tags:
@@ -96,7 +96,7 @@ paths:
       summary: Update a message
       operationId: updateMessage
       parameters:
-        - name: message_id
+        - name: messageId
           in: path
           required: true
           schema:
@@ -117,11 +117,11 @@ paths:
               examples:
                 example1:
                   value:
-                    message_id: agdsjf2u34z234
-                    chat_id: 1
-                    sender_id: 1
+                    messageId: agdsjf2u34z234
+                    chatId: 1
+                    senderId: 1
                     message: "Updated message"
-                    sent_at: "2023-11-01T10:00:00Z"
+                    sentAt: "2023-11-01T10:00:00Z"
 
     delete:
       tags:
@@ -129,7 +129,7 @@ paths:
       summary: Delete a message
       operationId: deleteMessage
       parameters:
-        - name: message_id
+        - name: messageId
           in: path
           required: true
           schema:

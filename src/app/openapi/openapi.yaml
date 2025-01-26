@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: API for managing users, fridges, shelves, items, shopping lists, recipes, ingredients, and messages.
 servers:
-  - url: http://localhost:4010
+  - url: http://localhost:3000
     description: 'API server'
 
 paths:
@@ -14,27 +14,29 @@ paths:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1login'
   /users/{userId}:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}'
-  /users/{userId}/fridges:
-    $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}~1fridges'
 
   /fridges:
     $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges'
   /fridges/{fridgeId}:
     $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges~1{fridgeId}'
+  /fridges/{userId}/user-fridges:
+    $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges~1{userId}~1user-fridges'
+  /fridges/{familyId}/family-fridges:
+    $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges~1{familyId}~1family-fridges'
 
   /shelves:
     $ref: './swagger/services/shelf-service.yaml#/paths/~1shelves'
   /shelves/{shelfId}:
     $ref: './swagger/services/shelf-service.yaml#/paths/~1shelves~1{shelfId}'
-  /fridges/{fridgeId}/shelves:
-    $ref: './swagger/services/shelf-service.yaml#/paths/~1fridges~1{fridgeId}~1shelves'
+  /shelves/{fridgeId}/user-shelves:
+    $ref: './swagger/services/shelf-service.yaml#/paths/~1shelves~1{fridgeId}~1user-shelves'
 
   /products:
     $ref: './swagger/services/product-service.yaml#/paths/~1products'
   /products/{productId}:
     $ref: './swagger/services/product-service.yaml#/paths/~1products~1{productId}'
-  /shelves/{shelfId}/products:
-    $ref: './swagger/services/product-service.yaml#/paths/~1shelves~1{shelfId}~1products'
+  /products/{shelfId}/shelf-products:
+    $ref: './swagger/services/product-service.yaml#/paths/~1products~1{shelfId}~1shelf-products'
 
   /shopping-lists:
     $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists'
@@ -44,8 +46,8 @@ paths:
     $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{listId}~1items'
   /shopping-lists/{listId}/items/{itemId}:
     $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{listId}~1items~1{itemId}'
-  /shopping-lists/{familyId}/family-shopping-lists:
-    $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{familyId}~1family-shopping-lists'
+  /shopping-lists/{userId}/user-shopping-lists:
+    $ref: './swagger/services/shopping-list-service.yaml#/paths/~1shopping-lists~1{userId}~1user-shopping-lists'
 
   /recipes:
     $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes'
@@ -54,10 +56,10 @@ paths:
 
   /messages:
     $ref: './swagger/services/message-service.yaml#/paths/~1messages'
-  /chats/{chat_id}/messages:
-    $ref: './swagger/services/message-service.yaml#/paths/~1chats~1{chat_id}~1messages'
-  /messages/{message_id}:
-    $ref: './swagger/services/message-service.yaml#/paths/~1messages~1{message_id}'
+  /chats/{chatId}/messages:
+    $ref: './swagger/services/message-service.yaml#/paths/~1chats~1{chatId}~1messages'
+  /messages/{messageId}:
+    $ref: './swagger/services/message-service.yaml#/paths/~1messages~1{messageId}'
 
   /families:
     $ref: './swagger/services/family-service.yaml#/paths/~1families'
@@ -80,6 +82,8 @@ components:
   schemas:
     User:
       $ref: './swagger/interfaces/user.yaml#/components/schemas/User'
+    UpdateUserReq:
+      $ref: './swagger/interfaces/user.yaml#/components/schemas/UpdateUserReq'
     LoginUserReq:
       $ref: './swagger/interfaces/user.yaml#/components/schemas/LoginUserReq'
     LoginUserResp:
@@ -90,8 +94,8 @@ components:
       $ref: './swagger/interfaces/user.yaml#/components/schemas/FamilyMember'
     Fridge:
       $ref: './swagger/interfaces/fridge.yaml#/components/schemas/Fridge'
-    UpdateFridgeNameRequest:
-      $ref: './swagger/interfaces/fridge.yaml#/components/schemas/UpdateFridgeNameRequest'
+    UpdateFridgeReq:
+      $ref: './swagger/interfaces/fridge.yaml#/components/schemas/UpdateFridgeReq'
     Shelf:
       $ref: './swagger/interfaces/shelf.yaml#/components/schemas/Shelf'
     UpdateShelfNameRequest:

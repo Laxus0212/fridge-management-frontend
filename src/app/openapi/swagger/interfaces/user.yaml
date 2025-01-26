@@ -3,7 +3,7 @@ components:
     User:
       type: object
       properties:
-        user_id:
+        userId:
           type: integer
         email:
           type: string
@@ -11,7 +11,7 @@ components:
           type: string
         password:
           type: string
-        family_id:
+        familyId:
           type: integer
       required:
         - email
@@ -41,26 +41,39 @@ components:
     FamilyMember:
       type: object
       properties:
-        user_id:
+        userId:
           type: integer
         username:
           type: string
-        family_id:
+        familyId:
           type: integer
       required:
-        - user_id
+        - userId
         - username
-        - family_id
+        - familyId
     GetUserResp:
       type: object
       properties:
-        user_id:
+        userId:
           type: integer
         username:
           type: string
-        family_id:
+        familyId:
           type: integer
       required:
-        - user_id
+        - userId
         - username
-        - family_id
+        - familyId
+    UpdateUserReq:
+      type: object
+      properties:
+        userId:
+          type: integer
+        email:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        familyId:
+          type: integer

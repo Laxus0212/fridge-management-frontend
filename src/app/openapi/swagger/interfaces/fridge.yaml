@@ -3,19 +3,22 @@ components:
     Fridge:
       type: object
       properties:
-        fridge_id:
+        fridgeId:
           type: integer
-        fridge_name:
+        fridgeName:
           type: string
-        owner_id:
+        ownerId:
           type: integer
-        shared_with_family:
-          type: boolean
-      required: [fridge_name]
-    UpdateFridgeNameRequest:
+        familyId:
+          type: integer
+      required: [fridgeName, ownerId]
+    UpdateFridgeReq:
       type: object
       properties:
-        fridge_name:
+        fridgeId:
+          type: integer
+        fridgeName:
           type: string
-      required: [fridge_name]
+        familyId:
+          type: integer
 

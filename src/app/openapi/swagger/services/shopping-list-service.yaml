@@ -21,25 +21,25 @@ paths:
               examples:
                 example1:
                   value:
-                    list_id: 1
+                    listId: 1
                     name: "Grocery"
                     items: [
                       {
-                        item_id: 1,
-                        list_id: 1,
-                        product_name: "Bread",
+                        itemId: 1,
+                        listId: 1,
+                        productName: "Bread",
                         quantity: 2,
                         unit: "pcs"
                       },
                       {
-                        item_id: 2,
-                        list_id: 1,
-                        product_name: "Milk",
+                        itemId: 2,
+                        listId: 1,
+                        productName: "Milk",
                         quantity: 1,
                         unit: "l"
                       }
                     ]
-                    family_id: 1
+                    familyId: 1
 
   /shopping-lists/{listId}:
     put:
@@ -118,9 +118,9 @@ paths:
               examples:
                 example1:
                   value:
-                    item_id: 1
-                    list_id: 1
-                    product_name: "Bread"
+                    itemId: 1
+                    listId: 1
+                    productName: "Bread"
                     quantity: 2
                     unit: "pcs"
 
@@ -184,17 +184,17 @@ paths:
         '404':
           description: Shopping list or item not found
 
-  /shopping-lists/{familyId}/family-shopping-lists:
+  /shopping-lists/{userId}/user-shopping-lists:
     get:
       tags:
         - ShoppingList
-      summary: Get shopping lists by family ID
-      description: Returns a list of shopping lists for the user, filtered by family ID.
-      operationId: getShoppingListsByFamilyId
+      summary: Get shopping lists by user ID
+      description: Returns a list of shopping lists for the user, filtered by user ID.
+      operationId: getShoppingListsByUserId
       parameters:
-        - name: family_id
+        - name: userId
           in: path
-          description: The family ID to filter shopping lists by. If not provided, returns all lists for the user.
+          description: The user ID to filter shopping lists by. If not provided, returns all lists for the user.
           required: false
           schema:
             type: integer
@@ -210,44 +210,44 @@ paths:
               examples:
                 example1:
                   value:
-                    - list_id: 1
+                    - listId: 1
                       name: "Grocery"
                       items: [
                       {
-                        item_id: 1,
-                        list_id: 1,
-                        product_name: "Bread",
+                        itemId: 1,
+                        listId: 1,
+                        productName: "Bread",
                         quantity: 2,
                         unit: "pcs"
                       },
                       {
-                        item_id: 2,
-                        list_id: 1,
-                        product_name: "Milk",
+                        itemId: 2,
+                        listId: 1,
+                        productName: "Milk",
                         quantity: 1,
                         unit: "l"
                       }
                     ]
-                    - family_id: 1,
-                      list_id: 2
+                    - familyId: 1,
+                      listId: 2
                       name: "Hardware store"
                       items: [
                       {
-                        item_id: 3,
-                        list_id: 2,
-                        product_name: "Screwdriver",
+                        itemId: 3,
+                        listId: 2,
+                        productName: "Screwdriver",
                         quantity: 1,
                         unit: "pcs"
                       },
                       {
-                        item_id: 4,
-                        list_id: 2,
-                        product_name: "Hammer",
+                        itemId: 4,
+                        listId: 2,
+                        productName: "Hammer",
                         quantity: 1,
                         unit: "pcs"
                       }
                     ]
         '400':
-          description: Invalid family ID supplied
+          description: Invalid user ID supplied
         '404':
           description: No shopping lists found

@@ -3,22 +3,22 @@ components:
     Family:
       type: object
       properties:
-        family_id:
+        familyId:
           type: integer
           format: int32
           description: The unique identifier for the family.
-        family_name:
+        familyName:
           type: string
           maxLength: 100
           description: The name of the family.
-        invitation_code:
+        invitationCode:
           type: string
           maxLength: 50
           description: The unique invitation code for the family.
       required:
-        - family_id
-        - family_name
-        - invitation_code
+        - familyId
+        - familyName
+        - invitationCode
     CreateFamilyReq:
       type: object
       properties:
@@ -31,16 +31,16 @@ components:
     Invite:
       type: object
       properties:
-        invite_id:
+        inviteId:
           type: integer
-        family_id:
+        familyId:
           type: integer
-        family_name:
+        familyName:
           type: string
         inviter_email:
           type: string
       required:
-        - invite_id
-        - family_id
-        - family_name
+        - inviteId
+        - familyId
+        - familyName
         - inviter_email

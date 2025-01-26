@@ -3,15 +3,15 @@ components:
     Message:
       type: object
       properties:
-        message_id:
+        messageId:
           type: string
-        chat_id:
+        chatId:
           type: integer
-        sender_id:
+        senderId:
           type: integer
         message:
           type: string
-        sent_at:
+        sentAt:
           type: string
           format: date-time
-      required: [chat_id, message]
+      required: [chatId, message]

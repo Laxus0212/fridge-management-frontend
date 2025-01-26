@@ -3,12 +3,12 @@ components:
     Chat:
       type: object
       properties:
-        chat_id:
+        chatId:
           type: integer
-        family_id:
+        familyId:
           type: integer
         messages:
             type: array
             items:
               $ref: '../interfaces/message.yaml#/components/schemas/Message'
-      required: [chat_id, family_id]
+      required: [chatId, familyId]
