@@ -14,6 +14,8 @@ paths:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1login'
   /users/{userId}:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}'
+  /users/email/{email}:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1email~1{email}'
 
   /fridges:
     $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges'
@@ -69,12 +71,14 @@ paths:
     $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}~1users'
   /families/{familyId}/invite:
     $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}~1invite'
-  /families/invites:
-    $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites'
+  /families/{familyId}/leave:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1{familyId}~1leave'
   /families/invites/{inviteId}/accept:
     $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites~1{inviteId}~1accept'
   /families/invites/{inviteId}/decline:
     $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites~1{inviteId}~1decline'
+  /families/invites/{userId}:
+    $ref: './swagger/services/family-service.yaml#/paths/~1families~1invites~1{userId}'
 
 
 
@@ -118,5 +122,11 @@ components:
       $ref: './swagger/interfaces/family.yaml#/components/schemas/Family'
     Invite:
       $ref: './swagger/interfaces/family.yaml#/components/schemas/Invite'
+    Invitation:
+      $ref: './swagger/interfaces/invitation.yaml#/components/schemas/Invitation'
+    UpdateInvitationReq:
+      $ref: './swagger/interfaces/invitation.yaml#/components/schemas/UpdateInvitationReq'
+    CreateInvitationReq:
+      $ref: './swagger/interfaces/invitation.yaml#/components/schemas/CreateInvitationReq'
     CreateFamilyReq:
       $ref: './swagger/interfaces/family.yaml#/components/schemas/CreateFamilyReq'
