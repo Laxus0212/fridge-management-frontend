@@ -154,7 +154,7 @@ export class RegisterComponent implements OnInit {
     if (this.isRegisterFormValid()) {
       const {isNewFamily, newFamilyName} = this.registerForm.value;
       if (isNewFamily && newFamilyName) {
-        const createFamilyReqObj: CreateFamilyReq = {name: newFamilyName};
+        const createFamilyReqObj: CreateFamilyReq = {familyName: newFamilyName};
         this.familyService.createFamily(createFamilyReqObj).subscribe({
           next: (family) => this.createUser(family.familyId),
           error: (resp) => void this.commonService.presentToast(resp.error.message, 'danger')
