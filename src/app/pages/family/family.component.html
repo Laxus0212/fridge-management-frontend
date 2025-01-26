@@ -5,7 +5,6 @@
 </ion-header>
 
 <ion-content>
-  <!-- Ha a felhasználó nem tagja egy családnak sem -->
   <div *ngIf="!family">
     <ion-card>
       <ion-card-header>
@@ -18,7 +17,6 @@
     </ion-card>
   </div>
 
-  <!-- Ha a felhasználó tagja egy családnak -->
   <div *ngIf="family">
     <ion-card>
       <ion-card-header>
@@ -71,14 +69,13 @@
     </ion-card>
   </div>
 
-  <!-- Ha van függőben lévő meghívó -->
   <div *ngIf="pendingInvite">
     <ion-card>
       <ion-card-header>
         <ion-card-title>Pending Invitation</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <p>You have been invited to join the family: {{ pendingInvite.familyName }}</p>
+        <p>You have been invited to join the family: {{ pendingInvite.family?.familyName }}</p>
         <ion-button expand="block" (click)="acceptInvite()">Accept</ion-button>
         <ion-button expand="block" color="danger" (click)="declineInvite()">Decline</ion-button>
       </ion-card-content>
