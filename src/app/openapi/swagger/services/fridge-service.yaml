@@ -80,8 +80,8 @@ paths:
     put:
       tags:
         - Fridge
-      summary: Update fridge name
-      operationId: updateFridgeName
+      summary: Update fridge
+      operationId: updateFridge
       parameters:
         - in: path
           name: fridgeId
@@ -89,7 +89,6 @@ paths:
             type: integer
           required: true
       requestBody:
-        required: true
         content:
           application/json:
             schema:
@@ -107,7 +106,7 @@ paths:
                     fridgeId: 1
                     fridgeName: "Updated Fridge Name"
                     ownerId: 1
-                    sharedWithFamily: true
+                    familyId: 1
         '400':
           description: Invalid input
         '404':

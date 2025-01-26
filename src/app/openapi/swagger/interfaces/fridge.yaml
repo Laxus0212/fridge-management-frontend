@@ -21,4 +21,5 @@ components:
           type: string
         familyId:
           type: integer
+      required: [fridgeId]
 
