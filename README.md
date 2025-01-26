@@ -1,8 +1,9 @@
 # Leírás a projekt elindításához
 
->npm install ws szerveren a websockethez
+> npm install ws szerveren a websockethez
 
 ## Kódsorok lokális futtatásához
+
 > npm install
 
 //> cd fridge-management/src/app/openapi
@@ -16,6 +17,7 @@
 > npm run start:dev
 
 ## Prism mock szerver futtatása
+
 > cd .\src\app\openapi\
 
 > prism mock openapi.yaml
@@ -31,7 +33,6 @@
 > ionic serve --configuration=production vagy ionic capacitor build android
 
 npm install @ionic/utils-process -> az ionic-nak, hogy lássa a telefont
-
 
 kell még websocket a chat funkcióhoz
 regisztrációs oldalt is megnézni
@@ -51,3 +52,8 @@ mindent kitelepíteni nas-ra
 mobilon tesztelni
 admin felület
 folyamat stb ábrák
+
+ezek a service-ek segíthetnek még a familyid, userid adatok elérésében. 
+A fridge component alapján szereném az owned és family shared, valamint 
+az edit és new shopping list-et megoldani.
+
