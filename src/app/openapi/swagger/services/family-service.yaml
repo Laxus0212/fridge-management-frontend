@@ -128,43 +128,6 @@ paths:
         '204':
           description: Family deleted successfully
 
-  /families/{familyId}/invite:
-    post:
-      tags:
-        - Family
-      summary: Invite a user to the family
-      operationId: inviteUserToFamily
-      parameters:
-        - in: path
-          name: familyId
-          schema:
-            type: integer
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: The email of the user to invite
-              required:
-                - email
-            examples:
-              example1:
-                value:
-                  email: "user@example.com"
-      responses:
-        '200':
-          description: Invitation sent successfully
-        '400':
-          description: Invalid request
-        '404':
-          description: Family not found
-
   /families/{familyId}/users:
     get:
       tags:
@@ -196,12 +159,61 @@ paths:
                       username: "Jane Doe"
                       familyId: 1
 
-  /families/invites:
+  /families/{familyId}/invite:
+    post:
+      tags:
+        - Family
+      summary: Invite a user to the family
+      operationId: inviteUserToFamily
+      parameters:
+        - in: path
+          name: familyId
+          schema:
+            type: integer
+          required: true
+          description: The ID of the family to which the user is invited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/invitation.yaml#/components/schemas/CreateInvitationReq'
+            examples:
+              example1:
+                value:
+                  invitedUserId: 2
+      responses:
+        '200':
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/invitation.yaml#/components/schemas/Invitation'
+              examples:
+                example1:
+                  value:
+                    invitationId: 1
+                    familyId: 1
+                    invitedUserId: 2
+                    status: "pending"
+        '400':
+          description: Invalid request (e.g., user already in the family)
+        '404':
+          description: Family or user not found
+
+  /families/invites/{userId}:
     get:
       tags:
         - Family
-      summary: Get pending invites for the current user
+      summary: Get pending invites for a user
       operationId: getPendingInvites
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: The ID of the user to fetch pending invites for.
       responses:
         '200':
           description: List of pending invites
@@ -210,14 +222,22 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '../interfaces/family.yaml#/components/schemas/Invite'
+                  $ref: '../interfaces/invitation.yaml#/components/schemas/Invitation'
               examples:
                 example1:
                   value:
-                    - inviteId: 1
+                    - invitationId: 1
                       familyId: 1
-                      familyName: "Smith Family"
-                      inviter_email: "user@example.com"
+                      invitedUserId: 2
+                      status: "pending"
+                      family:
+                        familyId: 1
+                        familyName: "Smith Family"
+                      invitedUser:
+                        userId: 2
+                        username: "user@example.com"
+        '404':
+          description: No pending invites found
 
   /families/invites/{inviteId}/accept:
     post:
@@ -231,11 +251,33 @@ paths:
           schema:
             type: integer
           required: true
+          description: The ID of the invitation to accept.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/invitation.yaml#/components/schemas/UpdateInvitationReq'
+            examples:
+              example1:
+                value:
+                  status: "accepted"
       responses:
         '200':
-          description: Invite accepted successfully
+          description: Invitation accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/invitation.yaml#/components/schemas/Invitation'
+              examples:
+                example1:
+                  value:
+                    invitationId: 1
+                    familyId: 1
+                    invitedUserId: 2
+                    status: "accepted"
         '404':
-          description: Invite not found
+          description: Invitation not found
 
   /families/invites/{inviteId}/decline:
     post:
@@ -249,8 +291,72 @@ paths:
           schema:
             type: integer
           required: true
+          description: The ID of the invitation to decline.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../interfaces/invitation.yaml#/components/schemas/UpdateInvitationReq'
+            examples:
+              example1:
+                value:
+                  status: "declined"
       responses:
         '200':
-          description: Invite declined successfully
+          description: Invitation declined successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/invitation.yaml#/components/schemas/Invitation'
+              examples:
+                example1:
+                  value:
+                    invitationId: 1
+                    familyId: 1
+                    invitedUserId: 2
+                    status: "declined"
         '404':
-          description: Invite not found
+          description: Invitation not found
+
+  /families/{familyId}/leave:
+    post:
+      tags:
+        - Family
+      summary: Leave a family
+      operationId: leaveFamily
+      parameters:
+        - in: path
+          name: familyId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+              required:
+                - userId
+      responses:
+        '200':
+          description: Successfully left the family
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              examples:
+                example1:
+                  value:
+                    message: "Successfully left the family"
+        '400':
+          description: Invalid request (e.g., user not in the family)
+        '404':
+          description: Family not found

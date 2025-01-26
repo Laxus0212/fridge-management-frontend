@@ -11,22 +11,19 @@ components:
           type: string
           maxLength: 100
           description: The name of the family.
-        invitationCode:
-          type: string
-          maxLength: 50
-          description: The unique invitation code for the family.
       required:
         - familyId
         - familyName
-        - invitationCode
+
     CreateFamilyReq:
       type: object
       properties:
-        name:
+        familyName:
           type: string
+          maxLength: 100
           example: "Family Name"
-          required:
-            - name
+      required:
+        - familyName
 
     Invite:
       type: object
