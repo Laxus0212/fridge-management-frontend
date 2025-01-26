@@ -172,3 +172,34 @@ paths:
                 example1:
                   value:
                     message: "User deleted successfully"
+
+  /users/email/{email}:
+    get:
+      tags:
+        - User
+      summary: Get user by email
+      operationId: getUserByEmail
+      parameters:
+        - in: path
+          name: email
+          schema:
+            type: string
+          required: true
+          description: The email of the user to retrieve.
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/user.yaml#/components/schemas/User'
+              examples:
+                example1:
+                  value:
+                    userId: 1
+                    email: "exampleuser@teszt.hu"
+                    username: "exampleuser"
+                    password: "password"
+                    familyId: 1
+        '404':
+          description: User not found
