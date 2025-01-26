@@ -195,7 +195,7 @@ paths:
         - name: userId
           in: path
           description: The user ID to filter shopping lists by. If not provided, returns all lists for the user.
-          required: false
+          required: true
           schema:
             type: integer
       responses:
@@ -212,6 +212,7 @@ paths:
                   value:
                     - listId: 1
                       name: "Grocery"
+                      ownerId: 1
                       items: [
                       {
                         itemId: 1,
@@ -230,6 +231,7 @@ paths:
                     ]
                     - familyId: 1,
                       listId: 2
+                      ownerId: 2
                       name: "Hardware store"
                       items: [
                       {

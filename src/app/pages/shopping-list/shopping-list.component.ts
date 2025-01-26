@@ -109,6 +109,7 @@ export class ShoppingListComponent implements OnInit {
 
     const newList: ShoppingList = {
       name: this.newShoppingListName,
+      ownerId: this.userId,
       familyId: this.newShoppingListSharedWithFamily ? this.userFamilyId : undefined,
     };
 
