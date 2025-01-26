@@ -1,0 +1,52 @@
+components:
+  schemas:
+    Invitation:
+      type: object
+      properties:
+        invitationId:
+          type: integer
+          description: A meghívó egyedi azonosítója.
+          example: 1
+        familyId:
+          type: integer
+          description: A család azonosítója, amelyhez a meghívó tartozik.
+          example: 1
+        invitedUserId:
+          type: integer
+          description: A meghívott felhasználó azonosítója.
+          example: 2
+        status:
+          type: string
+          enum: [pending, accepted, declined]
+          description: A meghívó állapota.
+          example: "pending"
+        family:
+          $ref: '../interfaces/family.yaml#/components/schemas/Family'
+        invitedUser:
+          $ref: '../interfaces/user.yaml#/components/schemas/User'
+      required:
+        - invitationId
+        - familyId
+        - invitedUserId
+        - status
+
+    CreateInvitationReq:
+      type: object
+      properties:
+        email:
+          type: string
+          description: A meghívni kívánt felhasználó e-mail címe.
+          example: "janiahegyrol@jaaanoooos.hu"
+      required:
+        - email
+
+    UpdateInvitationReq:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, accepted, declined]
+          description: A meghívó új állapota.
+          example: "accepted"
+      required:
+        - status
