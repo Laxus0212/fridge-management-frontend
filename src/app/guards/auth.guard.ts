@@ -11,8 +11,10 @@ export class AuthGuard implements CanActivate {
 
   canActivate(): boolean {
     if (this.authService.isLoggedIn()) {
-      return true; // Allow route if the user is logged in
+      console.log('Auth guard accept');
+      return true;
     } else {
+      console.log('Auth guard reject');
       void this.router.navigate([RoutePaths.Home]); // Redirect to home page
       return false;
     }
