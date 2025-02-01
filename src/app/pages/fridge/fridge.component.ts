@@ -60,16 +60,15 @@ export class FridgeComponent implements OnInit {
           if (this.userFamilyId) {
             this.fridgeService.getFamilyFridges(this.userFamilyId).subscribe({
               next: (familyFridges: Fridge[]) => {
-                this.fridges
-                  .concat(
-                    familyFridges
-                      .filter(fridge =>
-                        !this.fridges
-                          .some(ownedFridge =>
-                            ownedFridge.fridgeId === fridge.fridgeId
-                          )
-                      )
-                  );
+                this.fridges.push(
+                  ...familyFridges
+                    .filter(fridge =>
+                      !this.fridges
+                        .some(ownedFridge =>
+                          ownedFridge.fridgeId === fridge.fridgeId
+                        )
+                    )
+                );
                 this.applyFilter();
                 this.isLoading = false; // Set loading to false after fridges are loaded
               },

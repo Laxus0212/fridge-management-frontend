@@ -1,27 +1,20 @@
 :host {
-  ion-grid {
-    display: flex;
-    flex-wrap: wrap;
-  }
+  .fridge-tile {
+    ion-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
 
-  ion-col {
-    display: flex;
-  }
+    ion-card-header {
+      flex: 1;
+    }
 
-  ion-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  ion-card-header {
-    flex: 1;
-  }
-
-  ion-card-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    ion-card-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
   }
 }

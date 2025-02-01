@@ -27,7 +27,7 @@
 
       <ion-row>
         <!-- Fridge tiles -->
-        <ion-col size="6" *ngFor="let fridge of filteredFridges">
+        <ion-col size="6" *ngFor="let fridge of filteredFridges" class="fridge-tile">
           <ion-card (click)="navigateToShelf(fridge.fridgeId!)">
             <img src="assets/icon/fridge-icon.webp" alt="Fridge Image"/> <!-- Fridge image -->
             <ion-card-header>
