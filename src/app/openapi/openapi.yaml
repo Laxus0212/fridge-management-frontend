@@ -10,8 +10,14 @@ servers:
 paths:
   /users:
     $ref: './swagger/services/user-service.yaml#/paths/~1users'
+  /users/register:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1register'
   /users/login:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1login'
+  /users/logout:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1logout'
+  /users/user:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1user'
   /users/{userId}:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}'
   /users/email/{email}:
@@ -90,8 +96,6 @@ components:
       $ref: './swagger/interfaces/user.yaml#/components/schemas/UpdateUserReq'
     LoginUserReq:
       $ref: './swagger/interfaces/user.yaml#/components/schemas/LoginUserReq'
-    LoginUserResp:
-      $ref: './swagger/interfaces/user.yaml#/components/schemas/LoginUserResp'
     GetUserResp:
       $ref: './swagger/interfaces/user.yaml#/components/schemas/GetUserResp'
     FamilyMember:
@@ -130,3 +134,6 @@ components:
       $ref: './swagger/interfaces/invitation.yaml#/components/schemas/CreateInvitationReq'
     CreateFamilyReq:
       $ref: './swagger/interfaces/family.yaml#/components/schemas/CreateFamilyReq'
+  securitySchemes:
+    cookieAuth:
+      $ref: './swagger/services/user-service.yaml#/components/securitySchemes/cookieAuth'

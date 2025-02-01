@@ -23,6 +23,7 @@ paths:
                     - userId: 2
                       email: "user2@example.com"
                       username: "user2"
+  /users/register:
     post:
       tags:
         - User
@@ -40,13 +41,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../interfaces/user.yaml#/components/schemas/User'
-              examples:
-                example1:
-                  value:
-                    userId: 3
-                    email: "newuser@example.com"
-                    username: "newuser"
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "Login success"
+        '400':
+          description: "Invalid email or password"
+        '500':
+          description: "Server error"
 
   /users/login:
     post:
@@ -67,23 +71,75 @@ paths:
               password: "password"
       responses:
         '200':
-          description: "User data returned on successful login"
+          description: "Message returned on successful login"
+          headers:
+            Set-Cookie:
+              description: "Cookie containing session information"
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: "../interfaces/user.yaml#/components/schemas/LoginUserResp"
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "Login success"
+        '400':
+          description: "Invalid email or password"
+        '500':
+          description: "Server error"
+      security:
+        - cookieAuth: []
+
+  /users/user:
+    get:
+      tags:
+        - User
+      summary: Get logged in user
+      operationId: getLoggedInUser
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '../interfaces/user.yaml#/components/schemas/User'
               examples:
                 example1:
                   value:
-                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-                    user:
-                      userId: 1
-                      email: "exampleuser@teszt.hu"
-                      username: "exampleuser"
-                      password: "password"
-                      familyId: 1
+                    userId: 1
+                    email: "exampleuser@teszt.hu"
+                    username: "exampleuser"
+                    familyId: 1
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+      security:
+        - cookieAuth: []
+
+  /users/logout:
+    post:
+      tags:
+        - User
+      summary: Logout user
+      operationId: logoutUser
+      responses:
+        '200':
+          description: "Message returned on successful logout"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "Logout success"
         '400':
-          description: "Invalid email or password"
+          description: "Couldn't log out"
         '500':
           description: "Server error"
 
@@ -203,3 +259,9 @@ paths:
                     familyId: 1
         '404':
           description: User not found
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: jwt

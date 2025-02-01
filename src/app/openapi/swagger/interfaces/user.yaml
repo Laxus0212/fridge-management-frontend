@@ -16,7 +16,6 @@ components:
       required:
         - email
         - username
-        - password
     LoginUserReq:
       type: object
       properties:
@@ -29,15 +28,6 @@ components:
       required:
         - email
         - password
-    LoginUserResp:
-      type: object
-      properties:
-        token:
-          type: string
-          description: JWT token for authentication
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        user:
-          $ref: "#/components/schemas/User"
     FamilyMember:
       type: object
       properties:

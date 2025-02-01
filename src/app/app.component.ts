@@ -16,7 +16,6 @@ export class AppComponent {
     public readonly router: Router,
     private readonly authService: AuthService
     ) {
-    this.authService.setToken('mocktoken');
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {

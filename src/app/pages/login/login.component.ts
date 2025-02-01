@@ -1,11 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ToastController } from '@ionic/angular';
-import { Router } from '@angular/router';
+import {Component, OnInit} from '@angular/core';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {Router} from '@angular/router';
 import {AuthService} from "../../services/auth.service";
 import {RoutePaths} from "../../enums/route-paths";
 import {CommonService} from "../../services/common.service";
-import {LoginUserReq, UserService} from '../../openapi/generated-src';
+import {LoginUserReq, User, UserService} from '../../openapi/generated-src';
 
 @Component({
   selector: 'app-login',
@@ -23,7 +22,8 @@ export class LoginComponent implements OnInit {
     private userService: UserService,
     private authService: AuthService,
     private commonService: CommonService
-  ) {}
+  ) {
+  }
 
   ngOnInit() {
     this.loginForm = this.fb.group({
@@ -39,23 +39,7 @@ export class LoginComponent implements OnInit {
         email: this.loginForm.value.email,
         password: this.loginForm.value.password
       };
-      this.userService.loginUser(loginData).subscribe({
-        next: (resp) => {
-          console.log('Login successful');
-          void this.commonService.presentToast('Login successful!', 'success');
-          this.authService.setToken(resp.token!); // Store token
-          this.authService.setUsername(resp.user?.username!); // Store username
-          if (resp.user?.familyId) {
-            this.authService.setUserFamilyId(resp.user.familyId); // Store family id
-          }
-          this.authService.setUserId(resp.user?.userId!); // Store user id
-          void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful login
-        },
-        error: (resp) => {
-          console.error('Login failed:', resp.error.message);
-          void this.commonService.presentToast(resp.error.message, 'danger');
-        }
-      });
+      this.authService.login(loginData);
     } else {
       void this.commonService.presentToast('Please fill out the form correctly.', 'danger');
     }

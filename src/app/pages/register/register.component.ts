@@ -180,22 +180,7 @@ export class RegisterComponent implements OnInit {
         next: () => {
           console.log('Registration successful');
           void this.commonService.presentToast('Registration successful!', 'success');
-          this.userService.loginUser({email, password}).subscribe({
-            next: (resp) => {
-              console.log('Login successful');
-              this.authService.setToken(resp.token!); // Store token
-              this.authService.setUsername(resp.user?.username!); // Store username
-              if (resp.user?.familyId) {
-                this.authService.setUserFamilyId(resp.user.familyId); // Store family id
-              }
-              this.authService.setUserId(resp.user?.userId!); // Store user id
-              void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful registration
-            },
-            error: (resp) => {
-              console.error('Login failed:', resp.error.message);
-              void this.commonService.presentToast(resp.error.message, 'danger');
-            }
-          });
+          this.authService.login({email, password});
         },
         error: (resp) => {
           console.error('Registration failed:', resp);
