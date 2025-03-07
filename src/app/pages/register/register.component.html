@@ -1,13 +1,12 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Register</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="register-container">
+  <div class="logo-container">
+    <ion-icon name="snow-outline" class="app-logo"></ion-icon>
+    <h2>Fridge Manager</h2>
+    <p>Create your account to start managing your fridge!</p>
+  </div>
 
-<ion-content *ngIf="registerForm">
   <form [formGroup]="registerForm" (ngSubmit)="register()">
     <ion-list>
-      <ion-item-divider>Personal Information</ion-item-divider>
       <ion-item>
         <ion-input
           type="email"
@@ -16,6 +15,7 @@
           labelPlacement="stacked"
           formControlName="email"
           [errorText]="emailErrorText"
+          placeholder="Enter your email"
         ></ion-input>
         <ion-icon
           *ngIf="registerForm.get('email')?.dirty && registerForm.get('email')?.valid"
@@ -39,6 +39,7 @@
           labelPlacement="stacked"
           formControlName="username"
           [errorText]="usernameErrorText"
+          placeholder="Choose a username"
         ></ion-input>
         <ion-icon
           *ngIf="registerForm.get('username')?.dirty && registerForm.get('username')?.valid"
@@ -62,6 +63,7 @@
           labelPlacement="stacked"
           formControlName="password"
           [errorText]="passwordErrorText"
+          placeholder="Enter a password"
         ></ion-input>
         <ion-icon
           *ngIf="registerForm.get('password')?.dirty && registerForm.get('password')?.valid"
@@ -85,6 +87,7 @@
           labelPlacement="stacked"
           formControlName="confirmPassword"
           [errorText]="confirmPasswordErrorText"
+          placeholder="Confirm your password"
         ></ion-input>
         <ion-icon
           *ngIf="registerForm.get('confirmPassword')?.dirty && registerForm.get('confirmPassword')?.valid"
@@ -100,8 +103,7 @@
         </ion-icon>
       </ion-item>
 
-      <!-- Family kiválasztása -->
-      <ion-item-divider>Family</ion-item-divider>
+      <!-- Family Selection -->
       <ion-item>
         <ion-checkbox formControlName="isNewFamily">Create new family</ion-checkbox>
       </ion-item>
@@ -113,7 +115,9 @@
           formControlName="newFamilyName"
           label="New Family Name"
           labelPlacement="stacked"
-          [errorText]="familyErrorText"></ion-input>
+          [errorText]="familyErrorText"
+          placeholder="Enter family name"
+        ></ion-input>
         <ion-icon
           *ngIf="registerForm.get('newFamilyName')?.dirty && registerForm.get('newFamilyName')?.valid"
           name="checkmark-circle-outline"
@@ -127,8 +131,18 @@
           slot="end">
         </ion-icon>
       </ion-item>
-
     </ion-list>
-    <ion-button expand="full" type="submit">Register</ion-button>
+
+    <ion-button expand="block" type="submit" color="primary">Register</ion-button>
+
+    <div class="divider">
+      <span>or</span>
+    </div>
+
+    <ion-button expand="block" fill="outline" (click)="navigateToLogin()" color="medium">
+      <ion-icon name="log-in-outline" slot="start"></ion-icon>
+      Back to Login
+    </ion-button>
   </form>
 </ion-content>
+

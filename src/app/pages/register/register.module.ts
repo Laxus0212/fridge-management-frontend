@@ -1,5 +1,5 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {RegisterComponent} from "./register.component";
 import {IonicModule} from "@ionic/angular";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -12,9 +12,10 @@ import {provideHttpClient, withInterceptorsFromDi} from "@angular/common/http";
     CommonModule,
     IonicModule,
     FormsModule,
-    RouterModule.forChild([{ path: '', component: RegisterComponent }]),
+    RouterModule.forChild([{path: '', component: RegisterComponent}]),
     ReactiveFormsModule
   ],
   providers: [provideHttpClient(withInterceptorsFromDi())]
 })
-export class RegisterModule { }
+export class RegisterModule {
+}

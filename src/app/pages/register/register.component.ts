@@ -3,13 +3,13 @@ import {Router} from '@angular/router';
 import {FormGroup, NonNullableFormBuilder, Validators} from "@angular/forms";
 import {PasswordValidator} from "../../components/validators/password-validator";
 import {AuthService} from "../../services/auth.service";
-import {RoutePaths} from "../../enums/route-paths";
 import {CommonService} from "../../services/common.service";
 import {CreateFamilyReq, Family, FamilyService, User, UserService} from '../../openapi/generated-src';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
+  styleUrls: ['./register.component.scss']
 })
 export class RegisterComponent implements OnInit {
   registerForm!: FormGroup;
@@ -188,5 +188,9 @@ export class RegisterComponent implements OnInit {
         }
       },
     );
+  }
+
+  public navigateToLogin(): void {
+    void this.router.navigate(['/login']);
   }
 }
