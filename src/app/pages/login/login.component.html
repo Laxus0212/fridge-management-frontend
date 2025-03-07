@@ -1,4 +1,10 @@
-<ion-content>
+<ion-content class="login-container">
+  <div class="logo-container">
+    <ion-icon name="snow-outline" class="app-logo"></ion-icon>
+    <h2>Fridge Manager</h2>
+    <p>Keep track of what's fresh and what's missing!</p>
+  </div>
+
   <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
     <ion-list>
       <ion-item>
@@ -9,6 +15,7 @@
           labelPlacement="stacked"
           formControlName="email"
           [errorText]="emailErrorText"
+          placeholder="Enter your email"
         ></ion-input>
         <ion-icon
           *ngIf="loginForm.get('email')?.dirty && loginForm.get('email')?.valid"
@@ -32,6 +39,7 @@
           labelPlacement="stacked"
           formControlName="password"
           [errorText]="passwordErrorText"
+          placeholder="Enter your password"
         ></ion-input>
         <ion-icon
           *ngIf="loginForm.get('password')?.dirty && loginForm.get('password')?.valid"
@@ -47,6 +55,27 @@
         </ion-icon>
       </ion-item>
     </ion-list>
-    <ion-button expand="full" type="submit">Login</ion-button>
+
+    <ion-button expand="block" type="submit" color="primary">Login</ion-button>
+
+    <ion-button expand="block" fill="clear">
+      Forgot Password?
+    </ion-button>
+
+    <div class="divider">
+      <span>or</span>
+    </div>
+
+    <ion-button (click)="handleGoogleSignIn()" expand="block" fill="outline" color="tertiary">
+      <div id="google-login-button" style="display: none"></div>
+      <ion-icon name="logo-google" slot="start"></ion-icon>
+      Login with Google
+    </ion-button>
   </form>
+  <div class="signup-container">
+    <p>New to Fridge Manager?</p>
+    <ion-button expand="block" fill="outline" color="success" (click)="navigatetoRegistration()">
+      Sign Up
+    </ion-button>
+  </div>
 </ion-content>

@@ -78,22 +78,26 @@ export class AuthService {
       next: () => {
         console.log('Login successful');
         void this.commonService.presentToast('Login successful!', 'success');
-        this.userService.getLoggedInUser().subscribe({
-          next: (user) => {
-            this.storeUserData(user);
-          },
-          error: (error) => {
-            console.error('Login failed:', error.error.message);
-            void this.commonService.presentToast(error.error.message, 'danger');
-          },
-          complete: () => {
-            void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful login
-          }
-        });
+        this.storeLoggedInUserData();
       },
       error: (error) => {
         console.error('Login failed:', error.error.message);
         void this.commonService.presentToast(error.error.message, 'danger');
+      }
+    });
+  }
+
+  public storeLoggedInUserData() {
+    this.userService.getLoggedInUser().subscribe({
+      next: (user) => {
+        this.storeUserData(user);
+      },
+      error: (error) => {
+        console.error('Login failed:', error.error.message);
+        void this.commonService.presentToast(error.error.message, 'danger');
+      },
+      complete: () => {
+        void this.router.navigate([RoutePaths.Fridges]); // Redirect after successful login
       }
     });
   }
