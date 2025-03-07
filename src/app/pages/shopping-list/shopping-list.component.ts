@@ -42,7 +42,7 @@ export class ShoppingListComponent implements OnInit {
 
   constructor(
     private shoppingListService: ShoppingListService,
-    private authService: AuthService,
+    public authService: AuthService,
     private commonService: CommonService,
     private toastController: ToastController
   ) {
