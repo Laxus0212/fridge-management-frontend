@@ -6,8 +6,7 @@ import OpenAI from 'openai';
   providedIn: 'root'
 })
 export class CustomRecipeService {
-  private apiUrl = 'https://api.openai.com/v1/chat/completions'; // Replace with OpenAI API URL
-  //private apiKey = 'sk-KSsf9s2XauuTxmxi-riTcR_uR-BoazXPlWSDY6Lm13T3BlbkFJhFAX9fCVOvYPzB5fQuWF2qh_3MYB51vQ_lLGEqHJ8A'; // Replace with your OpenAI API key
+  private apiUrl = 'https://api.openai.com/v1/chat/completions';
   private apiKey = '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'; // Replace with your OpenAI API key
 
   openai = new OpenAI({
