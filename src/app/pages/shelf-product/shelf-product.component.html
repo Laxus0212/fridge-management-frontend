@@ -17,14 +17,13 @@
 
   <!-- List of shelf products -->
   <ion-list>
-    <ion-item *ngFor="let shelfProduct of shelfProducts">
+    <ion-item *ngFor="let product of products">
       <ion-label>
-        <h2>{{ shelfProduct.name }}</h2>
-        <p>Quantity: {{ shelfProduct.quantity }} {{ shelfProduct.unit }}</p>
-        <p>Status: {{ shelfProduct.status }}</p>
-        <p>Expiration Date: {{ shelfProduct.expiration_date }}</p>
+        <h2>{{ product.productName }}</h2>
+        <p>Quantity: {{ product.quantity }} {{ product.unit }}</p>
+        <p>Expiration Date: {{ product.expirationDate }}</p>
       </ion-label>
-      <ion-button slot="end" color="danger" (click)="deleteShelfProduct(shelfProduct.id!)">Delete</ion-button>
+      <ion-button slot="end" color="danger" (click)="deleteShelfProduct(product.productId!)">Delete</ion-button>
     </ion-item>
   </ion-list>
 
@@ -94,18 +93,7 @@
           </ion-popover>
         </ion-item>
 
-        <ion-item>
-          <ion-select
-            [(ngModel)]="newProductStatus"
-            fill="solid"
-            labelPlacement="stacked"
-            label="Status"
-          >
-            <ion-select-option *ngFor="let status of ['opened', 'unopened']">{{ status }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <ion-button expand="block" [disabled]="!newProductName || !newProductQuantity || !newProductUnit || !newProductExpirationDate || !newProductStatus" (click)="addProductToShelf()">Add Product</ion-button>
+        <ion-button expand="block" [disabled]="!newProductName || !newProductQuantity || !newProductUnit || !newProductExpirationDate" (click)="addProductToShelf()">Add Product</ion-button>
       </ion-content>
     </ng-template>
   </ion-modal>

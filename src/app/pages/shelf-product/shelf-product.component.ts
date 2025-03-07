@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../services/common.service';
-import { ShelfProduct, ShelfProductService } from "../../openapi/generated-angular-sdk";
+import {Product, ProductService} from '../../openapi/generated-src';
 
 @Component({
   selector: 'app-shelf-product',
@@ -8,17 +8,31 @@ import { ShelfProduct, ShelfProductService } from "../../openapi/generated-angul
   styleUrls: ['./shelf-product.component.scss']
 })
 export class ShelfProductComponent implements OnInit {
-  shelfProducts: ShelfProduct[] = [];
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  //NEM HASZNÁLT KOMPONENS
+  products: Product[] = []; // ShelfProduct helyett Product típusú tömb
   newProductName: string = '';
   newProductQuantity: number | null = null;
-  newProductUnit: ShelfProduct.UnitEnum | null = null;
+  newProductUnit: Product.UnitEnum | null = null; // Product.UnitEnum használata
   newProductExpirationDate: string = new Date().toISOString();
-  newProductStatus: ShelfProduct.StatusEnum = 'unopened';
   shelfId: number | undefined;
   isAddModalOpen: boolean = false;
 
   constructor(
-    private shelfProductService: ShelfProductService,
+    private productService: ProductService, // ShelfProductService helyett ProductService
     protected commonService: CommonService
   ) {}
 
@@ -29,9 +43,9 @@ export class ShelfProductComponent implements OnInit {
 
   // Load all shelf products for the selected shelf
   loadShelfProducts() {
-    this.shelfProductService.getShelfProducts().subscribe({
-      next: (shelfProducts: ShelfProduct[]) => {
-        this.shelfProducts = shelfProducts.filter(sp => sp.shelf_id === this.shelfId);
+    this.productService.getProductsByShelfId(this.shelfId!).subscribe({
+      next: (products: Product[]) => {
+        this.products = products;
       },
       error: (error) => {
         console.error('Failed to load shelf products:', error);
@@ -53,20 +67,19 @@ export class ShelfProductComponent implements OnInit {
 
   // Add a new product to the shelf
   addProductToShelf() {
-    if (!this.newProductName || !this.newProductQuantity || !this.newProductUnit || !this.newProductExpirationDate || !this.newProductStatus || !this.shelfId) {
+    if (!this.newProductName || !this.newProductQuantity || !this.newProductUnit || !this.newProductExpirationDate || !this.shelfId) {
       return;
     }
 
-    const newShelfProduct: ShelfProduct = {
-      name: this.newProductName,
-      shelf_id: this.shelfId,
+    const newProduct: Product = {
+      productName: this.newProductName,
+      shelfId: this.shelfId,
       quantity: this.newProductQuantity,
       unit: this.newProductUnit,
-      expiration_date: this.newProductExpirationDate,
-      status: this.newProductStatus
+      expirationDate: this.newProductExpirationDate,
     };
 
-    this.shelfProductService.createShelfProduct(newShelfProduct).subscribe({
+    this.productService.addProduct(newProduct).subscribe({
       next: () => {
         this.loadShelfProducts();
         this.closeAddProductModal();
@@ -85,12 +98,11 @@ export class ShelfProductComponent implements OnInit {
     this.newProductQuantity = null;
     this.newProductUnit = null;
     this.newProductExpirationDate = new Date().toISOString();
-    this.newProductStatus = 'unopened';
   }
 
   // Delete a product from the shelf
-  deleteShelfProduct(shelfProductId: number) {
-    this.shelfProductService.deleteShelfProductById(shelfProductId).subscribe({
+  deleteShelfProduct(productId: number) {
+    this.productService.deleteProduct(productId).subscribe({
       next: () => {
         this.loadShelfProducts();
         void this.commonService.presentToast('Product removed from shelf successfully!', 'success');
