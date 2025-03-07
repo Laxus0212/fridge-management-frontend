@@ -7,9 +7,8 @@ import {ShelfRoutingModule} from "../shelf/shelf-routing.module";
 const routes: Routes = [
   { path: '',
     component: FridgeComponent,
-    canActivate: [AuthGuard],
   },
-  { path: 'shelf', loadChildren: () => import('../shelf/shelf.module').then(m => m.ShelfModule), canActivate: [AuthGuard] },
+  { path: 'shelf', loadChildren: () => import('../shelf/shelf.module').then(m => m.ShelfModule) },
 ];
 
 @NgModule({

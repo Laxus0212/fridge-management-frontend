@@ -15,7 +15,7 @@ export class AuthGuard implements CanActivate {
       return true;
     } else {
       console.log('Auth guard reject');
-      void this.router.navigate([RoutePaths.Home]); // Redirect to home page
+      void this.router.navigate([RoutePaths.Error]); // Redirect to home page
       return false;
     }
   }

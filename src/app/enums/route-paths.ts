@@ -14,4 +14,5 @@ export enum RoutePaths {
   ShelfProduct = 'shelf-product',
   Account = 'account',
   Family = 'family',
+  Error = 'error',
 }

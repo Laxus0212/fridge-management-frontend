@@ -7,9 +7,8 @@ import {ShelfProductComponent} from "../shelf-product/shelf-product.component";
 const routes: Routes = [
   { path: '',
     component: ShelfComponent,
-    canActivate: [AuthGuard],
   },
-  { path: 'shelf-product', loadChildren: () => import('../shelf-product/shelf-product.module').then(m => m.ShelfProductModule), canActivate: [AuthGuard] },
+  { path: 'shelf-product', loadChildren: () => import('../shelf-product/shelf-product.module').then(m => m.ShelfProductModule) },
 ];
 
 @NgModule({
