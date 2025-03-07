@@ -30,7 +30,7 @@ export class FridgeComponent implements OnInit {
   constructor(
     protected fridgeService: FridgeService,
     private userService: UserService,
-    private authService: AuthService,
+    public authService: AuthService,
     private commonService: CommonService,
     private router: Router,
     private route: ActivatedRoute
