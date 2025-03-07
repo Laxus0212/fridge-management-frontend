@@ -22,6 +22,12 @@ paths:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1{userId}'
   /users/email/{email}:
     $ref: './swagger/services/user-service.yaml#/paths/~1users~1email~1{email}'
+  /users/google/google:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1google~1google'
+  /users/google/login:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1google~1login'
+  /users/google/callback:
+    $ref: './swagger/services/user-service.yaml#/paths/~1users~1google~1callback'
 
   /fridges:
     $ref: './swagger/services/fridge-service.yaml#/paths/~1fridges'

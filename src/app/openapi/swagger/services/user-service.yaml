@@ -91,7 +91,7 @@ paths:
         '500':
           description: "Server error"
       security:
-        - cookieAuth: []
+        - cookieAuth: [ ]
 
   /users/user:
     get:
@@ -118,7 +118,7 @@ paths:
         '500':
           description: Server error
       security:
-        - cookieAuth: []
+        - cookieAuth: [ ]
 
   /users/logout:
     post:
@@ -259,6 +259,87 @@ paths:
                     familyId: 1
         '404':
           description: User not found
+
+  /users/google/google:
+    get:
+      tags:
+        - User
+      summary: "Google OAuth bejelentkezés"
+      operationId: usersGoogleGet
+      description: "Átirányítás a Google bejelentkezési oldalára."
+      responses:
+        "302":
+          description: "Átirányítás a Google OAuth oldalára."
+      security:
+        - cookieAuth: [ ]
+  /users/google/login:
+    post:
+      tags:
+        - User
+      summary: "Google OAuth bejelentkezés"
+      operationId: usersGooglePost
+      description: "Fogadja a Google-tól érkező JWT tokent és hitelesíti a felhasználót."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credential:
+                  type: string
+                  description: "Google JWT token"
+      responses:
+        "200":
+          description: "Sikeres hitelesítés és JWT visszaküldése."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: "Sikeres hitelesítés"
+        "401":
+          description: "Hibás JWT token"
+        "500":
+          description: "Szerver hiba"
+
+  /users/google/callback:
+    get:
+      tags:
+        - User
+      summary: "Google OAuth visszatérési végpont"
+      operationId: loginWithGoogle
+      description: "Fogadja a Google-tól érkező JWT tokent és hitelesíti a felhasználót."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Google JWT token"
+      responses:
+        "200":
+          description: "Sikeres hitelesítés és JWT visszaküldése."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: "JWT token"
+        "400":
+          description: "Hibás JWT token"
+        "500":
+          description: "Szerver hiba"
+      security:
+        - cookieAuth: [ ]
+
 components:
   securitySchemes:
     cookieAuth:
