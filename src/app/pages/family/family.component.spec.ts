@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 
-import { AccountComponent } from './family.component';
+import { FamilyComponent } from './family.component';
 
-describe('AccountComponent', () => {
-  let component: AccountComponent;
-  let fixture: ComponentFixture<AccountComponent>;
+describe('FamilyComponent', () => {
+  let component: FamilyComponent;
+  let fixture: ComponentFixture<FamilyComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ AccountComponent ],
+      declarations: [ FamilyComponent ],
       imports: [IonicModule.forRoot()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(AccountComponent);
+    fixture = TestBed.createComponent(FamilyComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }));
