@@ -42,3 +42,5 @@ testem.log
 Thumbs.db
 /android/
 /docker-server/node-server/
+/www/
+/src/app/openapi/generated-src/
