@@ -6,8 +6,6 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
 
-
-
 @NgModule({
   declarations: [ChatComponent],
   imports: [
