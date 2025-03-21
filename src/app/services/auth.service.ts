@@ -3,6 +3,8 @@ import {Router} from '@angular/router';
 import {RoutePaths} from "../enums/route-paths";
 import {CommonService} from './common.service';
 import {LoginUserReq, User, UserService} from '../openapi/generated-src';
+import {CacheService} from './cache.service';
+import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +14,19 @@ export class AuthService {
   private userFamilyId = 'user_familyId'; // Store family id in localStorage
   private userId = 'userId'; // Store user id in localStorage
 
-  constructor(private router: Router, private commonService: CommonService, private userService: UserService) {
+  // Reaktív tárolók, hogy azonnal frissüljenek a komponensek
+  private userIdSubject = new BehaviorSubject<number | null>(this.getUserId());
+  private userFamilyIdSubject = new BehaviorSubject<number | null>(this.getUserFamilyId());
+
+  userId$ = this.userIdSubject.asObservable();
+  userFamilyId$ = this.userFamilyIdSubject.asObservable();
+
+  constructor(
+    private router: Router,
+    private commonService: CommonService,
+    private userService: UserService,
+    private cacheService: CacheService
+  ) {
   }
 
   setUsername(username: string) {
@@ -29,10 +43,12 @@ export class AuthService {
 
   setUserFamilyId(familyId: number) {
     localStorage.setItem(this.userFamilyId, familyId.toString()); // Store familyId
+    this.userFamilyIdSubject.next(familyId);
   }
 
   clearUserFamilyId() {
     localStorage.removeItem(this.userFamilyId);
+    this.userFamilyIdSubject.next(null);
   }
 
   getUserFamilyId(): number | null {
@@ -41,11 +57,13 @@ export class AuthService {
   }
 
   setUserId(userId: number) {
-    localStorage.setItem(this.userId, userId.toString()); // Store familyId
+    localStorage.setItem(this.userId, userId.toString());
+    this.userIdSubject.next(userId);
   }
 
   clearUserId() {
     localStorage.removeItem(this.userId);
+    this.userIdSubject.next(null);
   }
 
   getUserId(): number | null {
@@ -62,8 +80,11 @@ export class AuthService {
       next: () => {
         console.log('Logout successful');
         void this.commonService.presentToast('Logout successful!', 'success');
+        this.cacheService.clearCache(); // Clear cache
         localStorage.clear(); // Clear all stored data
         this.commonService.clearUserData();
+        this.userIdSubject.next(null);
+        this.userFamilyIdSubject.next(null);
         void this.router.navigate([RoutePaths.Home]); // Redirect to home page
       },
       error: (error) => {
@@ -78,6 +99,8 @@ export class AuthService {
       next: () => {
         console.log('Login successful');
         void this.commonService.presentToast('Login successful!', 'success');
+        this.userIdSubject.next(null);
+        this.userFamilyIdSubject.next(null);
         this.storeLoggedInUserData();
       },
       error: (error) => {
@@ -91,6 +114,7 @@ export class AuthService {
     this.userService.getLoggedInUser().subscribe({
       next: (user) => {
         this.storeUserData(user);
+        this.cacheService.syncFridges(this.getUserId(), this.getUserFamilyId());
       },
       error: (error) => {
         console.error('Login failed:', error.error.message);
@@ -106,6 +130,7 @@ export class AuthService {
     this.setUsername(user.username!); // Store username
     if (user.familyId) {
       this.setUserFamilyId(user.familyId); // Store family id
+      this.cacheService.getChat(user.familyId);
     }
     this.setUserId(user.userId!); // Store user id
   }
