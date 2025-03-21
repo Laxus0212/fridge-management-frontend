@@ -360,3 +360,24 @@ paths:
           description: Invalid request (e.g., user not in the family)
         '404':
           description: Family not found
+  /families/{familyId}/chat:
+    get:
+      tags:
+        - Family
+      summary: Get family chat
+      operationId: getChatByFamilyId
+      parameters:
+        - in: path
+          name: familyId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                $ref: "../interfaces/chat.yaml"
+        '404':
+          description: Family not found

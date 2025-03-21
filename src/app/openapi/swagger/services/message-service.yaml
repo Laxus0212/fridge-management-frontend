@@ -24,10 +24,12 @@ paths:
                     messageId: asldnfln234234asdnkls23
                     chatId: 1
                     senderId: 1
+                    username: "JohnDoe"
                     message: "Hello, family!"
+                    familyId: 2
                     sentAt: "2023-11-01T10:00:00Z"
 
-  /chats/{chatId}/messages:
+  /messages/chats/{chatId}/messages:
     get:
       tags:
         - Message
@@ -54,12 +56,16 @@ paths:
                     - messageId: alskfnlak2314j14jkafs2
                       chatId: 1
                       senderId: 1
+                      username: "JohnDoe"
                       message: "Hello, family!"
+                      familyId: 2
                       sentAt: "2023-11-01T10:00:00Z"
                     - messageId: 2
                       chatId: 1
                       senderId: 2
+                      username: "JaneDoe"
                       message: "Hi there!"
+                      familyId: 2
                       sentAt: "2023-11-01T10:05:00Z"
 
   /messages/{messageId}:
@@ -87,7 +93,9 @@ paths:
                     messageId: akjsdfhg234z98234sd
                     chatId: 1
                     senderId: 1
+                    username: "JohnDoe"
                     message: "Hello, family!"
+                    familyId: 2
                     sentAt: "2023-11-01T10:00:00Z"
 
     put:
@@ -120,7 +128,9 @@ paths:
                     messageId: agdsjf2u34z234
                     chatId: 1
                     senderId: 1
+                    username: "JohnDoe"
                     message: "Updated message"
+                    familyId: 2
                     sentAt: "2023-11-01T10:00:00Z"
 
     delete:

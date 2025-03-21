@@ -1,15 +1,17 @@
 export class WebsocketChat {
-  userId: number;
+  messageId: string;
+  senderId: number;
   chatId: number;
   username: string;
   message: string;
-  familyId: number; // Új mező
+  familyId: number;
 
-  constructor(userId: number, chatId: number, username: string, message: string, familyId: number) {
-    this.userId = userId;
+  constructor(messageId: string, senderId: number, chatId: number, username: string, message: string, familyId: number) {
+    this.messageId = messageId;
+    this.senderId = senderId;
     this.chatId = chatId;
     this.username = username;
     this.message = message;
-    this.familyId = familyId; // Új mező
+    this.familyId = familyId;
   }
 }

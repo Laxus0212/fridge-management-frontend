@@ -9,9 +9,13 @@ components:
           type: integer
         senderId:
           type: integer
+        username:
+          type: string
         message:
           type: string
+        familyId:
+          type: integer
         sentAt:
           type: string
           format: date-time
-      required: [chatId, message]
+      required: [chatId, senderId, username, message, familyId, sentAt]

@@ -11,4 +11,4 @@ components:
             type: array
             items:
               $ref: '../interfaces/message.yaml#/components/schemas/Message'
-      required: [chatId, familyId]
+      required: [chatId, familyId, messages]

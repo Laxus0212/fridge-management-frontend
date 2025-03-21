@@ -7,14 +7,16 @@ import {ActionSheetController} from '@ionic/angular';
 import {MessageWebsocketService} from '../../services/message.websocket.service';
 import {WebsocketChat} from '../../models/websocket-chat';
 import {v4 as uuidv4} from 'uuid';
+import {AbstractPage} from '../abstract-page';
+import {CacheService} from '../../services/cache.service';
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
 })
-export class ChatComponent implements OnInit, OnDestroy {
-  chatId: number;
+export class ChatComponent extends AbstractPage implements OnInit, OnDestroy {
+  chatId = null;
   chatTitle = 'Family Chat';
   prevWebsocketMessages: Message[] = [];
   websocketMessages: Message[] = [];
@@ -22,37 +24,33 @@ export class ChatComponent implements OnInit, OnDestroy {
   isLoading = true;
   editingMessageId: string | null = null;
   messageParticipants: User[] = [];
-  userId?: number;
-  familyId?: number;
 
   constructor(
+    commonService: CommonService,
+    authService: AuthService,
+    cacheService: CacheService,
     private route: ActivatedRoute,
     private messageService: MessageService,
-    private commonService: CommonService,
-    private authService: AuthService,
     private actionSheetController: ActionSheetController,
     private userService: UserService,
     public websocketService: MessageWebsocketService,
   ) {
-    this.chatId = parseInt(this.route.snapshot.paramMap.get('chatId') || '1', 10);
+    super(authService, cacheService, commonService);
+    if (this.familyId) {
+      this.chatId = cacheService.getChat(this.familyId).chatId;
+    }
   }
 
-  ngOnInit() {
-    const uId = this.authService.getUserId();
-    this.userId = uId ? uId : undefined;
-    const fId = this.authService.getUserFamilyId();
-    this.familyId = fId ? fId : undefined;
+  override ngOnInit() {
+    super.ngOnInit();
+    this.userId = this.authService.getUserId();
+    this.familyId = this.authService.getUserFamilyId();
+
     if (this.userId) {
-      // Websocket connection open
-      this.websocketService.openWebsocketConnection(this.userId);
+      this.websocketService.openWebsocketConnection(this.familyId!);
 
-      this.loadMessages();
-
-      // Websocket message subscription
       this.websocketService.websocketMessages$.subscribe((messages: WebsocketChat[]) => {
         this.websocketMessages = messages.map((msg) => this.convertWebsocketChatToMessage(msg));
-
-        console.log('Websocket messages:', this.websocketMessages);
       });
     }
   }
@@ -76,17 +74,18 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     if (this.userId && this.familyId) {
       const websocketMessage: WebsocketChat = {
-        userId: this.userId,
+        messageId: uuidv4(),
+        senderId: this.userId,
         chatId: this.chatId,
         username: this.authService.getUsername(),
         message: this.newMessageText,
         familyId: this.familyId,
       };
-    // Send the message through the websocket
-    this.websocketService.sendWebsocketMessage(websocketMessage);
+      // Send the message through the websocket
+      this.websocketService.sendWebsocketMessage(websocketMessage);
 
-    // Delete the message from the input field
-    this.newMessageText = '';
+      // Delete the message from the input field
+      this.newMessageText = '';
     }
   }
 
@@ -95,9 +94,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     return {
       messageId: uuidv4(),
       chatId: websocketChat.chatId,
-      senderId: websocketChat.userId,
+      senderId: websocketChat.senderId,
+      username: websocketChat.username,
       message: websocketChat.message,
-      sentAt: new Date().toISOString(), // Current time
+      sentAt: new Date().toISOString(),
+      familyId: websocketChat.familyId
     };
   }
 
