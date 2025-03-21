@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import {AuthGuard} from "./guards/auth.guard";
+import {MenuTabsModule} from './components/menu-tabs/menu-tabs.module';
 
 const routes: Routes = [
   { path: '', loadChildren: () => import('./components/menu-tabs/menu-tabs.module').then(m => m.MenuTabsModule) },
@@ -15,7 +16,7 @@ const routes: Routes = [
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })
+    RouterModule.forRoot(routes, { onSameUrlNavigation: 'reload' })
   ],
   exports: [RouterModule]
 })
