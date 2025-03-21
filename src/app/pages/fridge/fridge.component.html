@@ -18,7 +18,7 @@
             <ion-segment-button value="owned">
               <ion-label>Owned</ion-label>
             </ion-segment-button>
-            <ion-segment-button value="family" *ngIf="authService.isLoggedIn()">
+            <ion-segment-button value="family" *ngIf="authService.isLoggedIn() && this.familyId">
               <ion-label>Family-Shared</ion-label>
             </ion-segment-button>
           </ion-segment>
@@ -69,7 +69,7 @@
           <ion-label position="floating">Fridge Name</ion-label>
           <ion-input [(ngModel)]="newFridgeName"></ion-input>
         </ion-item>
-        <ion-item *ngIf="authService.isLoggedIn()">
+        <ion-item *ngIf="authService.isLoggedIn() && this.familyId">
           <ion-label>Share with Family</ion-label>
           <ion-toggle [(ngModel)]="newFridgeSharedWithFamily"></ion-toggle>
         </ion-item>
@@ -95,7 +95,7 @@
           <ion-label position="floating">Fridge Name</ion-label>
           <ion-input [(ngModel)]="selectedFridgeName"></ion-input>
         </ion-item>
-        <ion-item *ngIf="authService.isLoggedIn()">
+        <ion-item *ngIf="authService.isLoggedIn() && this.familyId">
           <ion-label>Share with Family</ion-label>
           <ion-toggle [(ngModel)]="selectedFridgeSharedWithFamily"></ion-toggle>
         </ion-item>
