@@ -1,46 +1,38 @@
 import {Component, OnInit} from '@angular/core';
 import {ToastController} from '@ionic/angular';
-import {
-  Family,
-  FamilyMember,
-  FamilyService,
-  Invitation,
-  UpdateInvitationReq,
-  UpdateUserReq,
-  UserService
-} from '../../openapi/generated-src';
+import {Family, FamilyMember, Invitation, UpdateUserReq,} from '../../openapi/generated-src';
 import {AuthService} from '../../services/auth.service';
+import {CacheService} from '../../services/cache.service';
+import {CommonService} from '../../services/common.service';
+import {AbstractPage} from '../abstract-page';
 
 @Component({
   selector: 'app-family',
   templateUrl: './family.component.html',
   styleUrls: ['./family.component.scss'],
 })
-export class FamilyComponent implements OnInit {
-  family: any = null; // A felhasználó családja
-  familyMembers: FamilyMember[] = []; // Családtagok listája
-  inviteEmail: string = ''; // Meghívandó email
-  pendingInvite: Invitation | null = null; // Függőben lévő meghívó
+export class FamilyComponent extends AbstractPage implements OnInit {
+  family: Family | null = null;
+  familyMembers: FamilyMember[] = [];
+  inviteEmail: string = '';
+  pendingInvite: Invitation | null = null;
   inviteEmailErrorText: string = '';
-  userId?: number;
-  familyId?: number;
 
   constructor(
-    private familyService: FamilyService,
-    private authService: AuthService,
-    private userService: UserService,
+    authService: AuthService,
+    cacheService: CacheService,
     private toastController: ToastController,
+    commonService: CommonService
   ) {
+    super(authService, cacheService, commonService);
   }
 
-  ngOnInit() {
-    const uId = this.authService.getUserId();
-    this.userId = uId ? uId : undefined;
-    const fId = this.authService.getUserFamilyId();
-    this.familyId = fId ? fId : undefined;
+  override ngOnInit() {
+    super.ngOnInit();
     this.loadFamilyData();
     this.checkPendingInvites();
   }
+
 
   validateEmail(email: string): boolean {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -52,155 +44,116 @@ export class FamilyComponent implements OnInit {
     return true;
   }
 
-  async loadFamilyData() {
+  loadFamilyData() {
     if (this.familyId) {
-      this.familyService.getFamilyById(this.familyId).subscribe({
-        next: (family: Family) => {
+      this.cacheService.getFamilyData().subscribe(family => {
+        if (family) {
           this.family = family;
-          this.loadFamilyMembers();
-        },
-        error: (error) => {
-          this.showToast('Failed to load family data.', 'danger');
-        },
+          this.loadFamilyMembers(); // Ha van család azonnal betöltjük a tagokat is
+        } else {
+          this.cacheService.loadFamilyData(this.familyId); // Ha nincs adat a cache-ben, akkor lekérjük
+        }
       });
-    } else {
-      this.showToast('Failed to load family data.', 'danger');
     }
   }
 
-  async loadFamilyMembers() {
+  loadFamilyMembers() {
     if (this.familyId) {
-      this.familyService.getFamilyMembers(this.familyId).subscribe({
-        next: (members: FamilyMember[]) => {
+      this.cacheService.getFamilyMembers().subscribe(members => {
+        if (members.length > 0) {
           this.familyMembers = members;
-        },
-        error: (error) => {
-          this.showToast('Failed to load family members.', 'danger');
-        },
+        } else {
+          this.cacheService.loadFamilyMembers(this.familyId); // Ha nincs adat a cache-ben, akkor lekérjük
+        }
       });
-    } else {
-      this.showToast('Failed to load family members.', 'danger');
     }
   }
 
-  async checkPendingInvites() {
+  checkPendingInvites() {
     if (this.userId) {
-      this.familyService.getPendingInvites(this.userId).subscribe({
-        next: (invites: Invitation[]) => {
-          this.pendingInvite = invites[0]; // Csak az első meghívót jelenítjük meg
-        },
-        error: (error) => {
-          this.showToast('Failed to load pending invites.', 'danger');
-        },
+      this.cacheService.getPendingInvites(this.userId).subscribe(invites => {
+        this.pendingInvite = invites.length > 0 ? invites[0] : null;
       });
     }
   }
 
-  async createFamily() {
+  createFamily() {
     const familyName = prompt('Enter family name:');
     if (familyName) {
-      this.familyService.createFamily({familyName: familyName}).subscribe({
+      this.cacheService.createFamily(familyName, this.userId).subscribe({
         next: (family: Family) => {
           if (this.userId) {
             const updatedUser: UpdateUserReq = {
               userId: this.userId,
               familyId: family.familyId,
             };
-            this.userService.updateUserById(this.userId, updatedUser).subscribe();
-            this.family = family;
-            this.authService.setUserFamilyId(family.familyId);
-            this.showToast('Family created successfully!', 'success');
-          } else {
-            this.showToast('Failed to create family.', 'danger');
+            this.cacheService.updateUserFamily(this.userId, updatedUser).subscribe(
+              {
+                next: () => {
+                  this.authService.setUserFamilyId(family.familyId);
+                  this.familyId = family.familyId;
+                  this.loadFamilyData();
+                  this.commonService.presentToast('Family created successfully!', 'success');
+                },
+                error: (err) => this.commonService.presentToast(err.message, 'danger')
+              }
+            );
           }
         },
-        error: (error) => {
-          this.showToast('Failed to create family.', 'danger');
-        },
+        error: () => this.commonService.presentToast('Failed to create family.', 'danger'),
       });
     }
   }
 
-  async inviteToFamily() {
-    if (this.inviteEmail) {
-      // Email cím validálása
-      if (!this.validateEmail(this.inviteEmail)) {
-        return;
-      }
-      // Meghívó küldése
-      this.familyService.inviteUserToFamily(this.family.familyId, {
-        email: this.inviteEmail
-      }).subscribe({
+  inviteToFamily() {
+    if (this.inviteEmail && this.validateEmail(this.inviteEmail)) {
+      this.cacheService.inviteUserToFamily(this.familyId!, this.inviteEmail).subscribe({
         next: () => {
-          this.showToast('Invitation sent successfully!', 'success');
-          this.inviteEmail = ''; // Mező ürítése
+          this.commonService.presentToast('Invitation sent successfully!', 'success');
+          this.inviteEmail = '';
         },
-        error: (error) => {
-          this.showToast('Failed to send invitation.', 'danger');
-        },
+        error: () => this.commonService.presentToast('Failed to send invitation.', 'danger'),
       });
     }
   }
 
-  async acceptInvite() {
+  acceptInvite() {
     if (this.pendingInvite) {
-      const updateInvitationReq: UpdateInvitationReq = {status: 'accepted'};
-
-      this.familyService.acceptInvite(this.pendingInvite.invitationId, updateInvitationReq).subscribe({
+      this.cacheService.acceptInvite(this.pendingInvite.invitationId).subscribe({
         next: () => {
-          this.authService.setUserFamilyId(this.pendingInvite!.familyId);
-          this.familyId = this.pendingInvite?.familyId;
-
-          this.showToast('Invitation accepted!', 'success');
-          this.pendingInvite = null; // Függőben lévő meghívó törlése
-          this.loadFamilyData(); // Családi adatok frissítése
+          this.familyId = this.pendingInvite?.familyId!;
+          this.authService.setUserFamilyId(this.familyId);
+          this.commonService.presentToast('Invitation accepted!', 'success');
+          this.pendingInvite = null;
+          this.loadFamilyData();
         },
-        error: (error) => {
-          this.showToast('Failed to accept invitation.', 'danger');
-        },
+        error: () => this.commonService.presentToast('Failed to accept invitation.', 'danger'),
       });
     }
   }
 
-  async declineInvite() {
+  declineInvite() {
     if (this.pendingInvite) {
-      const updateInvitationReq: UpdateInvitationReq = {status: 'declined'};
-
-      this.familyService.declineInvite(this.pendingInvite.invitationId, updateInvitationReq).subscribe({
+      this.cacheService.declineInvite(this.pendingInvite.invitationId).subscribe({
         next: () => {
-          this.showToast('Invitation declined.', 'warning');
-          this.pendingInvite = null; // Függőben lévő meghívó törlése
+          this.commonService.presentToast('Invitation declined.', 'warning');
+          this.pendingInvite = null;
         },
-        error: (error) => {
-          this.showToast('Failed to decline invitation.', 'danger');
-        },
+        error: () => this.commonService.presentToast('Failed to decline invitation.', 'danger'),
       });
     }
   }
 
-  async leaveFamily() {
-    const isConfirmed = confirm('Are you sure you want to leave the family?');
-    if (isConfirmed && this.userId && this.familyId) {
-      this.familyService.leaveFamily(this.familyId, { userId: this.userId }).subscribe({
+  leaveFamily() {
+    if (confirm('Are you sure you want to leave the family?') && this.userId && this.familyId) {
+      this.cacheService.leaveFamily(this.familyId, this.userId).subscribe({
         next: () => {
           this.family = null;
-          this.authService.setUserFamilyId(-1); // -1 vagy null, attól függően, hogy hogyan kezeled a localStorage-ban
-          this.showToast('You have left the family.', 'warning');
+          this.authService.clearUserFamilyId();
+          this.commonService.presentToast('You have left the family.', 'warning');
         },
-        error: (error) => {
-          this.showToast('Failed to leave family.', 'danger');
-        },
+        error: () => this.commonService.presentToast('Failed to leave family.', 'danger'),
       });
     }
-  }
-
-  async showToast(message: string, color: string) {
-    const toast = await this.toastController.create({
-      message: message,
-      duration: 3000,
-      color: color,
-      position: 'top',
-    });
-    await toast.present();
   }
 }
