@@ -2,19 +2,18 @@ import {Component, OnInit} from '@angular/core';
 import {Product, ShoppingList, ShoppingListItem, ShoppingListService} from '../../openapi/generated-src';
 import {AuthService} from '../../services/auth.service';
 import {CommonService} from '../../services/common.service';
-import {ToastController} from '@ionic/angular';
 import UnitEnum = Product.UnitEnum;
+import {AbstractPage} from '../abstract-page';
+import {CacheService} from '../../services/cache.service';
 
 @Component({
   selector: 'app-shopping-list',
   templateUrl: './shopping-list.component.html',
   styleUrls: ['./shopping-list.component.scss'],
 })
-export class ShoppingListComponent implements OnInit {
+export class ShoppingListComponent extends AbstractPage implements OnInit {
   shoppingLists: ShoppingList[] = [];
   filteredShoppingLists: ShoppingList[] = [];
-  userId?: number;
-  userFamilyId?: number;
   newShoppingListName: string = '';
   newShoppingListSharedWithFamily: boolean = false;
   isModalOpen: boolean = false;
@@ -41,49 +40,30 @@ export class ShoppingListComponent implements OnInit {
   public isEditProductModalOpen: boolean = false;
 
   constructor(
+    authService: AuthService,
+    cacheService: CacheService,
+    commonService: CommonService,
     private shoppingListService: ShoppingListService,
-    public authService: AuthService,
-    private commonService: CommonService,
-    private toastController: ToastController
   ) {
+    super(authService, cacheService, commonService);
   }
 
-  ngOnInit() {
-    const uId = this.authService.getUserId();
-    this.userId = uId ? uId : undefined;
-    const fId = this.authService.getUserFamilyId();
-    this.userFamilyId = fId ? fId : undefined;
-    this.loadShoppingLists();
-  }
-
-  async presentToast(message: string, color: string) {
-    const toast = await this.toastController.create({
-      message: message,
-      duration: 3000,
-      color: color,
-      position: 'top',
+  override ngOnInit() {
+    super.ngOnInit();
+    this.authService.userId$.subscribe(userId => {
+      this.userId = userId;
+      this.loadShoppingLists();
     });
-    await toast.present();
+
+    this.cacheService.isLoading$.subscribe(isLoading => this.isLoading = isLoading);
   }
 
   loadShoppingLists() {
-    if (this.userId) {
-      this.isLoading = true;
-      this.shoppingListService.getShoppingListsByUserId(this.userId).subscribe({
-        next: (lists: ShoppingList[]) => {
-          this.shoppingLists = lists;
-          this.applyFilter();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Failed to load shopping lists:', error);
-          this.isLoading = false;
-          void this.presentToast('Failed to load shopping lists', 'danger');
-        },
-      });
-    }else {
-      void this.commonService.presentToast('Failed to load user', 'danger');
-    }
+    this.cacheService.loadShoppingLists(this.userId);
+    this.cacheService.getShoppingLists().subscribe(lists => {
+      this.shoppingLists = lists;
+      this.applyFilter();
+    });
   }
 
   applyFilter() {
@@ -109,21 +89,12 @@ export class ShoppingListComponent implements OnInit {
 
     const newList: ShoppingList = {
       name: this.newShoppingListName,
-      ownerId: this.userId,
-      familyId: this.newShoppingListSharedWithFamily ? this.userFamilyId : undefined,
+      ownerId: this.userId ?? undefined,
+      familyId: this.newShoppingListSharedWithFamily ? this.familyId! : undefined,
     };
 
-    this.shoppingListService.createShoppingList(newList).subscribe({
-      next: () => {
-        this.loadShoppingLists();
-        this.closeAddShoppingListModal();
-        void this.presentToast('Shopping list added successfully', 'success');
-      },
-      error: (error) => {
-        console.error('Failed to add shopping list:', error);
-        void this.presentToast('Failed to add shopping list', 'danger');
-      },
-    });
+    this.cacheService.addShoppingList(newList, this.userId);
+    this.closeAddShoppingListModal();
   }
 
   openEditShoppingListModal(shoppingList: ShoppingList) {
@@ -146,33 +117,15 @@ export class ShoppingListComponent implements OnInit {
     const updatedList: ShoppingList = {
       ...this.selectedShoppingList,
       name: this.selectedShoppingListName,
-      familyId: this.selectedShoppingListSharedWithFamily ? this.userFamilyId : undefined,
+      familyId: this.selectedShoppingListSharedWithFamily ? this.familyId! : undefined,
     };
 
-    this.shoppingListService.updateShoppingList(this.selectedShoppingList.listId!, updatedList).subscribe({
-      next: () => {
-        this.loadShoppingLists();
-        this.closeEditShoppingListModal();
-        void this.presentToast('Shopping list updated successfully', 'success');
-      },
-      error: (error) => {
-        console.error('Failed to update shopping list:', error);
-        void this.presentToast('Failed to update shopping list', 'danger');
-      },
-    });
+    this.cacheService.updateShoppingList(this.selectedShoppingList.listId!, updatedList, this.userId);
+    this.closeEditShoppingListModal();
   }
 
   deleteShoppingList(listId: number) {
-    this.shoppingListService.deleteShoppingList(listId).subscribe({
-      next: () => {
-        this.loadShoppingLists();
-        void this.presentToast('Shopping list deleted successfully', 'success');
-      },
-      error: (error) => {
-        console.error('Failed to delete shopping list:', error);
-        void this.presentToast('Failed to delete shopping list', 'danger');
-      },
-    });
+    this.cacheService.deleteShoppingList(listId, this.userId);
   }
 
   openAddProductModal(listId: number) {
@@ -199,11 +152,11 @@ export class ShoppingListComponent implements OnInit {
         next: () => {
           this.loadShoppingLists();
           this.closeAddProductModal();
-          void this.presentToast('Product added successfully', 'success');
+          void this.commonService.presentToast('Product added successfully', 'success');
         },
         error: (error) => {
           console.error('Failed to add product:', error);
-          void this.presentToast('Failed to add product', 'danger');
+          void this.commonService.presentToast('Failed to add product', 'danger');
         },
       });
     }
@@ -213,11 +166,11 @@ export class ShoppingListComponent implements OnInit {
     this.shoppingListService.deleteShoppingListItem(listId, itemId).subscribe({
       next: () => {
         this.loadShoppingLists();
-        void this.presentToast('Product deleted successfully', 'success');
+        void this.commonService.presentToast('Product deleted successfully', 'success');
       },
       error: (error) => {
         console.error('Failed to delete product:', error);
-        void this.presentToast('Failed to delete product', 'danger');
+        void this.commonService.presentToast('Failed to delete product', 'danger');
       },
     });
   }
@@ -268,11 +221,11 @@ export class ShoppingListComponent implements OnInit {
           next: () => {
             this.closeEditProductModal();
             this.loadShoppingLists(); // Frissíti a bevásárlólistákat
-            void this.presentToast('Product updated successfully', 'success');
+            void this.commonService.presentToast('Product updated successfully', 'success');
           },
           error: (error) => {
             console.error('Failed to update product:', error);
-            void this.presentToast('Failed to update product', 'danger');
+            void this.commonService.presentToast('Failed to update product', 'danger');
           },
         });
     }
