@@ -1,26 +1,26 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {BehaviorSubject, catchError, filter, forkJoin, map, Observable, switchMap, take, tap, throwError} from 'rxjs';
 import {
-  Chat,
+  CreateRecipe,
   Family,
   FamilyMember,
   FamilyService,
   Fridge,
   FridgeService,
-  GetChatByFamilyId200Response,
   Invitation,
   Product,
-  ProductService,
+  ProductService, Recipe, RecipeService,
   RegisterUser201Response,
   Shelf,
   ShelfService,
-  ShoppingList,
+  ShoppingList, ShoppingListItem,
   ShoppingListService,
   UpdateFridgeReq,
   UpdateUserReq,
   User,
-  UserService
+  UserService,
 } from '../openapi/generated-src';
+import {Chat} from '../openapi/generated-src/model/chat';
 
 @Injectable({
   providedIn: 'root'
@@ -35,7 +35,11 @@ export class CacheService {
   private chatCache$ = new BehaviorSubject<Chat | null>(null);
   private familyMembersCache$ = new BehaviorSubject<FamilyMember[]>([]);
   private isLoadingSubject$ = new BehaviorSubject<boolean>(false);
+  private favoriteRecipesSubject$ = new BehaviorSubject<Recipe[]>([]);
+  private familyRecipesSubject$ = new BehaviorSubject<Recipe[]>([]);
+  private allFridgeProductsCache$ = new BehaviorSubject<Product[]>([]);
   isLoading$ = this.isLoadingSubject$.asObservable();
+  private cacheLoaded = false;
 
   constructor(
     public fridgeService: FridgeService,
@@ -44,13 +48,24 @@ export class CacheService {
     private productService: ProductService,
     private userService: UserService,
     private familyService: FamilyService,
+    private recipeService: RecipeService,
   ) {
+    // this.productCache$.subscribe(products => {
+    //   this.allFridgeProductsCache$.next(products);
+    // });
   }
 
   /** Load all fridges for the user and store them in cache */
   loadFridges(userId: number | null, familyId: number | null): void {
     this.isLoadingSubject$.next(true); // Start loading
     this.syncFridges(userId, familyId);
+
+    this.getFridges().pipe(
+      filter(fridges => fridges.length > 0),
+      take(1)
+    ).subscribe(() => {
+      this.loadAllFridgeProducts();
+    });
   }
 
   //clearCache
@@ -63,6 +78,10 @@ export class CacheService {
     this.familyCache$.next(null);
     this.chatCache$.next(null);
     this.familyMembersCache$.next([]);
+    this.favoriteRecipesSubject$.next([]);
+    this.familyRecipesSubject$.next([]);
+    this.allFridgeProductsCache$.next([]);
+
   }
 
   //syncronize cache with the server data
@@ -74,6 +93,7 @@ export class CacheService {
             this.makeMergedFridgesFromOwnedAndFamilys(familyId, fridges);
           } else {
             this.fridgeCache$.next([...fridges]);
+            //this.loadAllFridgeProducts();
             this.isLoadingSubject$.next(false); // Stop loading
           }
         },
@@ -84,12 +104,74 @@ export class CacheService {
     }
   }
 
+  getAllFridgeProducts(): Observable<Product[]> {
+    return this.allFridgeProductsCache$.asObservable();
+  }
+
+  // loadAllFridgeProducts(): void {
+  //   this.getFridges().pipe(
+  //     filter(fridges => fridges.length > 0),
+  //     switchMap(fridges => {
+  //       const shelvesRequests = fridges.map(fridge => this.loadShelves(fridge.fridgeId!));
+  //       return forkJoin(shelvesRequests);
+  //     }),
+  //     switchMap(() => this.getShelves()),
+  //     switchMap(shelves => {
+  //       const productsRequests = shelves.map(shelf => this.loadShelfProducts(shelf.shelfId!));
+  //       return forkJoin(productsRequests);
+  //     }),
+  //     map(productsArrays => productsArrays.flat())
+  //   ).subscribe({
+  //     next: (allProducts) => this.allFridgeProductsCache$.next(allProducts),
+  //     error: (error) => console.error('Failed to load all fridge products:', error),
+  //   });
+  // }
+
+  loadAllFridgeProducts(): void {
+    this.getFridges().pipe(
+      filter(fridges => fridges.length > 0),
+      switchMap(fridges => {
+        const allShelvesRequests = fridges.map(fridge =>
+          this.shelfService.getShelvesByFridgeId(fridge.fridgeId!)
+        );
+        return forkJoin(allShelvesRequests).pipe(
+          map(shelvesArrays => shelvesArrays.flat())
+        );
+      }),
+      tap(allShelves => this.shelfCache$.next(allShelves)),
+      switchMap(allShelves => {
+        const productRequests = allShelves.map(shelf =>
+          this.productService.getProductsByShelfId(shelf.shelfId!)
+        );
+        return forkJoin(productRequests);
+      }),
+      map(productsArrays => {
+        const allProducts = productsArrays.flat();
+
+        const uniqueMap = new Map<number, Product>();
+        allProducts.forEach(p => {
+          if (!uniqueMap.has(p.productId!)) {
+            uniqueMap.set(p.productId!, p);
+          }
+        });
+
+        return Array.from(uniqueMap.values());
+      })
+    ).subscribe({
+      next: (uniqueProducts) => {
+        this.allFridgeProductsCache$.next(uniqueProducts);
+      },
+      error: (error) => console.error('Failed to load all fridge products:', error),
+    });
+  }
+
   //full load
   fullLoad(userId: number | null, familyId: number | null): void {
     this.loadFridges(userId, familyId);
-    this.loadShoppingLists(userId);
-    this.loadAccountData(userId);
     this.loadFamilyData(familyId);
+    this.loadShoppingLists(userId);
+    this.loadFavoriteRecipes(userId!);
+    this.loadFamilyRecipes(userId!, familyId!);
   }
 
   /** Add a new fridge and synchronize the cache */
@@ -126,6 +208,7 @@ export class CacheService {
           }
         });
         this.fridgeCache$.next(mergedFridges);
+        //this.loadAllFridgeProducts();
         this.isLoadingSubject$.next(false); // Stop loading
       },
       error: () => this.isLoadingSubject$.next(false)
@@ -133,33 +216,105 @@ export class CacheService {
   }
 
   /** Load shelves for a specific fridge */
-  loadShelves(fridgeId: number): void {
-    this.shelfService.getShelvesByFridgeId(fridgeId).subscribe({
-      next: (shelves) => this.shelfCache$.next(shelves),
-      error: () => {
-      }
-    });
+  loadShelves(fridgeId: number): Observable<Shelf[]> {
+    return this.shelfService.getShelvesByFridgeId(fridgeId).pipe(
+      tap(shelves => this.shelfCache$.next(shelves))
+    );
   }
 
-  /** Load products for a specific shelf */
-  loadShelfProducts(shelfId: number): void {
-    this.productService.getProductsByShelfId(shelfId).subscribe({
-      next: (products) => this.productCache$.next(products),
-      error: () => {
-      }
-    });
+  loadShelfProductsIntoCache(shelfId: number): Observable<Product[]> {
+    return this.loadShelfProducts(shelfId).pipe(
+      tap((products) => {
+        const currentProducts = this.productCache$.getValue();
+        const updatedProducts = [
+          ...currentProducts.filter((p) => p.shelfId !== shelfId),
+          ...products,
+        ];
+        this.productCache$.next(updatedProducts);
+      })
+    );
+  }
+
+  /** Get products for a specific shelf */
+  loadShelfProducts(shelfId: number): Observable<Product[]> {
+    return this.productService.getProductsByShelfId(shelfId);
+  }
+
+  /** Add a new product */
+  addProduct(newProduct: Product): Observable<Product> {
+    return this.productService.addProduct(newProduct).pipe(
+      tap((product) => {
+        const currentProducts = this.productCache$.getValue();
+        this.productCache$.next([...currentProducts, product]);
+        const allProducts = this.allFridgeProductsCache$.getValue();
+        this.allFridgeProductsCache$.next([...allProducts, product]);
+      }),
+      catchError((error) => {
+        console.error('Failed to add product:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Update an existing product */
+  updateProduct(productId: number, updatedProduct: Product): Observable<Product> {
+    return this.productService.updateProduct(productId, updatedProduct).pipe(
+      tap(() => {
+        const currentProducts = this.productCache$.getValue();
+        const updatedProducts = currentProducts.map((product) =>
+          product.productId === productId ? updatedProduct : product
+        );
+        this.productCache$.next(updatedProducts);
+        const allProducts = this.allFridgeProductsCache$.getValue();
+        const updatedAllProducts = allProducts.map((product) =>
+          product.productId === productId ? updatedProduct : product
+        );
+        this.allFridgeProductsCache$.next(updatedAllProducts);
+      }),
+      catchError((error) => {
+        console.error('Failed to update product:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Delete a product */
+  deleteProduct(productId: number): Observable<void> {
+    return this.productService.deleteProduct(productId).pipe(
+      tap(() => {
+        const currentProducts = this.productCache$.getValue();
+        const updatedProducts = currentProducts.filter(
+          (product) => product.productId !== productId
+        );
+        this.productCache$.next(updatedProducts);
+        const allProducts = this.allFridgeProductsCache$.getValue();
+        const updatedAllProducts = allProducts.filter(
+          (product) => product.productId !== productId
+        );
+        this.allFridgeProductsCache$.next(updatedAllProducts);
+      }),
+      catchError((error) => {
+        console.error('Failed to delete product:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Get cached products as an observable */
+  getProducts(): Observable<Product[]> {
+    return this.productCache$.asObservable();
   }
 
   /** Load account data for the logged-in user */
-  loadAccountData(userId: number | null): void {
-    if (userId) {
-      this.userService.getUserById(userId).subscribe({
-        next: (user) => this.accountCache$.next(user),
-        error: () => {
-        }
-      });
-    }
-  }
+  // loadAccountData(userId: number | null): void {
+  //   if (userId) {
+  //     this.userService.getUserById(userId).subscribe({
+  //       next: (user) => this.accountCache$.next(user),
+  //       error: () => {
+  //       }
+  //     });
+  //   }
+  // }
 
   /** Load family data and members */
   loadFamilyData(familyId: number | null): void {
@@ -184,16 +339,25 @@ export class CacheService {
   }
 
   //get chat from family service and store it in cache
-  getChat(familyId: number): Chat {
-    if (!this.chatCache$.getValue()) {
-      this.familyService.getChatByFamilyId(familyId).subscribe({
-        next: (chat: GetChatByFamilyId200Response) => {
-          this.chatCache$.next(chat as unknown as Chat);
-        },
-        error: (error: any) => console.error('Failed to load chat:', error)
+  async getChat(familyId: number): Promise<Chat | null> {
+    const cachedChat = this.chatCache$.getValue();
+    if (cachedChat) {
+      return cachedChat;
+    } else {
+      return new Promise((resolve, reject) => {
+        this.familyService.getChatByFamilyId(familyId).subscribe({
+          next: (chat) => {
+            const chatData = chat as unknown as Chat;
+            this.chatCache$.next(chatData);
+            resolve(chatData);
+          },
+          error: (error: any) => {
+            console.error('Failed to load chat:', error);
+            reject(null);
+          }
+        });
       });
     }
-    return this.chatCache$.getValue();
   }
 
   createFamily(familyName: string, userId: number | null): Observable<Family> {
@@ -234,25 +398,73 @@ export class CacheService {
     }
   }
 
-  addShoppingList(newList: ShoppingList, userId: number | null): void {
-    this.shoppingListService.createShoppingList(newList).subscribe({
-      next: () => this.loadShoppingLists(userId),
-      error: (error) => console.error('Failed to add shopping list:', error),
-    });
+  addShoppingList(newList: ShoppingList, userId: number | null): Observable<void> {
+    return this.shoppingListService.createShoppingList(newList).pipe(
+      tap(() => this.loadShoppingLists(userId)),
+      map(() => void 0),
+      catchError((error) => {
+        console.error('Failed to add shopping list:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
-  updateShoppingList(listId: number, updatedList: ShoppingList, userId: number | null): void {
-    this.shoppingListService.updateShoppingList(listId, updatedList).subscribe({
-      next: () => this.loadShoppingLists(userId),
-      error: (error) => console.error('Failed to update shopping list:', error),
-    });
+  updateShoppingList(listId: number, updatedList: ShoppingList, userId: number | null): Observable<void> {
+    return this.shoppingListService.updateShoppingList(listId, updatedList).pipe(
+      tap(() => this.loadShoppingLists(userId)),
+      map(() => void 0),
+      catchError((error) => {
+        console.error('Failed to update shopping list:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
-  deleteShoppingList(listId: number, userId: number | null): void {
-    this.shoppingListService.deleteShoppingList(listId).subscribe({
-      next: () => this.loadShoppingLists(userId),
-      error: (error) => console.error('Failed to delete shopping list:', error),
-    });
+  deleteShoppingList(listId: number, userId: number | null): Observable<void> {
+    return this.shoppingListService.deleteShoppingList(listId).pipe(
+      tap(() => this.loadShoppingLists(userId)),
+      map(() => void 0),
+      catchError((error) => {
+        console.error('Failed to delete shopping list:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Add a product to a shopping list and refresh the list */
+  addItemToShoppingList(listId: number, item: ShoppingListItem, userId: number | null): Observable<void> {
+    return this.shoppingListService.addItemToShoppingList(listId, item).pipe(
+      tap(() => this.loadShoppingLists(userId)),
+      map(() => void 0),
+      catchError((error) => {
+        console.error('Failed to add item to shopping list:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Delete a product from a shopping list and refresh the list */
+  deleteShoppingListItem(listId: number, itemId: number, userId: number | null): Observable<void> {
+    return this.shoppingListService.deleteShoppingListItem(listId, itemId).pipe(
+      tap(() => this.loadShoppingLists(userId)),
+      map(() => void 0),
+      catchError((error) => {
+        console.error('Failed to delete item from shopping list:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Update a shopping list item and refresh the list */
+  updateShoppingListItem(listId: number, itemId: number, updatedItem: ShoppingListItem, userId: number | null): Observable<void> {
+    return this.shoppingListService.updateShoppingListItem(listId, itemId, updatedItem).pipe(
+      tap(() => this.loadShoppingLists(userId)),
+      map(() => void 0),
+      catchError((error) => {
+        console.error('Failed to update item in shopping list:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getShoppingLists(): Observable<ShoppingList[]> {
@@ -261,6 +473,52 @@ export class CacheService {
 
   getShelves(): Observable<Shelf[]> {
     return this.shelfCache$.asObservable();
+  }
+
+  /** Add a new shelf and update the cache */
+  addShelf(newShelf: Shelf): Observable<Shelf> {
+    return this.shelfService.addShelf(newShelf).pipe(
+      tap((shelf) => {
+        const currentShelves = this.shelfCache$.getValue();
+        this.shelfCache$.next([...currentShelves, shelf]);
+      }),
+      catchError((error) => {
+        console.error('Failed to add shelf:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Update a shelf name and synchronize the cache */
+  updateShelfName(shelfId: number, updatedShelf: Shelf): Observable<Shelf> {
+    return this.shelfService.updateShelfName(shelfId, updatedShelf).pipe(
+      tap(() => {
+        const currentShelves = this.shelfCache$.getValue();
+        const updatedShelves = currentShelves.map((shelf) =>
+          shelf.shelfId === shelfId ? { ...shelf, shelfName: updatedShelf.shelfName } : shelf
+        );
+        this.shelfCache$.next(updatedShelves);
+      }),
+      catchError((error) => {
+        console.error('Failed to update shelf:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /** Delete a shelf and update the cache */
+  deleteShelf(shelfId: number): Observable<any> {
+    return this.shelfService.deleteShelf(shelfId).pipe(
+      tap(() => {
+        const currentShelves = this.shelfCache$.getValue();
+        const updatedShelves = currentShelves.filter((shelf) => shelf.shelfId !== shelfId);
+        this.shelfCache$.next(updatedShelves);
+      }),
+      catchError((error) => {
+        console.error('Failed to delete shelf:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getShelfProducts(): Observable<Product[]> {
@@ -279,7 +537,47 @@ export class CacheService {
     return this.familyMembersCache$.asObservable();
   }
 
+
   updateUserFamily(userId: number, updatedUser: UpdateUserReq): Observable<User> {
     return this.userService.updateUserById(userId, updatedUser);
   }
+
+  getFavoriteRecipes(userId: number): Observable<Recipe[]> {
+    if (this.favoriteRecipesSubject$.getValue().length === 0) {
+      this.loadFavoriteRecipes(userId);
+    }
+    return this.favoriteRecipesSubject$.asObservable();
+  }
+
+  getFamilyRecipes(userId: number, familyId: number): Observable<Recipe[]> {
+    if (this.familyRecipesSubject$.getValue().length === 0) {
+      this.loadFamilyRecipes(userId, familyId);
+    }
+    return this.familyRecipesSubject$.asObservable();
+  }
+
+  loadFavoriteRecipes(userId: number) {
+    this.recipeService.getUsersFavoriteRecipes(userId).subscribe({
+      next: (recipes) => this.favoriteRecipesSubject$.next(recipes),
+      error: () => console.error('Failed to load user recipes'),
+    });
+  }
+
+  loadFamilyRecipes(userId: number, familyId: number) {
+    this.recipeService.getUsersFamilySharedRecipes(userId, familyId).subscribe({
+      next: (recipes) => this.familyRecipesSubject$.next(recipes),
+      error: () => console.error('Failed to load family shared recipes'),
+    });
+  }
+
+  saveRecipeToFavorites(createRecipeDto: CreateRecipe): Observable<Recipe> {
+    return this.recipeService.createRecipe(createRecipeDto).pipe(
+      tap(() => {
+        if (createRecipeDto.saved_by) {
+          this.loadFavoriteRecipes(createRecipeDto.saved_by);
+        }
+      })
+    );
+  }
+
 }
