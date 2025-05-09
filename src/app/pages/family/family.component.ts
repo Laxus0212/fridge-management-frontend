@@ -49,9 +49,7 @@ export class FamilyComponent extends AbstractPage implements OnInit {
       this.cacheService.getFamilyData().subscribe(family => {
         if (family) {
           this.family = family;
-          this.loadFamilyMembers(); // Ha van család azonnal betöltjük a tagokat is
-        } else {
-          this.cacheService.loadFamilyData(this.familyId); // Ha nincs adat a cache-ben, akkor lekérjük
+          this.loadFamilyMembers();
         }
       });
     }

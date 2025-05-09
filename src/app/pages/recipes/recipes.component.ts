@@ -1,16 +1,20 @@
 import {Component, OnInit} from '@angular/core';
 import {ModalController} from '@ionic/angular';
-import {Fridge, FridgeService, Ingredient, ShelfService} from '../../openapi/generated-src';
+import {Fridge, FridgeService, Recipe, ShelfService} from '../../openapi/generated-src';
 import {CommonService} from 'src/app/services/common.service';
 import {AuthService} from 'src/app/services/auth.service';
 import {CustomRecipeService} from '../../services/custom-recipe.service';
+import {CacheService} from '../../services/cache.service';
+import {Ingredient} from '../../openapi/generated-src/model/ingredient';
+import {AbstractPage} from '../abstract-page';
+import {BehaviorSubject, combineLatest, filter, forkJoin, map, Observable, of, switchMap} from 'rxjs';
 
 @Component({
   selector: 'app-recipes',
   templateUrl: './recipes.component.html',
   styleUrls: ['./recipes.component.scss'],
 })
-export class RecipesComponent implements OnInit {
+export class RecipesComponent extends AbstractPage implements OnInit {
   ingredientsList: Ingredient[] = [];
   customIngredients: any[] = [];
   selectedIngredients: string[] = [];
@@ -23,81 +27,173 @@ export class RecipesComponent implements OnInit {
   searched = false;
   isRecipeModalOpen = false;
   selectedRecipe: any = null;
-  loading = false; // Add loading state
-  userId?: number;
+  loading = false;
+
+  selectedTab: 'gpt' | 'favorites' = 'gpt';
+  favoriteRecipes: Recipe[] = [];
+  familySharedRecipes: Recipe[] = [];
+  filteredFavorites: Recipe[] = [];
+  filterOption: 'own' | 'family' = 'own';
+
+  favoriteRecipes$: Observable<Recipe[]> = of([]);
+  familyRecipes$: Observable<Recipe[]> = of([]);
+
+  filteredFavorites$: Observable<Recipe[]> = of([]);
+  private customIngredients$ = new BehaviorSubject<Ingredient[]>([]);
 
   constructor(
     private recipeService: CustomRecipeService,
     private shelfProductService: ShelfService,
-    private commonService: CommonService,
-    private authService: AuthService,
+    override commonService: CommonService,
+    override authService: AuthService,
     private fridgeService: FridgeService,
-    private modalController: ModalController
+    private modalController: ModalController,
+    override cacheService: CacheService
   ) {
+    super(authService, cacheService, commonService);
   }
 
-  ngOnInit() {
-    const uId = this.authService.getUserId();
-    this.userId = uId ? uId : undefined;
-    this.loadFridgeIngredients();
+  override ngOnInit() {
+    super.ngOnInit();
+
+    this.cacheService.getFavoriteRecipes(this.userId!).subscribe((recipes: Recipe[]) => {
+      this.favoriteRecipes = recipes;
+      this.applyFavoritesFilter();
+    });
+
+    this.cacheService.getFamilyRecipes(this.userId!, this.familyId!).subscribe((recipes: Recipe[]) => {
+      this.familySharedRecipes = recipes;
+      this.applyFavoritesFilter();
+    });
+
+    this.favoriteRecipes$ = this.cacheService.getFavoriteRecipes(this.userId!);
+    this.familyRecipes$ = this.cacheService.getFamilyRecipes(this.userId!, this.familyId!);
+    this.filteredFavorites$ = combineLatest([this.favoriteRecipes$, this.familyRecipes$]).pipe(
+      map(([favorites, family]) => [...favorites, ...family])
+    );
+
+    //this.cacheService.loadAllFridgeProducts();
+    //this.loadFridgeIngredients();
+
+    this.cacheService.getAllFridgeProducts().pipe(
+      filter(products => products.length > 0)
+    ).subscribe((products) => {
+      this.ingredientsList = products.map(product => ({
+        ingredient_name: product.productName,
+      }));
+    });
+  }
+
+  ingredientsList$: Observable<Ingredient[]> = combineLatest([
+    this.cacheService.getAllFridgeProducts().pipe(
+      filter(products => products.length > 0),
+      map(products => products.map(p => ({ ingredient_name: p.productName })))
+    ),
+    this.customIngredients$
+  ]).pipe(
+    map(([fromFridge, custom]) => {
+      const combined: Ingredient[] = [...fromFridge];
+      custom.forEach(cust => {
+        if (!combined.some(i => i.ingredient_name?.toLowerCase() === cust.ingredient_name?.toLowerCase())) {
+          combined.push(cust);
+        }
+      });
+      return combined;
+    })
+  );
+
+  applyFavoritesFilter() {
+    const all = [...this.favoriteRecipes, ...this.familySharedRecipes];
+
+    this.filteredFavorites = all.filter(recipe => {
+      const matchType = this.selectedMealType ? recipe.mealType === this.selectedMealType : true;
+      const matchOwnership = this.filterOption === 'own'
+        ? recipe.saved_by === this.userId
+        : recipe.familyId === this.authService.getUserFamilyId() && recipe.saved_by !== this.userId;
+
+      return matchType && matchOwnership;
+    });
+  }
+
+  loadAllProductsFromFridges() {
+    this.cacheService.getFridges().pipe(
+      filter(fridges => fridges.length > 0),
+      switchMap(fridges => {
+        const shelvesRequests = fridges.map(fridge => this.cacheService.loadShelves(fridge.fridgeId!));
+        return forkJoin(shelvesRequests);
+      }),
+      switchMap(() => this.cacheService.getShelves()),
+      switchMap(shelves => {
+        const productsRequests = shelves.map(shelf => this.cacheService.loadShelfProducts(shelf.shelfId!));
+        return forkJoin(productsRequests);
+      }),
+      switchMap(() => this.cacheService.getShelfProducts()),
+      map(products => {
+        products.forEach(product => {
+          if (!this.ingredientsList.some(ing => ing.ingredient_name === product.productName)) {
+            this.ingredientsList.push({ ingredient_name: product.productName });
+          }
+        });
+      })
+    ).subscribe();
   }
 
   loadFridgeIngredients() {
-    this.loadUserFridges();
+    this.loadAllProductsFromFridges();
   }
 
-  private loadUserFridges() {
-    if (this.userId) {
-      this.fridgeService.getUserFridges(this.userId).subscribe({
-        next: (fridges: Fridge[]) => {
-          if (fridges.length === 0) {
-            void void this.commonService.presentToast('No fridge found', 'warning');
-            return;
-          }
-          fridges.forEach(fridge => {
-            this.loadShelvesByFridgeId(fridge);
-          });
-        },
-        error: (err) => void this.commonService.presentToast('Error loading fridge', 'danger')
-      });
-    }else {
+  saveRecipeToFavorites(recipe: any) {
+    if (!this.userId) {
       void this.commonService.presentToast('User not found', 'danger');
+      return;
     }
-  }
 
-  loadShelvesByFridgeId(fridge: Fridge) {
-    this.shelfProductService.getShelvesByFridgeId(fridge.fridgeId!).subscribe({
-      next: (shelves) => {
-        shelves.map(shelf => {
-          shelf.products?.map(product => {
-            if (this.ingredientsList.findIndex(i => i.ingredient_name === product.productName) === -1) {
-              this.ingredientsList.push({
-                ingredient_name: product.productName
-              });
-            }
-          });
-        });
+    const createRecipeDto = {
+      title: recipe.title,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      ingredients: recipe.ingredients,
+      saved_by: this.userId,
+      mealType: this.selectedMealType ?? undefined,
+      familyId: this.familyId ? this.familyId : undefined
+    };
+
+    this.cacheService.saveRecipeToFavorites(createRecipeDto).subscribe({
+      next: () => {
+        void this.commonService.presentToast('Recipe added to favorites!', 'success');
+        this.closeRecipeModal();
       },
-      error: (err) => void this.commonService.presentToast('Error loading shelves', 'danger')
+      error: (error) => {
+        console.error('Failed to save recipe:', error);
+        void this.commonService.presentToast('Failed to add to favorites', 'danger');
+      }
     });
   }
 
   addCustomIngredient() {
     if (this.newIngredientName) {
-      const isThereIngredientWithThisName = this.ingredientsList.find(ingredient =>
-        ingredient.ingredient_name?.toLowerCase() === this.newIngredientName.toLowerCase()
+      const newIngredient = { ingredient_name: this.newIngredientName };
+
+      const current = this.customIngredients$.value;
+      const exists = current.some(
+        ing => ing.ingredient_name?.toLowerCase() === this.newIngredientName.toLowerCase()
       );
-      if (!isThereIngredientWithThisName) {
-        this.ingredientsList.push({
-          ingredient_name: this.newIngredientName
-        });
+
+      if (!exists) {
+        this.customIngredients$.next([...current, newIngredient]);
       }
+
       this.newIngredientName = '';
     }
   }
 
+  isInFavorites(recipe: Recipe): boolean {
+    return this.favoriteRecipes.some(r => r.title === recipe.title)
+      || this.familySharedRecipes.some(r => r.title === recipe.title);
+  }
+
   getRecipeSuggestions() {
-    this.loading = true; // Set loading to true
+    this.loading = true;
     this.suggestedRecipes = [];
     const ingredients = [
       ...this.selectedIngredients,
@@ -108,18 +204,18 @@ export class RecipesComponent implements OnInit {
       (suggestions: any) => {
         this.suggestedRecipes = suggestions;
         this.searched = true;
-        this.loading = false; // Set loading to false
+        this.loading = false;
       }
     ).catch(
-      (err) => {
+      () => {
         void this.commonService.presentToast('Error fetching recipes', 'danger');
-        this.loading = false; // Set loading to false
+        this.loading = false;
       }
     );
   }
 
   loadMoreRecipes() {
-    this.loading = true; // Set loading to true
+    this.loading = true;
     const ingredients = [
       ...this.selectedIngredients,
       ...this.customIngredients.map(i => i.ingredient_name)
@@ -128,23 +224,50 @@ export class RecipesComponent implements OnInit {
     this.recipeService.getRecipeSuggestions(ingredients, this.selectedMealType).then(
       (newSuggestions: any) => {
         this.suggestedRecipes = [...this.suggestedRecipes, ...newSuggestions];
-        this.loading = false; // Set loading to false
+        this.loading = false;
       }
     ).catch(
-      (err) => {
+      () => {
         void this.commonService.presentToast('Error fetching more recipes', 'danger');
-        this.loading = false; // Set loading to false
+        this.loading = false;
       }
     );
   }
 
   openRecipeModal(recipe: any) {
-    this.selectedRecipe = recipe;
+    this.selectedRecipe = {
+      ...recipe,
+      ingredients: Array.isArray(recipe.ingredients)
+        ? recipe.ingredients
+        : JSON.parse(recipe.ingredients)
+    };
     this.isRecipeModalOpen = true;
   }
 
   closeRecipeModal() {
     this.isRecipeModalOpen = false;
     this.selectedRecipe = null;
+  }
+
+  isOwnRecipe(recipe: Recipe): boolean {
+    return recipe.saved_by === this.userId;
+  }
+
+  toggleFamilyShare(recipe: Recipe) {
+    const updatedRecipe = {
+      ...recipe,
+      familyId: recipe.familyId ? undefined : this.familyId
+    };
+
+    this.cacheService.saveRecipeToFavorites(updatedRecipe).subscribe({
+      next: () => {
+        const msg = updatedRecipe.familyId ? 'Shared with family' : 'Unshared from family';
+        void this.commonService.presentToast(msg, 'success');
+        this.closeRecipeModal();
+      },
+      error: () => {
+        void this.commonService.presentToast('Failed to update sharing', 'danger');
+      }
+    });
   }
 }

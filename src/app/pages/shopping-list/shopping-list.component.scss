@@ -1,0 +1,98 @@
+.shopping-list {
+  background: transparent;
+}
+
+.shopping-list-header-item {
+  border-radius: 3px;
+}
+
+.shopping-list-products {
+  border-radius: 5px;
+}
+
+/* Kártyák és fejléc */
+.shopping-list-card {
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Kártya fejléce (lista neve + ikonok) */
+.shopping-list-header ion-item {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --min-height: 56px;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+}
+
+/* Lista címsor */
+.shopping-list-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Termék soron belüli label */
+.shopping-list-products-item p {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Termék gombok */
+.shopping-list-products-item ion-button {
+  margin-left: 0.5rem;
+}
+
+/* "Add Product" gomb a lista alján */
+.shopping-list-products {
+  padding: 0 1rem 1rem 1rem;
+}
+
+.shopping-list-products ion-button {
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+/* Modal inputok */
+ion-modal ion-item {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+}
+
+ion-modal ion-input,
+ion-modal ion-select {
+  font-size: 1rem;
+}
+
+/* Modal gombok */
+ion-modal ion-button {
+  margin: 1rem;
+}
+
+/* "Add Shopping List" gomb (fejléc jobb felső sarokban) */
+ion-header ion-button {
+  --padding-start: 0;
+  --padding-end: 0;
+  --border-radius: 50%;
+}
+
+/* Chevron ikon stílus egységesítése */
+.shopping-list-header ion-icon {
+  font-size: 1.4rem;
+  margin-left: 0.5rem;
+}
+
+/* Responsiveness & max szélesség korlát */
+@media (min-width: 768px) {
+  ion-card.shopping-list-card {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.page-content {
+  --background: #123e47;
+}

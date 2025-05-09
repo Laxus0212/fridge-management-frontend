@@ -4,19 +4,18 @@ import {AuthService} from "../../services/auth.service";
 import {CommonService} from "../../services/common.service";
 import {PasswordValidator} from "../../components/validators/password-validator";
 import {User, UserService} from '../../openapi/generated-src';
+import {AbstractPage} from '../abstract-page';
+import {CacheService} from '../../services/cache.service';
 
 @Component({
   selector: 'app-account',
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.scss'],
 })
-export class AccountComponent implements OnInit {
+export class AccountComponent extends AbstractPage implements OnInit {
   accountForm!: FormGroup;
   originalPassword: string = '';
-  userId?: number;
-  familyId?: number;
 
-  // Error message variables
   emailErrorText = 'Email is required.';
   usernameErrorText = 'Username is required.';
   passwordErrorText = 'Password is required.';
@@ -25,18 +24,17 @@ export class AccountComponent implements OnInit {
   constructor(
     private userService: UserService,
     private formBuilder: NonNullableFormBuilder,
-    private authService: AuthService,
-    private commonService: CommonService,
+    authService: AuthService,
+    commonService: CommonService,
+    cacheService: CacheService,
   ) {
+    super(authService, cacheService, commonService);
   }
 
-  ngOnInit() {
+  override ngOnInit() {
+    super.ngOnInit();
     this.initForm();
     this.loadUserData();
-    const uId = this.authService.getUserId();
-    this.userId = uId ? uId : undefined;
-    const fId = this.authService.getUserFamilyId();
-    this.familyId = fId ? fId : undefined
   }
 
   initForm() {
@@ -56,28 +54,15 @@ export class AccountComponent implements OnInit {
   }
 
   loadUserData() {
-    // Példa alapján felhasználó ID-t feltételezünk
-    const userId = this.authService.getUserId();
-    if (userId) {
-      this.userService.getUserById(userId).subscribe(
-        {
-          next: (userData: User) => {
-            this.accountForm.patchValue({
-              email: userData.email,
-              username: userData.username,
-            });
-            this.originalPassword = userData.password || '';
-          },
-          error: (error) => {
-            console.error('Failed to load user data:', error);
-          }
-        }
-      );
+    if (this.userId) {
+      this.accountForm.patchValue({
+        email: this.authService.getEmail(),
+        username: this.authService.getUsername(),
+      });
     }
   }
 
   checkValidation() {
-    // Ellenőrzések, mint a regisztrációs komponensben
     const emailControl = this.accountForm.get('email');
     if (emailControl?.touched && emailControl?.invalid) {
       this.emailErrorText = emailControl.errors?.['required'] ? 'Email is required.' : 'Please enter a valid email.';
@@ -119,18 +104,21 @@ export class AccountComponent implements OnInit {
   async updateAccount() {
     if (this.isAccountFormValid()) {
       const {email, username, password} = this.accountForm.value;
-      const newPassword = password === '' ? this.originalPassword : password;
       const updatedUser: User = {
-        userId: this.userId,
+        userId: this.userId!,
         email,
         username,
-        password: newPassword,
-        familyId: this.familyId,
+        password: password || undefined,
+        familyId: this.familyId!,
       };
 
       if (this.userId) {
         this.userService.updateUserById(this.userId, updatedUser).subscribe({
           next: () => {
+            this.authService.setUsername(updatedUser.username!);
+            if (updatedUser.familyId) {
+              this.authService.setUserFamilyId(updatedUser.familyId);
+            }
             this.commonService.presentToast('Account updated successfully.', 'success');
           },
           error: (error) => {

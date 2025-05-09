@@ -2,18 +2,49 @@
   <ion-toolbar>
     <ion-title>Recipe Suggestions</ion-title>
   </ion-toolbar>
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="selectedTab" (ionChange)="applyFavoritesFilter()">
+      <ion-segment-button value="gpt">
+        <ion-label>Suggested</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="favorites">
+        <ion-label>Favorites</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
 </ion-header>
 
-<ion-content>
+
+<ion-content *ngIf="selectedTab === 'favorites'" class="page-content">
+  <ion-card *ngFor="let recipe of filteredFavorites$ | async">
+    <ion-card-header>
+      <ion-card-title>
+        {{ recipe.title }}
+        <ion-badge *ngIf="recipe.familyId" color="warning" style="margin-left: 8px;">👪 Shared</ion-badge>
+        <ion-badge *ngIf="!recipe.familyId" color="success" style="margin-left: 8px;">👤 Own</ion-badge>
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-button color="secondary" (click)="openRecipeModal(recipe)">Details</ion-button>
+      <ion-button color="danger">Remove</ion-button>
+      <ion-button *ngIf="isOwnRecipe(recipe)" color="tertiary" (click)="toggleFamilyShare(recipe)">
+        {{ recipe.familyId ? 'Unshare' : 'Share' }}
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
+
+<ion-content *ngIf="selectedTab === 'gpt'" class="page-content">
   <!-- Ingredient Selection -->
   <ion-item>
     <ion-select
       [(ngModel)]="selectedIngredients"
+      (ngModelChange)="selectedIngredients = $event"
       fill="solid"
       label="Select Ingredients"
       multiple="true"
     >
-      <ion-select-option *ngFor="let ingredient of ingredientsList" [value]="ingredient.ingredient_name">
+      <ion-select-option *ngFor="let ingredient of ingredientsList$ | async" [value]="ingredient">
         {{ ingredient.ingredient_name }}
       </ion-select-option>
     </ion-select>
@@ -56,7 +87,7 @@
   <ion-grid *ngIf="suggestedRecipes.length > 0 || suggestedRecipes.length > 0 && !loading">
     <ion-row>
       <ion-col size="12" size-md="6" size-lg="4" *ngFor="let recipe of suggestedRecipes">
-        <ion-card (click)="openRecipeModal(recipe)" class="recipe-card">
+        <ion-card class="recipe-card">
           <ion-card-header>
             <ion-icon name="restaurant-outline" class="recipe-icon"></ion-icon> <!-- Icon placeholder -->
             <ion-card-title>{{ recipe.title }}</ion-card-title>
@@ -64,6 +95,9 @@
 
           <ion-card-content>
             <p *ngIf="recipe.mealType" class="meal-type">Meal Type: {{ recipe.mealType | titlecase }}</p>
+          </ion-card-content>
+          <ion-card-content>
+            <ion-button (click)="openRecipeModal(recipe)" color="secondary" >Details</ion-button>
           </ion-card-content>
         </ion-card>
       </ion-col>
@@ -147,6 +181,9 @@
           <p>{{ selectedRecipe?.instructions || 'No instructions provided' }}</p>
         </ion-card-content>
       </ion-card>
+      <ion-button *ngIf="!isInFavorites(selectedRecipe)" (click)="saveRecipeToFavorites(selectedRecipe)" color="secondary">
+        Add to favorites
+      </ion-button>
     </ion-content>
   </ng-template>
 </ion-modal>

@@ -4,10 +4,13 @@
       <ion-back-button text="Back" icon="arrow-back-circle-outline"></ion-back-button>
     </ion-buttons>
     <ion-title class="ion-text-center">Shelves</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openLogPopup()">Show Logs</ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="page-content">
   <ion-searchbar [(ngModel)]="searchQuery" (ionInput)="searchProducts($event)"></ion-searchbar>
 
   <ng-container *ngIf="isLoading">
@@ -20,8 +23,6 @@
     </ion-list>
   </ng-container>
 
-
-
   <ng-container *ngIf="!isLoading">
       <ion-fab horizontal="end" vertical="bottom" slot="fixed">
         <ion-fab-button>
@@ -29,7 +30,7 @@
         </ion-fab-button>
       </ion-fab>
     <ion-accordion-group expand="inset">
-      <ion-accordion *ngFor="let shelf of shelves" [value]="shelf.shelfId">
+      <ion-accordion *ngFor="let shelf of shelves$ | async" [value]="shelf.shelfId">
         <ion-item slot="header" color="light" class="large-row">
           <ion-label>{{ shelf.shelfName }}</ion-label>
           <ion-button slot="end" color="primary" (click)="openUpdateShelfModal(shelf); $event.stopPropagation()">
@@ -38,15 +39,45 @@
           <ion-button slot="end" color="danger" (click)="deleteShelf(shelf.shelfId); $event.stopPropagation()">
             <ion-icon name="trash-outline" class="large-icon"></ion-icon>
           </ion-button>
+          <ion-button slot="end" fill="clear" (click)="toggleSortDirection(shelf.shelfId!); $event.stopPropagation()">
+            <ion-icon [name]="sortDirections[shelf.shelfId!] === 'desc' ? 'arrow-down-outline' : 'arrow-up-outline'"></ion-icon>
+          </ion-button>
         </ion-item>
         <div class="ion-padding" slot="content">
-          <ion-list>
-            <ion-item *ngFor="let product of shelf.products">
+          <ion-list *ngIf="shelf.products$ | async as products" class="shelf-list">
+            <ion-item *ngFor="let product of products">
               <ion-label>
-                <h2>{{ product.productName }}</h2>
+                <h2 class="product-name">
+                  {{ product.productName }}
+                  <ion-icon
+                    *ngIf="getExpirationStatus(product.expirationDate) === 'good'"
+                    name="checkmark-circle-outline"
+                    color="success"
+                    slot="end">
+                  >
+                  </ion-icon>
+
+                  <ion-icon
+                    *ngIf="getExpirationStatus(product.expirationDate) === 'warning'"
+                    name="alert-circle-outline"
+                    color="warning">
+                  </ion-icon>
+
+                  <ion-icon
+                    *ngIf="getExpirationStatus(product.expirationDate) === 'expired'"
+                    name="close-circle-outline"
+                    color="danger">
+                  </ion-icon>
+                </h2>
                 <p>Quantity: {{ product.quantity }}</p>
                 <p>Unit: {{ product.unit }}</p>
-                <p>Expiration Date: {{ product.expirationDate | date: 'yyyy-MM-dd' }}</p>
+                <p
+                  [ngClass]="{
+                    'product-good': getExpirationStatus(product.expirationDate) === 'good',
+                    'product-warning': getExpirationStatus(product.expirationDate) === 'warning',
+                    'product-expired': getExpirationStatus(product.expirationDate) === 'expired'
+                  }"
+                >Expiration Date: {{ product.expirationDate | date: 'yyyy-MM-dd' }}</p>
                 <p>Opened Date: {{ product.opened_date | date: 'yyyy-MM-dd' }}</p>
               </ion-label>
               <ion-button slot="end" color="primary" (click)="openUpdateProductModal(product); $event.stopPropagation()">

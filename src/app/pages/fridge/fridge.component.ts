@@ -6,6 +6,7 @@ import { RoutePaths } from '../../enums/route-paths';
 import {Fridge, UpdateFridgeReq} from '../../openapi/generated-src';
 import { CacheService } from '../../services/cache.service';
 import {AbstractPage} from '../abstract-page';
+import {map, Observable, tap} from 'rxjs';
 
 @Component({
   selector: 'app-fridge',
@@ -15,6 +16,8 @@ import {AbstractPage} from '../abstract-page';
 export class FridgeComponent extends AbstractPage implements OnInit {
   fridges: Fridge[] = [];
   filteredFridges: Fridge[] = [];
+  fridges$: Observable<Fridge[]> = this.cacheService.getFridges();
+  filteredFridges$: Observable<Fridge[]>;
   newFridgeName: string = '';
   newFridgeSharedWithFamily: boolean = false;
   isModalOpen: boolean = false;
@@ -36,6 +39,15 @@ export class FridgeComponent extends AbstractPage implements OnInit {
   ) {
     super(authService, cacheService, commonService);
     console.log('FridgeComponent constructor called');
+
+    this.filteredFridges$ = this.fridges$.pipe(
+      tap(fridges => {
+        if (fridges.length === 0) {
+          void this.commonService.presentToast('You have no fridges yet. Click the + button to add one!', 'warning');
+        }
+      }),
+      map(fridges => this.applyFilter(fridges))
+    );
   }
 
   override ngOnInit() {
@@ -43,44 +55,62 @@ export class FridgeComponent extends AbstractPage implements OnInit {
     console.log('FridgeComponent ngOnInit called');
     this.authService.userId$.subscribe(userId => {
       this.userId = userId;
-      this.loadFridges();
+      //this.loadFridges();
     });
 
     this.authService.userFamilyId$.subscribe(familyId => {
       this.familyId = familyId;
-      this.loadFridges();
+      //this.loadFridges();
     });
     this.cacheService.isLoading$.subscribe(isLoading => this.isLoading = isLoading);
-    this.loadFridges();
+    //this.loadFridges();
   }
 
-  loadFridges() {
-    this.cacheService.loadFridges(this.userId, this.familyId);
-    this.cacheService.getFridges().subscribe(
-      {
-        next: fridges => {
-          this.fridges = fridges;
-          this.applyFilter();
-          //this.changeDetectorRef.detectChanges();
-          if (this.fridges.length === 0) {
-            void this.commonService.presentToast('You have no fridges yet. Click the + button to add one!', 'warning');
-          }
-        },
-        error: (e) => this.commonService.presentToast('Failed to load fridges', e),
-      }
-      );
-  }
 
-  applyFilter() {
+  // loadFridges() {
+  //   this.cacheService.loadFridges(this.userId, this.familyId);
+  //   this.cacheService.getFridges().subscribe(
+  //     {
+  //       next: fridges => {
+  //         this.fridges = fridges;
+  //         this.applyFilter();
+  //         //this.changeDetectorRef.detectChanges();
+  //         if (this.fridges.length === 0) {
+  //           void this.commonService.presentToast('You have no fridges yet. Click the + button to add one!', 'warning');
+  //         }
+  //       },
+  //       error: (e) => this.commonService.presentToast('Failed to load fridges', e),
+  //     }
+  //     );
+  // }
+
+  // applyFilter() {
+  //   if (this.filterOption === 'owned') {
+  //     this.filteredFridges = this.fridges.filter(fridge => fridge.ownerId === this.userId);
+  //   } else if (this.filterOption === 'family' && this.familyId) {
+  //     this.filteredFridges = this.fridges.filter(
+  //       fridge => fridge.familyId && fridge.ownerId && this.familyId
+  //     );
+  //   } else {
+  //     this.filteredFridges = [];
+  //   }
+  // }
+
+  private applyFilter(fridges: Fridge[]): Fridge[] {
     if (this.filterOption === 'owned') {
-      this.filteredFridges = this.fridges.filter(fridge => fridge.ownerId === this.userId);
+      return fridges.filter(f => f.ownerId === this.userId);
     } else if (this.filterOption === 'family' && this.familyId) {
-      this.filteredFridges = this.fridges.filter(
-        fridge => fridge.familyId && fridge.ownerId && this.familyId
-      );
+      return fridges.filter(f => f.familyId === this.familyId);
     } else {
-      this.filteredFridges = [];
+      return [];
     }
+  }
+
+  onFilterChange() {
+    // Új filter kiválasztáskor új stream generálása
+    this.filteredFridges$ = this.fridges$.pipe(
+      map(fridges => this.applyFilter(fridges))
+    );
   }
 
   openAddFridgeModal() {

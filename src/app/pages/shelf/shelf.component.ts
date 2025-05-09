@@ -1,16 +1,23 @@
 import {Component, OnInit} from '@angular/core';
 import {CommonService} from '../../services/common.service';
 import {RoutePaths} from '../../enums/route-paths';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {Product, ProductService, Shelf, ShelfService} from 'src/app/openapi/generated-src';
-import {BarcodeScanner} from '@capacitor-community/barcode-scanner';
+import {AbstractPage} from '../abstract-page';
+import {AuthService} from '../../services/auth.service';
+import { CacheService } from 'src/app/services/cache.service';
+import {CapacitorBarcodeScanner} from '@capacitor/barcode-scanner';
+import { ModalController } from '@ionic/angular';
+import {LogPopupComponent} from '../../components/log-popup/log-popup.component';
+import {map, Observable, tap} from 'rxjs';
+import {ShelfViewModel} from './shelf-view-model';
 
 @Component({
   selector: 'app-shelf',
   templateUrl: './shelf.component.html',
   styleUrls: ['./shelf.component.scss'],
 })
-export class ShelfComponent implements OnInit {
+export class ShelfComponent extends AbstractPage implements OnInit {
   shelves: Shelf[] = [];
   newShelfName: string = '';
   selectedShelfName: string = '';
@@ -36,50 +43,128 @@ export class ShelfComponent implements OnInit {
     expirationDate: '',
     shelfId: 0
   };
-  isLoading: boolean = false; // Add this line
+  isLoading: boolean = false;
   searchQuery: string = '';
   highlightedProducts: { [key: number]: boolean } = {};
   expandedShelfId: number | null = null;
+  sortDirections: {[shelfId: number]: 'asc' | 'desc'} = {};
 
 
   constructor(
     private shelfService: ShelfService,
-    public commonService: CommonService,
+    readonly activatedRoute: ActivatedRoute,
+    readonly router: Router,
+    authService: AuthService,
+    cacheService: CacheService,
+    commonService: CommonService,
     private route: ActivatedRoute,
-    private productService: ProductService
+    private productService: ProductService,
+    private readonly modalController: ModalController,
+    //private barcodeScanner: BarcodeScanner
   ) {
+    super(authService, cacheService, commonService);
   }
 
-  ngOnInit() {
+  override ngOnInit() {
+    super.ngOnInit();
     this.fridgeId = Number.parseInt(sessionStorage.getItem('selectedFridgeId') ?? '');
     this.loadShelves();
+    this.route.queryParams.subscribe(params => {
+      const scannedBarcode = params['barcode'];
+      if (scannedBarcode) {
+        // használd itt a kódot
+        console.log('Beolvasott vonalkód:', scannedBarcode);
+      }
+    });
+
+    this.cacheService.getProducts().subscribe((products) => {
+      this.shelves.forEach((shelf) => {
+        shelf.products = products.filter((product) => product.shelfId === shelf.shelfId);
+      });
+    });
+    this.rebuildShelvesStream();
+  }
+
+  shelves$: Observable<ShelfViewModel[]> = this.cacheService.getShelves().pipe(
+    map(shelves => shelves.map(shelf => ({
+      ...shelf,
+      products$: this.cacheService.getProducts().pipe(
+        map(products => {
+          const shelfProducts = products.filter(p => p.shelfId === shelf.shelfId);
+          const direction = this.sortDirections[shelf.shelfId!] || 'asc';
+          return [...shelfProducts].sort((a, b) => {
+            const dateA = new Date(a.expirationDate).getTime();
+            const dateB = new Date(b.expirationDate).getTime();
+            return direction === 'asc' ? dateA - dateB : dateB - dateA;
+          });
+        })
+      )
+    })))
+  );
+
+  toggleSortDirection(shelfId: number) {
+    const current = this.sortDirections[shelfId] || 'asc';
+    this.sortDirections[shelfId] = current === 'asc' ? 'desc' : 'asc';
+    this.rebuildShelvesStream();
+  }
+
+  rebuildShelvesStream() {
+    this.shelves$ = this.cacheService.getShelves().pipe(
+      map(shelves => shelves.map(shelf => ({
+        ...shelf,
+        products$: this.cacheService.getProducts().pipe(
+          map(products => {
+            const shelfProducts = products.filter(p => p.shelfId === shelf.shelfId);
+            const direction = this.sortDirections[shelf.shelfId!] || 'asc';
+            return [...shelfProducts].sort((a, b) => {
+              const dateA = new Date(a.expirationDate).getTime();
+              const dateB = new Date(b.expirationDate).getTime();
+              return direction === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+          })
+        )
+      })))
+    );
+  }
+
+  getExpirationStatus(expirationDate: string): 'good' | 'warning' | 'expired' {
+    const today = new Date();
+    const expiry = new Date(expirationDate);
+
+    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 5) {
+      return 'good';
+    } else if (diffDays >= 0) {
+      return 'warning';
+    } else {
+      return 'expired';
+    }
   }
 
   loadShelves() {
     if (!this.fridgeId) return;
-    this.isLoading = true; // Set loading to true
-    this.shelfService.getShelvesByFridgeId(this.fridgeId).subscribe({
-      next: (shelves: Shelf[]) => {
+    this.isLoading = true;
+    this.cacheService.loadShelves(this.fridgeId).subscribe({
+      next: (shelves) => {
         this.shelves = shelves;
-        this.shelves.forEach(shelf => {
-          this.loadProductsForShelf(shelf);
-        });
-        this.isLoading = false; // Set loading to false after loading shelves
+        this.shelves.forEach((shelf) => this.loadProductsForShelf(shelf));
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Failed to load shelves:', error);
         void this.commonService.presentToast(error.error.message, 'danger');
-        this.isLoading = false; // Set loading to false in case of error
-      }
+        this.isLoading = false;
+      },
     });
   }
 
   loadProductsForShelf(shelf: Shelf) {
-    this.productService.getProductsByShelfId(shelf.shelfId!).subscribe({
-      next: (products: Product[]) => {
+    this.cacheService.loadShelfProductsIntoCache(shelf.shelfId!).subscribe({
+      next: products => {
         shelf.products = products;
       },
-      error: (error) => {
+      error: error => {
         console.error(`Failed to load products for shelf ${shelf.shelfId}:`, error);
         void this.commonService.presentToast(error.error.message, 'danger');
       }
@@ -109,31 +194,72 @@ export class ShelfComponent implements OnInit {
     return this.highlightedProducts[productId] || false;
   }
 
-  async startScan(isNewProduct: boolean) {
-    await BarcodeScanner.checkPermission({force: true});
-    await BarcodeScanner.hideBackground(); // Make background transparent
-    const result = await BarcodeScanner.startScan(); // Start scanning
+  // scanBarcode() {
+  //   this.barcodeScanner.scan().then(barcodeData => {
+  //     console.log('Barcode data:', barcodeData);
+  //
+  //     // példa: vonalkódból termék hozzáadása
+  //     const scannedText = barcodeData.text;
+  //     if (scannedText) {
+  //       this.handleScannedBarcode(scannedText);
+  //     }
+  //   }).catch(err => {
+  //     console.error('Error', err);
+  //   });
+  // }
 
-    if (result.hasContent) {
-      const productDetails = JSON.parse(result.content);
-      if (isNewProduct) {
-        this.newProduct.productName = productDetails.productName;
-        this.newProduct.quantity = productDetails.quantity;
-        this.newProduct.unit = productDetails.unit;
-        this.newProduct.expirationDate = productDetails.expirationDate;
-        this.newProduct.opened_date = productDetails.opened_date;
-      } else {
-        this.selectedProduct.productName = productDetails.productName;
-        this.selectedProduct.quantity = productDetails.quantity;
-        this.selectedProduct.unit = productDetails.unit;
-        this.selectedProduct.expirationDate = productDetails.expirationDate;
-        this.selectedProduct.opened_date = productDetails.opened_date;
-      }
-    }
+  async openLogPopup() {
+    const modal = await this.modalController.create({
+      component: LogPopupComponent,
+    });
+    return await modal.present();
   }
 
-  stopScan() {
-    void BarcodeScanner.stopScan();
+   async startScan(isNewProduct: boolean) {
+
+       try {
+         const result = await CapacitorBarcodeScanner.scanBarcode({
+           hint: 17,
+           cameraDirection: 1
+         });
+         const barcode = result.ScanResult; // pl. "5991234567890"
+
+         if (!barcode) return;
+
+         console.log('Scanned barcode:', barcode);
+
+         const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
+         const data = await response.json();
+
+         if (data.status === 1) {
+           const product = data.product;
+           const name = product.product_name || '';
+           const quantity = parseFloat(product.quantity?.replace(/[^0-9.]/g, '')) || 1;
+           const unit = product.quantity?.includes('ml') || product.quantity?.includes('l') ? 'ml' : 'pcs';
+
+           if (isNewProduct) {
+             this.newProduct.productName = name;
+             this.newProduct.quantity = quantity;
+             this.newProduct.unit = unit as Product.UnitEnum;
+           } else {
+             this.selectedProduct.productName = name;
+             this.selectedProduct.quantity = quantity;
+             this.selectedProduct.unit = unit as Product.UnitEnum;
+           }
+
+           void this.commonService.presentToast(`Product found: ${name}`, 'success');
+         } else {
+           void this.commonService.presentToast('Product not found in database', 'warning');
+         }
+       } catch (error) {
+         console.error('Scan failed', error);
+         void this.commonService.presentToast('Scan failed!', 'danger');
+       }
+
+  }
+
+  async stopScan() {
+    document.body.classList.remove('scanner-active');
   }
 
   openAddShelfModal() {
@@ -147,14 +273,14 @@ export class ShelfComponent implements OnInit {
   }
 
   deleteProduct(id: number) {
-    this.productService.deleteProduct(id).subscribe({
+    this.cacheService.deleteProduct(id).subscribe({
       next: () => {
-        this.loadShelves();
+        //this.loadShelves();
         void this.commonService.presentToast('Product deleted successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to delete product:', error);
-        void this.commonService.presentToast(error.error.message, 'danger');
+        void this.commonService.presentToast('Failed to delete product!', 'danger');
       }
     });
   }
@@ -172,15 +298,14 @@ export class ShelfComponent implements OnInit {
       fridgeId: this.fridgeId
     };
 
-    this.shelfService.addShelf(newShelf).subscribe({
+    this.cacheService.addShelf(newShelf).subscribe({
       next: () => {
-        this.loadShelves();
         this.closeAddShelfModal();
         void this.commonService.presentToast('Shelf added successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to add shelf:', error);
-        void this.commonService.presentToast(error.error.message, 'danger');
+        void this.commonService.presentToast('Failed to add shelf!', 'danger');
       }
     });
   }
@@ -197,20 +322,37 @@ export class ShelfComponent implements OnInit {
     this.selectedShelfName = '';
   }
 
+  // updateShelf() {
+  //   if (!this.selectedShelf || !this.selectedShelfName) return;
+  //
+  //   const updatedShelf: Shelf = {...this.selectedShelf, shelfName: this.selectedShelfName};
+  //
+  //   this.shelfService.updateShelfName(this.selectedShelf.shelfId!, updatedShelf).subscribe({
+  //     next: () => {
+  //       this.loadShelves();
+  //       this.closeUpdateShelfModal();
+  //       void this.commonService.presentToast('Shelf updated successfully!', 'success');
+  //     },
+  //     error: (error) => {
+  //       console.error('Failed to update shelf:', error);
+  //       void this.commonService.presentToast(error.error.message, 'danger');
+  //     }
+  //   });
+  // }
+
   updateShelf() {
     if (!this.selectedShelf || !this.selectedShelfName) return;
 
-    const updatedShelf: Shelf = {...this.selectedShelf, shelfName: this.selectedShelfName};
+    const updatedShelf: Shelf = { ...this.selectedShelf, shelfName: this.selectedShelfName };
 
-    this.shelfService.updateShelfName(this.selectedShelf.shelfId!, updatedShelf).subscribe({
+    this.cacheService.updateShelfName(this.selectedShelf.shelfId!, updatedShelf).subscribe({
       next: () => {
-        this.loadShelves();
         this.closeUpdateShelfModal();
         void this.commonService.presentToast('Shelf updated successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to update shelf:', error);
-        void this.commonService.presentToast(error.error.message, 'danger');
+        void this.commonService.presentToast('Failed to update shelf!', 'danger');
       }
     });
   }
@@ -218,14 +360,13 @@ export class ShelfComponent implements OnInit {
   deleteShelf(id: number | undefined) {
     if (!id) return;
 
-    this.shelfService.deleteShelf(id).subscribe({
+    this.cacheService.deleteShelf(id).subscribe({
       next: () => {
-        this.loadShelves();
         void this.commonService.presentToast('Shelf deleted successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to delete shelf:', error);
-        void this.commonService.presentToast(error.message, 'danger');
+        void this.commonService.presentToast('Failed to delete shelf!', 'danger');
       }
     });
   }
@@ -272,15 +413,14 @@ export class ShelfComponent implements OnInit {
       shelfId: this.selectedShelf.shelfId
     };
 
-    this.productService.addProduct(newProduct).subscribe({
+    this.cacheService.addProduct(newProduct).subscribe({
       next: () => {
-        this.loadProductsForShelf(this.selectedShelf!);
         this.closeAddProductModal();
         void this.commonService.presentToast('Product added successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to add product:', error);
-        void this.commonService.presentToast(error.error.message, 'danger');
+        void this.commonService.presentToast('Failed to add product!', 'danger');
       }
     });
   }
@@ -299,20 +439,20 @@ export class ShelfComponent implements OnInit {
 
   updateProduct() {
     if (!this.selectedProduct) return;
+
     this.selectedProduct.expirationDate = this.formatDate(this.selectedProduct.expirationDate);
     if (this.selectedProduct.opened_date) {
       this.selectedProduct.opened_date = this.formatDate(this.selectedProduct.opened_date);
     }
 
-    this.productService.updateProduct(this.selectedProduct.productId!, this.selectedProduct).subscribe({
+    this.cacheService.updateProduct(this.selectedProduct.productId!, this.selectedProduct).subscribe({
       next: () => {
-        this.loadProductsForShelf(this.selectedShelf!);
         this.closeUpdateProductModal();
         void this.commonService.presentToast('Product updated successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to update product:', error);
-        void this.commonService.presentToast(error.error.message, 'danger');
+        void this.commonService.presentToast('Failed to update product!', 'danger');
       }
     });
   }

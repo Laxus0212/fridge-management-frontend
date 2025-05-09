@@ -21,3 +21,38 @@
 .highlight {
   background-color: yellow !important;
 }
+
+.scanner-active {
+  background: transparent !important;
+}
+
+.product-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.product-good {
+  background: #57de78;
+  color: #000000;
+  border-radius: 2px;
+}
+
+.product-warning {
+  background: #e7c96c;
+  color: #000000;
+  border-radius: 2px;
+}
+
+.product-expired {
+  background: #e76470;
+  color: #000000;
+  border-radius: 2px;
+}
+
+.shelf-list {
+  border-radius: 2px;
+}
+
+.page-content {
+  --background: #123e47;
+}

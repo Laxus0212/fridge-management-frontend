@@ -4,7 +4,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content *ngIf="accountForm">
+<ion-content *ngIf="accountForm" class="page-content">
   <form [formGroup]="accountForm" (ngSubmit)="updateAccount()">
     <ion-list>
       <ion-item-divider>Personal Information</ion-item-divider>

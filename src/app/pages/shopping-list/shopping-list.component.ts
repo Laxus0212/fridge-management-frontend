@@ -5,6 +5,7 @@ import {CommonService} from '../../services/common.service';
 import UnitEnum = Product.UnitEnum;
 import {AbstractPage} from '../abstract-page';
 import {CacheService} from '../../services/cache.service';
+import {map, Observable, tap} from 'rxjs';
 
 @Component({
   selector: 'app-shopping-list',
@@ -38,41 +39,75 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
   public isExpanded: { [listId: number]: boolean } = {};
   public selectedProduct?: ShoppingListItem;
   public isEditProductModalOpen: boolean = false;
+  shoppingLists$: Observable<ShoppingList[]> = this.cacheService.getShoppingLists();
+  filteredShoppingLists$: Observable<ShoppingList[]>;
 
   constructor(
     authService: AuthService,
     cacheService: CacheService,
     commonService: CommonService,
-    private shoppingListService: ShoppingListService,
   ) {
     super(authService, cacheService, commonService);
+
+    this.filteredShoppingLists$ = this.shoppingLists$.pipe(
+      tap(lists => {
+        if (lists.length === 0) {
+          void this.commonService.presentToast('No shopping lists yet. Click the + button to add one!', 'warning');
+        }
+      }),
+      map(lists => this.applyFilter(lists))
+    );
   }
 
   override ngOnInit() {
     super.ngOnInit();
-    this.authService.userId$.subscribe(userId => {
-      this.userId = userId;
-      this.loadShoppingLists();
-    });
+
 
     this.cacheService.isLoading$.subscribe(isLoading => this.isLoading = isLoading);
   }
 
-  loadShoppingLists() {
-    this.cacheService.loadShoppingLists(this.userId);
-    this.cacheService.getShoppingLists().subscribe(lists => {
-      this.shoppingLists = lists;
-      this.applyFilter();
-    });
+  onFilterChange() {
+    this.filteredShoppingLists$ = this.shoppingLists$.pipe(
+      map(lists => this.applyFilter(lists))
+    );
   }
 
-  applyFilter() {
+  private applyFilter(lists: ShoppingList[]): ShoppingList[] {
     if (this.filterOption === 'owned') {
-      this.filteredShoppingLists = this.shoppingLists;
+      return lists.filter(l => l.ownerId === this.userId);
+    } else if (this.filterOption === 'family' && this.familyId) {
+      return lists.filter(l => l.familyId === this.familyId);
     } else {
-      this.filteredShoppingLists = this.shoppingLists.filter(list => list.familyId);
+      return [];
     }
   }
+
+  // shoppingLists$: Observable<ShoppingList[]> = this.cacheService.getShoppingLists().pipe(
+  //   tap(lists => {
+  //     if (lists.length === 0) {
+  //       void this.commonService.presentToast('No shopping lists yet', 'warning');
+  //     }
+  //   }),
+  //   map(lists => this.applyFilter(lists))
+  // );
+
+  // loadShoppingLists() {
+  //   this.cacheService.loadShoppingLists(this.userId);
+  //   this.cacheService.getShoppingLists().subscribe(lists => {
+  //     this.shoppingLists = lists;
+  //     this.applyFilter();
+  //   });
+  // }
+
+  // applyFilter(shoppingLists: ShoppingList[]): ShoppingList[] {
+  //   if (this.filterOption === 'owned') {
+  //     return shoppingLists.filter(s => s.ownerId === this.userId);
+  //   } else if (this.filterOption === 'family' && this.familyId) {
+  //     return shoppingLists.filter(list => list.familyId === this.familyId);
+  //   }else {
+  //     return [];
+  //   }
+  // }
 
   openAddShoppingListModal() {
     this.isModalOpen = true;
@@ -85,16 +120,26 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
   }
 
   addShoppingList() {
-    if (!this.newShoppingListName) return;
+    if (!this.newShoppingListName) {
+      void this.commonService.presentToast('List name is required', 'warning');
+      return;
+    }
 
     const newList: ShoppingList = {
       name: this.newShoppingListName,
       ownerId: this.userId ?? undefined,
-      familyId: this.newShoppingListSharedWithFamily ? this.familyId! : undefined,
+      familyId: this.newShoppingListSharedWithFamily ? this.familyId ?? undefined : undefined,
     };
 
-    this.cacheService.addShoppingList(newList, this.userId);
-    this.closeAddShoppingListModal();
+    this.cacheService.addShoppingList(newList, this.userId).subscribe({
+      next: () => {
+        this.closeAddShoppingListModal();
+        void this.commonService.presentToast('Shopping list added successfully!', 'success');
+      },
+      error: (error) => {
+        void this.commonService.presentToast('Failed to add shopping list: ' + (error?.error?.message || 'Unknown error'), 'danger');
+      }
+    });
   }
 
   openEditShoppingListModal(shoppingList: ShoppingList) {
@@ -112,20 +157,39 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
   }
 
   updateShoppingList() {
-    if (!this.selectedShoppingList || !this.selectedShoppingListName) return;
+    if (!this.selectedShoppingList || !this.selectedShoppingListName) {
+      void this.commonService.presentToast('List name is required', 'warning');
+      return;
+    }
 
     const updatedList: ShoppingList = {
       ...this.selectedShoppingList,
       name: this.selectedShoppingListName,
-      familyId: this.selectedShoppingListSharedWithFamily ? this.familyId! : undefined,
+      familyId: this.selectedShoppingListSharedWithFamily ? this.familyId ?? undefined : undefined
     };
 
-    this.cacheService.updateShoppingList(this.selectedShoppingList.listId!, updatedList, this.userId);
-    this.closeEditShoppingListModal();
+    this.cacheService.updateShoppingList(this.selectedShoppingList.listId!, updatedList, this.userId).subscribe({
+      next: () => {
+        this.closeEditShoppingListModal();
+        void this.commonService.presentToast('Shopping list updated successfully!', 'success');
+      },
+      error: (error) => {
+        void this.commonService.presentToast('Failed to update shopping list: ' + (error?.error?.message || 'Unknown error'), 'danger');
+      }
+    });
   }
 
   deleteShoppingList(listId: number) {
-    this.cacheService.deleteShoppingList(listId, this.userId);
+    if (!listId) return;
+
+    this.cacheService.deleteShoppingList(listId, this.userId).subscribe({
+      next: () => {
+        void this.commonService.presentToast('Shopping list deleted successfully!', 'success');
+      },
+      error: (error) => {
+        void this.commonService.presentToast('Failed to delete shopping list: ' + (error?.error?.message || 'Unknown error'), 'danger');
+      }
+    });
   }
 
   openAddProductModal(listId: number) {
@@ -141,37 +205,36 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
   }
 
   addProductToShoppingList() {
-    if (this.currentEditingShoppingListId && this.newProductName && this.newProductQuantity && this.newProductUnit) {
-      const newProduct: ShoppingListItem = {
-        productName: this.newProductName,
-        quantity: this.newProductQuantity,
-        unit: this.newProductUnit,
-      };
-
-      this.shoppingListService.addItemToShoppingList(this.currentEditingShoppingListId, newProduct).subscribe({
-        next: () => {
-          this.loadShoppingLists();
-          this.closeAddProductModal();
-          void this.commonService.presentToast('Product added successfully', 'success');
-        },
-        error: (error) => {
-          console.error('Failed to add product:', error);
-          void this.commonService.presentToast('Failed to add product', 'danger');
-        },
-      });
+    if (!this.currentEditingShoppingListId || !this.newProductName || !this.newProductQuantity || !this.newProductUnit) {
+      void this.commonService.presentToast('All product fields are required', 'warning');
+      return;
     }
+
+    const newProduct: ShoppingListItem = {
+      productName: this.newProductName,
+      quantity: this.newProductQuantity,
+      unit: this.newProductUnit,
+    };
+
+    this.cacheService.addItemToShoppingList(this.currentEditingShoppingListId, newProduct, this.userId).subscribe({
+      next: () => {
+        this.closeAddProductModal();
+        void this.commonService.presentToast('Product added to shopping list!', 'success');
+      },
+      error: (error) => {
+        void this.commonService.presentToast('Failed to add product: ' + (error?.error?.message || 'Unknown error'), 'danger');
+      }
+    });
   }
 
   deleteProduct(listId: number, itemId: number) {
-    this.shoppingListService.deleteShoppingListItem(listId, itemId).subscribe({
+    this.cacheService.deleteShoppingListItem(listId, itemId, this.userId).subscribe({
       next: () => {
-        this.loadShoppingLists();
-        void this.commonService.presentToast('Product deleted successfully', 'success');
+        void this.commonService.presentToast('Product deleted successfully!', 'success');
       },
       error: (error) => {
-        console.error('Failed to delete product:', error);
-        void this.commonService.presentToast('Failed to delete product', 'danger');
-      },
+        void this.commonService.presentToast('Failed to delete product: ' + (error?.error?.message || 'Unknown error'), 'danger');
+      }
     });
   }
 
@@ -215,19 +278,22 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
         unit: this.editProductUnit,
       };
 
-      this.shoppingListService
-        .updateShoppingListItem(this.currentEditingShoppingListId, this.currentEditingProductId, updatedProduct)
-        .subscribe({
-          next: () => {
-            this.closeEditProductModal();
-            this.loadShoppingLists(); // Frissíti a bevásárlólistákat
-            void this.commonService.presentToast('Product updated successfully', 'success');
-          },
-          error: (error) => {
-            console.error('Failed to update product:', error);
-            void this.commonService.presentToast('Failed to update product', 'danger');
-          },
-        });
+      this.cacheService.updateShoppingListItem(
+        this.currentEditingShoppingListId,
+        this.currentEditingProductId,
+        updatedProduct,
+        this.userId
+      ).subscribe({
+        next: () => {
+          this.closeEditProductModal();
+          void this.commonService.presentToast('Product updated successfully!', 'success');
+        },
+        error: (error) => {
+          void this.commonService.presentToast('Failed to update product: ' + (error?.error?.message || 'Unknown error'), 'danger');
+        }
+      });
+    } else {
+      void this.commonService.presentToast('All fields are required', 'warning');
     }
   }
 

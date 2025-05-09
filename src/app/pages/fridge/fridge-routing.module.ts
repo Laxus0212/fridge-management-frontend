@@ -1,14 +1,13 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import {AuthGuard} from "../../guards/auth.guard";
+import {NgModule} from '@angular/core';
+import {RouterModule, Routes} from '@angular/router';
 import {FridgeComponent} from "./fridge.component";
-import {ShelfRoutingModule} from "../shelf/shelf-routing.module";
 
 const routes: Routes = [
-  { path: '',
+  {
+    path: '',
     component: FridgeComponent,
   },
-  { path: 'shelf', loadChildren: () => import('../shelf/shelf.module').then(m => m.ShelfModule) },
+  {path: 'shelf', loadChildren: () => import('../shelf/shelf.module').then(m => m.ShelfModule)},
 ];
 
 @NgModule({
@@ -17,4 +16,5 @@ const routes: Routes = [
   ],
   exports: [RouterModule]
 })
-export class FridgeRoutingModule { }
+export class FridgeRoutingModule {
+}
