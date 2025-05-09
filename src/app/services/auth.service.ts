@@ -11,6 +11,7 @@ import {BehaviorSubject} from 'rxjs';
 })
 export class AuthService {
   private usernameKey = 'username'; // Store username in localStorage
+  private emailKey = 'email'; // Store username in localStorage
   private userFamilyId = 'user_familyId'; // Store family id in localStorage
   private userId = 'userId'; // Store user id in localStorage
 
@@ -27,6 +28,14 @@ export class AuthService {
     private userService: UserService,
     private cacheService: CacheService
   ) {
+  }
+
+  getEmail(): string {
+    return localStorage.getItem(this.emailKey) || ''; // Get email from storage
+  }
+
+  setEmail(email: string) {
+    localStorage.setItem(this.emailKey, email); // Store email
   }
 
   setUsername(username: string) {
@@ -114,7 +123,7 @@ export class AuthService {
     this.userService.getLoggedInUser().subscribe({
       next: (user) => {
         this.storeUserData(user);
-        this.cacheService.syncFridges(this.getUserId(), this.getUserFamilyId());
+        this.cacheService.fullLoad(this.getUserId(), this.getUserFamilyId());
       },
       error: (error) => {
         console.error('Login failed:', error.error.message);
@@ -128,9 +137,10 @@ export class AuthService {
 
   private storeUserData(user: User) {
     this.setUsername(user.username!); // Store username
+    this.setEmail(user.email!); // Store username
     if (user.familyId) {
       this.setUserFamilyId(user.familyId); // Store family id
-      this.cacheService.getChat(user.familyId);
+      void this.cacheService.getChat(user.familyId);
     }
     this.setUserId(user.userId!); // Store user id
   }
