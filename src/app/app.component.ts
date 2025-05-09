@@ -3,6 +3,7 @@ import {NavigationEnd, Router} from "@angular/router";
 import {filter} from "rxjs";
 import {RoutePaths} from "./enums/route-paths";
 import {AuthService} from './services/auth.service';
+import {CacheService} from './services/cache.service';
 
 @Component({
   selector: 'app-root',
@@ -14,13 +15,26 @@ export class AppComponent {
 
   constructor(
     public readonly router: Router,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private cacheService: CacheService,
     ) {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       this.checkIfUserBarShouldBeDisplayed(event.urlAfterRedirects);
     });
+
+    this.initializeApp();
+  }
+
+  initializeApp() {
+    if (this.authService.isLoggedIn()) {
+      const userId = this.authService.getUserId();
+      const familyId = this.authService.getUserFamilyId();
+
+      console.log('Auto-login detected, full loading cache...');
+      this.cacheService.fullLoad(userId, familyId);
+    }
   }
 
   checkIfUserBarShouldBeDisplayed(url: string) {
