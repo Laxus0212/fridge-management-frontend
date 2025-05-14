@@ -1,5 +1,10 @@
 <ion-header>
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="reloadShoppingLists()">
+        <ion-icon slot="icon-only" name="reload"></ion-icon>
+      </ion-button>
+    </ion-buttons>
     <ion-title>Shopping Lists</ion-title>
     <ion-buttons slot="end">
       <ion-button color="primary" (click)="openAddShoppingListModal()">

@@ -1,5 +1,17 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, catchError, filter, forkJoin, map, Observable, switchMap, take, tap, throwError} from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  distinctUntilChanged,
+  filter,
+  forkJoin,
+  map,
+  Observable,
+  switchMap,
+  take,
+  tap,
+  throwError
+} from 'rxjs';
 import {
   CreateRecipe,
   Family,
@@ -15,7 +27,7 @@ import {
   ShelfService,
   ShoppingList, ShoppingListItem,
   ShoppingListService,
-  UpdateFridgeReq,
+  UpdateFridgeReq, UpdateRecipe,
   UpdateUserReq,
   User,
   UserService,
@@ -29,6 +41,7 @@ export class CacheService {
   private fridgeCache$ = new BehaviorSubject<Fridge[]>([]);
   private shoppingListCache$ = new BehaviorSubject<ShoppingList[]>([]);
   private shelfCache$ = new BehaviorSubject<Shelf[]>([]);
+  private allShelvesWithProducts$ = new BehaviorSubject<Shelf[]>([]);
   private productCache$ = new BehaviorSubject<Product[]>([]);
   private accountCache$ = new BehaviorSubject<User | null>(null);
   private familyCache$ = new BehaviorSubject<Family | null>(null);
@@ -74,7 +87,7 @@ export class CacheService {
     this.shoppingListCache$.next([]);
     this.shelfCache$.next([]);
     this.productCache$.next([]);
-    this.accountCache$.next(null);
+    //this.accountCache$.next(null);
     this.familyCache$.next(null);
     this.chatCache$.next(null);
     this.familyMembersCache$.next([]);
@@ -130,6 +143,7 @@ export class CacheService {
   loadAllFridgeProducts(): void {
     this.getFridges().pipe(
       filter(fridges => fridges.length > 0),
+      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
       switchMap(fridges => {
         const allShelvesRequests = fridges.map(fridge =>
           this.shelfService.getShelvesByFridgeId(fridge.fridgeId!)
@@ -138,15 +152,12 @@ export class CacheService {
           map(shelvesArrays => shelvesArrays.flat())
         );
       }),
-      tap(allShelves => this.shelfCache$.next(allShelves)),
-      switchMap(allShelves => {
-        const productRequests = allShelves.map(shelf =>
-          this.productService.getProductsByShelfId(shelf.shelfId!)
-        );
-        return forkJoin(productRequests);
+      tap(allShelves => {
+        this.shelfCache$.next(allShelves);
+        this.allShelvesWithProducts$.next(allShelves);
       }),
-      map(productsArrays => {
-        const allProducts = productsArrays.flat();
+      map(allShelves => {
+        const allProducts = allShelves.flatMap(shelf => shelf.products || []);
 
         const uniqueMap = new Map<number, Product>();
         allProducts.forEach(p => {
@@ -165,6 +176,17 @@ export class CacheService {
     });
   }
 
+  getAllShelvesWithProducts(): Observable<Shelf[]> {
+    return this.allShelvesWithProducts$.asObservable();
+  }
+
+  getShelvesFromCacheByFridgeId(fridgeId: number): Observable<Shelf[]> {
+    return this.allShelvesWithProducts$.pipe(
+      map(shelves => shelves.filter(shelf => shelf.fridgeId === fridgeId)),
+      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+    )
+  }
+
   //full load
   fullLoad(userId: number | null, familyId: number | null): void {
     this.loadFridges(userId, familyId);
@@ -172,6 +194,7 @@ export class CacheService {
     this.loadShoppingLists(userId);
     this.loadFavoriteRecipes(userId!);
     this.loadFamilyRecipes(userId!, familyId!);
+    this.getPendingInvites(userId!);
   }
 
   /** Add a new fridge and synchronize the cache */
@@ -244,6 +267,16 @@ export class CacheService {
   addProduct(newProduct: Product): Observable<Product> {
     return this.productService.addProduct(newProduct).pipe(
       tap((product) => {
+        this.allShelvesWithProducts$.pipe(
+          filter(shelves => shelves.length > 0),
+          take(1)
+        ).subscribe((shelves) => {
+          const shelf = shelves.find(shelf => shelf.shelfId === product.shelfId);
+          if (shelf) {
+            shelf.products?.push(newProduct);
+          }
+        }
+        )
         const currentProducts = this.productCache$.getValue();
         this.productCache$.next([...currentProducts, product]);
         const allProducts = this.allFridgeProductsCache$.getValue();
@@ -260,6 +293,19 @@ export class CacheService {
   updateProduct(productId: number, updatedProduct: Product): Observable<Product> {
     return this.productService.updateProduct(productId, updatedProduct).pipe(
       tap(() => {
+        this.allShelvesWithProducts$.pipe(
+          filter(shelves => shelves.length > 0),
+          take(1)
+        ).subscribe((shelves) => {
+          const shelf = shelves.find(shelf => shelf.shelfId === updatedProduct.shelfId);
+          if (shelf) {
+            const productIndex = shelf.products?.findIndex(product => product.productId === productId);
+            if (productIndex !== undefined && productIndex !== -1) {
+              shelf.products![productIndex] = updatedProduct;
+            }
+          }
+        }
+        )
         const currentProducts = this.productCache$.getValue();
         const updatedProducts = currentProducts.map((product) =>
           product.productId === productId ? updatedProduct : product
@@ -282,6 +328,18 @@ export class CacheService {
   deleteProduct(productId: number): Observable<void> {
     return this.productService.deleteProduct(productId).pipe(
       tap(() => {
+        this.allShelvesWithProducts$.pipe(
+          filter(shelves => shelves.length > 0),
+          take(1)
+        ).subscribe((shelves) => {
+          shelves.forEach(shelf => {
+            const productIndex = shelf.products?.findIndex(product => product.productId === productId);
+            if (productIndex !== undefined && productIndex !== -1) {
+              shelf.products!.splice(productIndex, 1);
+            }
+          });
+        }
+        )
         const currentProducts = this.productCache$.getValue();
         const updatedProducts = currentProducts.filter(
           (product) => product.productId !== productId
@@ -304,17 +362,6 @@ export class CacheService {
   getProducts(): Observable<Product[]> {
     return this.productCache$.asObservable();
   }
-
-  /** Load account data for the logged-in user */
-  // loadAccountData(userId: number | null): void {
-  //   if (userId) {
-  //     this.userService.getUserById(userId).subscribe({
-  //       next: (user) => this.accountCache$.next(user),
-  //       error: () => {
-  //       }
-  //     });
-  //   }
-  // }
 
   /** Load family data and members */
   loadFamilyData(familyId: number | null): void {
@@ -481,6 +528,8 @@ export class CacheService {
       tap((shelf) => {
         const currentShelves = this.shelfCache$.getValue();
         this.shelfCache$.next([...currentShelves, shelf]);
+        const currentAllShelves = this.allShelvesWithProducts$.getValue();
+        this.allShelvesWithProducts$.next([...currentAllShelves, shelf]);
       }),
       catchError((error) => {
         console.error('Failed to add shelf:', error);
@@ -498,6 +547,11 @@ export class CacheService {
           shelf.shelfId === shelfId ? { ...shelf, shelfName: updatedShelf.shelfName } : shelf
         );
         this.shelfCache$.next(updatedShelves);
+        const currentAllShelves = this.allShelvesWithProducts$.getValue();
+        const updatedAllShelves = currentAllShelves.map((shelf) =>
+          shelf.shelfId === shelfId ? { ...shelf, shelfName: updatedShelf.shelfName } : shelf
+        );
+        this.allShelvesWithProducts$.next(updatedAllShelves);
       }),
       catchError((error) => {
         console.error('Failed to update shelf:', error);
@@ -513,6 +567,9 @@ export class CacheService {
         const currentShelves = this.shelfCache$.getValue();
         const updatedShelves = currentShelves.filter((shelf) => shelf.shelfId !== shelfId);
         this.shelfCache$.next(updatedShelves);
+        const currentAllShelves = this.allShelvesWithProducts$.getValue();
+        const updatedAllShelves = currentAllShelves.filter((shelf) => shelf.shelfId !== shelfId);
+        this.allShelvesWithProducts$.next(updatedAllShelves);
       }),
       catchError((error) => {
         console.error('Failed to delete shelf:', error);
@@ -564,18 +621,63 @@ export class CacheService {
   }
 
   loadFamilyRecipes(userId: number, familyId: number) {
-    this.recipeService.getUsersFamilySharedRecipes(userId, familyId).subscribe({
-      next: (recipes) => this.familyRecipesSubject$.next(recipes),
-      error: () => console.error('Failed to load family shared recipes'),
-    });
+    if (familyId){
+      this.recipeService.getUsersFamilySharedRecipes(userId, familyId).subscribe({
+        next: (recipes) => this.familyRecipesSubject$.next(recipes),
+        error: () => console.error('Failed to load family shared recipes'),
+      });
+    }else {
+      this.familyRecipesSubject$.next([]);
+    }
   }
 
   saveRecipeToFavorites(createRecipeDto: CreateRecipe): Observable<Recipe> {
     return this.recipeService.createRecipe(createRecipeDto).pipe(
       tap(() => {
-        if (createRecipeDto.saved_by) {
-          this.loadFavoriteRecipes(createRecipeDto.saved_by);
+        if (createRecipeDto.savedBy) {
+          this.loadFavoriteRecipes(createRecipeDto.savedBy);
         }
+      })
+    );
+  }
+
+  updateRecipe(recipeId: number, userId: number, update: UpdateRecipe): Observable<Recipe> {
+    return this.recipeService.updateRecipe(recipeId, update).pipe(
+      tap((updatedRecipe) => {
+        // Update the favorite recipes cache
+        const favoriteRecipes = this.favoriteRecipesSubject$.getValue();
+        const updatedFavoriteRecipes = favoriteRecipes.map(recipe =>
+          recipe.id === recipeId ? updatedRecipe : recipe
+        );
+        this.favoriteRecipesSubject$.next(updatedFavoriteRecipes);
+
+        // Update the family recipes cache if familyId exists
+        if (update.familyId) {
+          const familyRecipes = this.familyRecipesSubject$.getValue();
+          const updatedFamilyRecipes = familyRecipes.map(recipe =>
+            recipe.id === recipeId ? updatedRecipe : recipe
+          );
+          this.familyRecipesSubject$.next(updatedFamilyRecipes);
+        }
+      }),
+      catchError((error) => {
+        console.error('Failed to update recipe:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  deleteRecipeFromFavorites(userId: number, recipeId: number): Observable<void> {
+    return this.recipeService.removeRecipeFromFavorites(userId, recipeId).pipe(
+      tap(() => {
+        const currentRecipes = this.favoriteRecipesSubject$.getValue();
+        const updatedRecipes = currentRecipes.filter(recipe => recipe.id !== recipeId);
+        this.favoriteRecipesSubject$.next(updatedRecipes);
+      }),
+      map(() => void 0),
+      catchError((error) => {
+        console.error('Failed to delete recipe:', error);
+        return throwError(() => error);
       })
     );
   }

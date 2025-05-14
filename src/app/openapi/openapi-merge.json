@@ -1,0 +1,13 @@
+{
+  "inputs": [
+    { "inputFile": "/swagger/services/family-service.yaml" },
+    { "inputFile": "/swagger/services/fridge-service.yaml" },
+    { "inputFile": "/swagger/services/message-service.yaml" },
+    { "inputFile": "/swagger/services/product-service.yaml" },
+    { "inputFile": "/swagger/services/recipe-service.yaml" },
+    { "inputFile": "/swagger/services/shelf-service.yaml" },
+    { "inputFile": "/swagger/services/shopping-list-service.yaml" },
+    { "inputFile": "/swagger/services/user-service.yaml" }
+  ],
+  "output": "/swagger/services/fridge-services.yaml"
+}

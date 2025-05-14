@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: API for managing users, fridges, shelves, items, shopping lists, recipes, ingredients, and messages.
 servers:
-  - url: http://localhost:3001
+  - url: https://varadinas.synology.me:3001
     description: 'API server'
 
 paths:
@@ -65,13 +65,17 @@ paths:
 
   /recipes:
     $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes'
-  /recipes/{recipeId}/ingredients:
-    $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes~1{recipeId}~1ingredients'
+  /recipes/{userId}/favorites:
+    $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes~1{userId}~1favorites'
+  /recipes/{userId}/favorites/family/{familyId}:
+    $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes~1{userId}~1favorites~1family~1{familyId}'
+  /recipes/{recipeId}:
+    $ref: './swagger/services/recipe-service.yaml#/paths/~1recipes~1{recipeId}'
 
   /messages:
     $ref: './swagger/services/message-service.yaml#/paths/~1messages'
-  /messages/chats/{chatId}/messages:
-    $ref: './swagger/services/message-service.yaml#/paths/~1messages~1chats~1{chatId}~1messages'
+  /messages/chats/{familyId}/messages:
+    $ref: './swagger/services/message-service.yaml#/paths/~1messages~1chats~1{familyId}~1messages'
   /messages/{messageId}:
     $ref: './swagger/services/message-service.yaml#/paths/~1messages~1{messageId}'
 
@@ -124,8 +128,10 @@ components:
       $ref: './swagger/interfaces/shopping-list.yaml#/components/schemas/ShoppingListItem'
     Recipe:
       $ref: './swagger/interfaces/recipe.yaml#/components/schemas/Recipe'
-    Ingredient:
-      $ref: './swagger/interfaces/recipe.yaml#/components/schemas/Ingredient'
+    CreateRecipe:
+      $ref: './swagger/interfaces/recipe.yaml#/components/schemas/CreateRecipe'
+    UpdateRecipe:
+      $ref: './swagger/interfaces/recipe.yaml#/components/schemas/UpdateRecipe'
     Message:
       $ref: './swagger/interfaces/message.yaml#/components/schemas/Message'
     Chat:

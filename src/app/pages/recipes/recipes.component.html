@@ -1,5 +1,10 @@
 <ion-header>
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="reloadRecipes()">
+        <ion-icon slot="icon-only" name="reload"></ion-icon>
+      </ion-button>
+    </ion-buttons>
     <ion-title>Recipe Suggestions</ion-title>
   </ion-toolbar>
   <ion-toolbar>
@@ -26,7 +31,7 @@
     </ion-card-header>
     <ion-card-content>
       <ion-button color="secondary" (click)="openRecipeModal(recipe)">Details</ion-button>
-      <ion-button color="danger">Remove</ion-button>
+      <ion-button *ngIf="isOwnRecipe(recipe)" (click)="deleteRecipe(recipe)" color="danger">Remove</ion-button>
       <ion-button *ngIf="isOwnRecipe(recipe)" color="tertiary" (click)="toggleFamilyShare(recipe)">
         {{ recipe.familyId ? 'Unshare' : 'Share' }}
       </ion-button>

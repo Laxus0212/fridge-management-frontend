@@ -16,7 +16,7 @@ import {CacheService} from '../../services/cache.service';
   styleUrls: ['./chat.component.scss'],
 })
 export class ChatComponent extends AbstractPage implements OnInit, OnDestroy {
-  chatId = null;
+  chatId: number | null = null;
   chatTitle = 'Family Chat';
   prevWebsocketMessages: Message[] = [];
   websocketMessages: Message[] = [];
@@ -36,27 +36,38 @@ export class ChatComponent extends AbstractPage implements OnInit, OnDestroy {
     public websocketService: MessageWebsocketService,
   ) {
     super(authService, cacheService, commonService);
-    if (this.familyId) {
-      this.chatId = cacheService.getChat(this.familyId).chatId;
-    }
   }
 
-  override ngOnInit() {
+  override async ngOnInit() {
     super.ngOnInit();
-    this.userId = this.authService.getUserId();
-    this.familyId = this.authService.getUserFamilyId();
+    // Subscribe to familyId changes
+    this.authService.userFamilyId$.subscribe(async (familyId) => {
+      if (familyId) {
+        this.familyId = familyId;
+        this.chatId = await this.cacheService.getChat(this.familyId).then(chat => chat?.chatId ?? null);
 
-    if (this.userId) {
-      this.websocketService.openWebsocketConnection(this.familyId!);
-
-      this.websocketService.websocketMessages$.subscribe((messages: WebsocketChat[]) => {
-        this.websocketMessages = messages.map((msg) => this.convertWebsocketChatToMessage(msg));
-      });
-    }
+        if (this.chatId) {
+          this.websocketService.openWebsocketConnection(this.familyId);
+          this.websocketService.websocketMessages$.subscribe((messages: WebsocketChat[]) => {
+            this.websocketMessages = messages.map((msg) => this.convertWebsocketChatToMessage(msg));
+            this.isLoading = false;
+          });
+        }
+      } else {
+        this.clearChatData(); // Clear chat data if no family is associated
+      }
+    });
   }
 
   ngOnDestroy() {
     // Websocket connection close
+    this.websocketService.closeWebsocketConnection();
+  }
+
+  clearChatData() {
+    this.chatId = null;
+    this.websocketMessages = [];
+    this.prevWebsocketMessages = [];
     this.websocketService.closeWebsocketConnection();
   }
 
@@ -65,20 +76,19 @@ export class ChatComponent extends AbstractPage implements OnInit, OnDestroy {
       return; // Don't send empty messages
     }
 
-
     if (!this.websocketService.isConnected) {
       console.error('Websocket is not connected. Please try again.');
       void this.commonService.presentToast('Websocket is not connected. Please try again.', 'danger');
       return;
     }
 
-    if (this.userId && this.familyId) {
+    if (this.userId && this.familyId && this.chatId) {
       const websocketMessage: WebsocketChat = {
-        messageId: uuidv4(),
         senderId: this.userId,
         chatId: this.chatId,
         username: this.authService.getUsername(),
         message: this.newMessageText,
+        sentAt: new Date().toISOString(),
         familyId: this.familyId,
       };
       // Send the message through the websocket
@@ -97,28 +107,30 @@ export class ChatComponent extends AbstractPage implements OnInit, OnDestroy {
       senderId: websocketChat.senderId,
       username: websocketChat.username,
       message: websocketChat.message,
-      sentAt: new Date().toISOString(),
+      sentAt: websocketChat.sentAt,
       familyId: websocketChat.familyId
     };
   }
 
   // Load all websocketMessages for the chat
   loadMessages() {
-    this.isLoading = true;
-    this.messageService.getMessagesForChat(this.chatId).subscribe({
-      next: (messages: Message[]) => {
-        this.prevWebsocketMessages = messages;
-        messages.forEach(message => {
-          this.getMessageSenderDetails(message);
-        });
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Failed to load messages:', error);
-        void this.commonService.presentToast('Error loading messages', 'danger');
-        this.isLoading = false;
-      }
-    });
+    if (this.chatId) {
+      this.isLoading = true;
+      this.messageService.getMessagesForChat(this.chatId).subscribe({
+        next: (messages: Message[]) => {
+          this.prevWebsocketMessages = messages;
+          messages.forEach(message => {
+            this.getMessageSenderDetails(message);
+          });
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Failed to load messages:', error);
+          void this.commonService.presentToast('Error loading messages', 'danger');
+          this.isLoading = false;
+        }
+      });
+    }
   }
 
   deleteMessage(messageId: string) {

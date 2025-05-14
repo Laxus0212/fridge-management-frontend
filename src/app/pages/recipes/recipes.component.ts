@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ModalController} from '@ionic/angular';
-import {Fridge, FridgeService, Recipe, ShelfService} from '../../openapi/generated-src';
+import {Fridge, FridgeService, Recipe, ShelfService, UpdateRecipe} from '../../openapi/generated-src';
 import {CommonService} from 'src/app/services/common.service';
 import {AuthService} from 'src/app/services/auth.service';
 import {CustomRecipeService} from '../../services/custom-recipe.service';
@@ -68,9 +68,7 @@ export class RecipesComponent extends AbstractPage implements OnInit {
 
     this.favoriteRecipes$ = this.cacheService.getFavoriteRecipes(this.userId!);
     this.familyRecipes$ = this.cacheService.getFamilyRecipes(this.userId!, this.familyId!);
-    this.filteredFavorites$ = combineLatest([this.favoriteRecipes$, this.familyRecipes$]).pipe(
-      map(([favorites, family]) => [...favorites, ...family])
-    );
+    this.filteredFavorites$ = this.getFilteredFavorites();
 
     //this.cacheService.loadAllFridgeProducts();
     //this.loadFridgeIngredients();
@@ -82,6 +80,12 @@ export class RecipesComponent extends AbstractPage implements OnInit {
         ingredient_name: product.productName,
       }));
     });
+  }
+
+  private getFilteredFavorites() {
+    return combineLatest([this.favoriteRecipes$, this.familyRecipes$]).pipe(
+      map(([favorites, family]) => [...favorites, ...family])
+    );
   }
 
   ingredientsList$: Observable<Ingredient[]> = combineLatest([
@@ -108,8 +112,8 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     this.filteredFavorites = all.filter(recipe => {
       const matchType = this.selectedMealType ? recipe.mealType === this.selectedMealType : true;
       const matchOwnership = this.filterOption === 'own'
-        ? recipe.saved_by === this.userId
-        : recipe.familyId === this.authService.getUserFamilyId() && recipe.saved_by !== this.userId;
+        ? recipe.savedBy === this.userId
+        : recipe.familyId === this.authService.getUserFamilyId() && recipe.savedBy !== this.userId;
 
       return matchType && matchOwnership;
     });
@@ -138,6 +142,19 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     ).subscribe();
   }
 
+  reloadRecipes() {
+    if (this.userId) {
+      this.cacheService.loadFavoriteRecipes(this.userId);
+      if (this.familyId){
+        this.cacheService.loadFamilyRecipes(this.userId, this.familyId);
+      }
+      this.filteredFavorites$ = this.getFilteredFavorites();
+      void this.commonService.presentToast('Recipes reloaded!', 'success');
+    } else {
+      void this.commonService.presentToast('User not found', 'danger');
+    }
+  }
+
   loadFridgeIngredients() {
     this.loadAllProductsFromFridges();
   }
@@ -153,9 +170,8 @@ export class RecipesComponent extends AbstractPage implements OnInit {
       description: recipe.description,
       instructions: recipe.instructions,
       ingredients: recipe.ingredients,
-      saved_by: this.userId,
+      savedBy: this.userId,
       mealType: this.selectedMealType ?? undefined,
-      familyId: this.familyId ? this.familyId : undefined
     };
 
     this.cacheService.saveRecipeToFavorites(createRecipeDto).subscribe({
@@ -250,23 +266,37 @@ export class RecipesComponent extends AbstractPage implements OnInit {
   }
 
   isOwnRecipe(recipe: Recipe): boolean {
-    return recipe.saved_by === this.userId;
+    return recipe.savedBy === this.userId;
+  }
+
+  deleteRecipe(recipe: Recipe) {
+    if (!this.userId || !recipe.id) return;
+
+    this.cacheService.deleteRecipeFromFavorites(this.userId, recipe.id).subscribe({
+      next: () => {
+        void this.commonService.presentToast(`\u{1F5D1}\uFE0F '${recipe.title}' removed from favorites`, 'success');
+        this.favoriteRecipes = this.favoriteRecipes.filter(r => r.id !== recipe.id);
+        this.applyFavoritesFilter();
+      },
+      error: () => {
+        void this.commonService.presentToast(`Failed to remove '${recipe.title}'`, 'danger');
+      }
+    });
   }
 
   toggleFamilyShare(recipe: Recipe) {
-    const updatedRecipe = {
-      ...recipe,
-      familyId: recipe.familyId ? undefined : this.familyId
+    if (!recipe.id) return;
+    const update: UpdateRecipe = {
+      familyId: recipe.familyId ? undefined : this.familyId ?? null
     };
 
-    this.cacheService.saveRecipeToFavorites(updatedRecipe).subscribe({
+    this.cacheService.updateRecipe(recipe.id, this.userId!, update).subscribe({
       next: () => {
-        const msg = updatedRecipe.familyId ? 'Shared with family' : 'Unshared from family';
+        const msg = update.familyId ? `\u{1F91D} '${recipe.title}' shared with family` : `\u{1F464} '${recipe.title}' unshared from family`;
         void this.commonService.presentToast(msg, 'success');
-        this.closeRecipeModal();
       },
       error: () => {
-        void this.commonService.presentToast('Failed to update sharing', 'danger');
+        void this.commonService.presentToast(`Failed to update sharing for '${recipe.title}'`, 'danger');
       }
     });
   }

@@ -36,7 +36,7 @@
           <ion-button slot="end" color="primary" (click)="openUpdateShelfModal(shelf); $event.stopPropagation()">
             <ion-icon name="pencil-outline" class="large-icon"></ion-icon>
           </ion-button>
-          <ion-button slot="end" color="danger" (click)="deleteShelf(shelf.shelfId); $event.stopPropagation()">
+          <ion-button slot="end" color="danger" (click)="deleteShelf(shelf.shelfId!); $event.stopPropagation()">
             <ion-icon name="trash-outline" class="large-icon"></ion-icon>
           </ion-button>
           <ion-button slot="end" fill="clear" (click)="toggleSortDirection(shelf.shelfId!); $event.stopPropagation()">
@@ -44,8 +44,8 @@
           </ion-button>
         </ion-item>
         <div class="ion-padding" slot="content">
-          <ion-list *ngIf="shelf.products$ | async as products" class="shelf-list">
-            <ion-item *ngFor="let product of products">
+          <ion-list *ngIf="shelf.products" class="shelf-list">
+            <ion-item *ngFor="let product of shelf.products">
               <ion-label>
                 <h2 class="product-name">
                   {{ product.productName }}

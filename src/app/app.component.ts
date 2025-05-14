@@ -4,6 +4,9 @@ import {filter} from "rxjs";
 import {RoutePaths} from "./enums/route-paths";
 import {AuthService} from './services/auth.service';
 import {CacheService} from './services/cache.service';
+import {NotificationService} from './services/notification.service';
+import {Preferences} from '@capacitor/preferences';
+import {Platform} from '@ionic/angular';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +20,8 @@ export class AppComponent {
     public readonly router: Router,
     private readonly authService: AuthService,
     private cacheService: CacheService,
+    private notificationService: NotificationService,
+    private platform: Platform,
     ) {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
@@ -24,18 +29,30 @@ export class AppComponent {
       this.checkIfUserBarShouldBeDisplayed(event.urlAfterRedirects);
     });
 
-    this.initializeApp();
+    void this.initializeApp();
   }
 
-  initializeApp() {
+  async initializeApp() {
     if (this.authService.isLoggedIn()) {
       const userId = this.authService.getUserId();
       const familyId = this.authService.getUserFamilyId();
 
       console.log('Auto-login detected, full loading cache...');
+      this.cacheService.clearCache();
       this.cacheService.fullLoad(userId, familyId);
+
+      await this.platform.ready();
+
+      const result = await Preferences.get({key: 'notificationSettings'});
+      if (result.value) {
+        const settings = JSON.parse(result.value);
+        if (settings.enabled) {
+          await this.notificationService.initializeNotifications(settings.onlyIfNewItems, settings.notificationTime);
+        }
+      }
     }
   }
+
 
   checkIfUserBarShouldBeDisplayed(url: string) {
     const urlWithoutSlash = url.slice(1);

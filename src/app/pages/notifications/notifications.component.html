@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Értesítések</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="page-content">
+  <ion-list>
+    <ion-item>
+      <ion-label>Napi értesítés engedélyezése</ion-label>
+      <ion-toggle [(ngModel)]="notificationsEnabled" (ionChange)="saveSettings()"></ion-toggle>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Csak ha van új lejárat</ion-label>
+      <ion-toggle [(ngModel)]="onlyIfNewItems" [disabled]="!notificationsEnabled" (ionChange)="saveSettings()"></ion-toggle>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Értesítési időpont</ion-label>
+      <ion-select [(ngModel)]="notificationTime" [disabled]="!notificationsEnabled" (ionChange)="saveSettings()">
+        <ion-select-option value="07:00">07:00</ion-select-option>
+        <ion-select-option value="08:00">08:00</ion-select-option>
+        <ion-select-option value="09:00">09:00</ion-select-option>
+        <ion-select-option value="12:00">12:00</ion-select-option>
+        <ion-select-option value="18:00">18:00</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </ion-list>
+</ion-content>

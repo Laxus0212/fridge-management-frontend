@@ -66,6 +66,15 @@ export class FridgeComponent extends AbstractPage implements OnInit {
     //this.loadFridges();
   }
 
+  reloadFridges() {
+    if (this.userId) {
+      this.cacheService.loadFridges(this.userId, this.familyId);
+      void this.commonService.presentToast('Fridges reloaded!', 'success');
+    } else {
+      void this.commonService.presentToast('User not found', 'danger');
+    }
+  }
+
 
   // loadFridges() {
   //   this.cacheService.loadFridges(this.userId, this.familyId);

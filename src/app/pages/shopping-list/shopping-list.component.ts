@@ -66,6 +66,15 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
     this.cacheService.isLoading$.subscribe(isLoading => this.isLoading = isLoading);
   }
 
+  reloadShoppingLists() {
+    if (this.userId) {
+      this.cacheService.loadShoppingLists(this.userId);
+      void this.commonService.presentToast('Shopping lists reloaded!', 'success');
+    } else {
+      void this.commonService.presentToast('User not found', 'danger');
+    }
+  }
+
   onFilterChange() {
     this.filteredShoppingLists$ = this.shoppingLists$.pipe(
       map(lists => this.applyFilter(lists))

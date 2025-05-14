@@ -7,41 +7,50 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <!-- Loading State -->
-  <ng-container *ngIf="isLoading; else messageList">
-    <ion-list>
-      <ion-item *ngFor="let i of [1, 2, 3]">
-        <ion-label>
-          <ion-skeleton-text animated style="width: 80%"></ion-skeleton-text>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+<ion-content class="page-content">
+  <!-- No Family Message -->
+  <ng-container *ngIf="!familyId; else chatContent">
+    <div class="no-family-message">
+      <p>You are currently not part of any family. Join or create a family to access the chat.</p>
+    </div>
   </ng-container>
 
-  <!-- Message List -->
-  <ng-template #messageList>
-    <div class="message-container">
-      <!-- Websocket Messages -->
-      <ng-container *ngFor="let messages of [prevWebsocketMessages, websocketMessages]">
-        <div
-          *ngFor="let message of messages"
-          [ngClass]="{'sent-bubble': isUserMessage(message), 'received-bubble': !isUserMessage(message)}"
-        >
-          <!-- Message Bubble -->
-          <div class="bubble-content" (click)="isUserMessage(message) ? presentAccountActionSheet(message) : null">
-            <h3 *ngIf="!isUserMessage(message)">{{ getMessageSenderName(message) }}</h3>
-            <p>{{ message.message }}</p>
-            <small>{{ message.sentAt | date: 'dd/MM/YY hh:mm' }}</small>
+  <!-- Chat Content -->
+  <ng-template #chatContent>
+    <!-- Loading State -->
+    <ng-container *ngIf="isLoading; else messageList">
+      <ion-list>
+        <ion-item *ngFor="let i of [1, 2, 3]">
+          <ion-label>
+            <ion-skeleton-text animated style="width: 80%"></ion-skeleton-text>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ng-container>
+
+    <!-- Message List -->
+    <ng-template #messageList>
+      <div class="message-container">
+        <!-- Websocket Messages -->
+        <ng-container *ngFor="let message of websocketMessages">
+          <div
+            [ngClass]="{'sent-bubble': isUserMessage(message), 'received-bubble': !isUserMessage(message)}"
+          >
+            <!-- Message Bubble -->
+            <div class="bubble-content" (click)="isUserMessage(message) ? presentAccountActionSheet(message) : null">
+              <h3 *ngIf="!isUserMessage(message)">{{ message.username }}</h3>
+              <p>{{ message.message }}</p>
+              <small>{{ message.sentAt | date: 'dd/MM/YY hh:mm' }}</small>
+            </div>
           </div>
-        </div>
-      </ng-container>
-    </div>
+        </ng-container>
+      </div>
+    </ng-template>
   </ng-template>
 </ion-content>
 
 <!-- Message Input and Send Button -->
-<ion-footer>
+<ion-footer *ngIf="familyId">
   <ion-toolbar>
     <ion-item>
       <ion-input

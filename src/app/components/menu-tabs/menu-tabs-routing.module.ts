@@ -33,6 +33,10 @@ const routes: Routes = [
         loadChildren: () => import('../../pages/family/family.module').then(m => m.FamilyModule), canActivate: [AuthGuard]
       },
       {
+        path: 'notifications',
+        loadChildren: () => import('../../pages/notifications/notifications.module').then(m => m.NotificationsModule), canActivate: [AuthGuard]
+      },
+      {
         path: 'error',
         loadChildren: () => import('../../pages/error/error.module').then(m => m.ErrorModule)
       },

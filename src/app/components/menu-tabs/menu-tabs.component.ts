@@ -44,6 +44,15 @@ export class MenuTabsComponent  implements OnInit {
           }
         },
         {
+          text: 'Notifications',
+          icon: 'notifications-outline',
+          handler: () => {
+            // Navigálás a fiókbeállítások oldalra
+            this.commonService.navigateToPage(RoutePaths.Notifications, this.route);
+            console.log('Notifications clicked');
+          }
+        },
+        {
           text: 'Logout',
           role: 'destructive',
           icon: 'log-out',

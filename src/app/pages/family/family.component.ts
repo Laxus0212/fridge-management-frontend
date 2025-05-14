@@ -29,8 +29,34 @@ export class FamilyComponent extends AbstractPage implements OnInit {
 
   override ngOnInit() {
     super.ngOnInit();
-    this.loadFamilyData();
+
+    // Subscribe to userId and familyId changes
+    this.authService.userId$.subscribe((userId) => {
+      if (userId) {
+        this.userId = userId;
+        this.loadFamilyData(); // Load family data for the new user
+        this.checkPendingInvites();
+      } else {
+        this.clearFamilyData(); // Clear family data if no user is logged in
+        this.pendingInvite = null;
+      }
+    });
+
+    this.authService.userFamilyId$.subscribe((familyId) => {
+      if (familyId) {
+        this.familyId = familyId;
+        this.loadFamilyData(); // Reload family data if family changes
+      } else {
+        this.clearFamilyData(); // Clear family data if no family is associated
+      }
+    });
+
     this.checkPendingInvites();
+  }
+
+  clearFamilyData() {
+    this.family = null;
+    this.familyMembers = [];
   }
 
 
@@ -91,6 +117,7 @@ export class FamilyComponent extends AbstractPage implements OnInit {
                   this.authService.setUserFamilyId(family.familyId);
                   this.familyId = family.familyId;
                   this.loadFamilyData();
+                  this.cacheService.fullLoad(this.userId, this.familyId);
                   this.commonService.presentToast('Family created successfully!', 'success');
                 },
                 error: (err) => this.commonService.presentToast(err.message, 'danger')
@@ -100,6 +127,19 @@ export class FamilyComponent extends AbstractPage implements OnInit {
         },
         error: () => this.commonService.presentToast('Failed to create family.', 'danger'),
       });
+    }
+  }
+
+  reloadFamily() {
+    if (!this.familyId) {
+      this.checkPendingInvites();
+    }
+    if (this.userId && this.familyId) {
+      this.cacheService.loadFamilyMembers(this.familyId);
+      this.cacheService.loadFamilyData(this.familyId);
+      this.commonService.presentToast('Family data reloaded!', 'success');
+    } else {
+      this.commonService.presentToast('User or family not found', 'danger');
     }
   }
 
@@ -124,6 +164,7 @@ export class FamilyComponent extends AbstractPage implements OnInit {
           this.commonService.presentToast('Invitation accepted!', 'success');
           this.pendingInvite = null;
           this.loadFamilyData();
+          this.cacheService.fullLoad(this.userId, this.familyId);
         },
         error: () => this.commonService.presentToast('Failed to accept invitation.', 'danger'),
       });
@@ -148,6 +189,8 @@ export class FamilyComponent extends AbstractPage implements OnInit {
         next: () => {
           this.family = null;
           this.authService.clearUserFamilyId();
+          //this.cacheService.clearCache();
+          this.cacheService.fullLoad(this.userId, this.familyId);
           this.commonService.presentToast('You have left the family.', 'warning');
         },
         error: () => this.commonService.presentToast('Failed to leave family.', 'danger'),

@@ -22,14 +22,12 @@ export class MessageWebsocketService {
 
   public openWebsocketConnection(familyId: number): void {
     this.familyId = familyId;
-    this.socket = io('http://localhost:3001', {
+    this.socket = io('https://varadinas.synology.me:3001', {
       transports: ['websocket'],
     });
 
     this.socket.on('connect', () => {
-      console.log('✅ Socket.IO connected');
-      console.log(this.socket);
-      this.socket?.emit('setFamilyId', familyId); // ha van ilyen event
+      this.socket?.emit('setFamilyId', familyId);
       this.isConnected = true;
 
       // Betöltés (ha kell adat betöltés külön)
@@ -39,12 +37,13 @@ export class MessageWebsocketService {
             messageId: msg.messageId ?? '',
             senderId: msg.senderId!,
             chatId: msg.chatId,
-            username: this.extractUsername(msg.senderId!),
+            username: msg.username,
             message: msg.message,
-            familyId: this.familyId!,
+            sentAt: msg.sentAt,
+            familyId: msg.familyId,
           }));
-
-          this.websocketMessages$.next(websocketMessages);
+          //add to websocketMessages with sorted by sentAt
+          this.websocketMessages$.next(websocketMessages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()));
         },
         error: (err) => console.error('Load error:', err),
       });
@@ -87,20 +86,6 @@ export class MessageWebsocketService {
 
     message.familyId = this.familyId!;
     this.socket.emit('sendMessage', message);
-
-    // DB mentés
-    this.messageService.sendMessage({
-      messageId: message.messageId,
-      chatId: message.chatId,
-      senderId: message.senderId,
-      username: message.username,
-      message: message.message,
-      familyId: message.familyId,
-      sentAt: new Date().toISOString(),
-    }).subscribe({
-      next: () => console.log('Message saved'),
-      error: (err) => console.error('Save failed:', err),
-    });
   }
 
   public closeWebsocketConnection(): void {

@@ -3,68 +3,165 @@ paths:
     post:
       tags:
         - Recipe
-      summary: Add a new recipe
-      operationId: addRecipe
+      summary: Save recipe as favorite
+      operationId: createRecipe
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '../interfaces/recipe.yaml#/components/schemas/Recipe'
+              $ref: '../interfaces/recipe.yaml#/components/schemas/CreateRecipe'
+            example:
+              title: Tojásrántotta
+              description: Egyszerű és gyors reggeli tojásból.
+              ingredients:
+                - "2 tojás"
+                - "1 evőkanál vaj"
+                - "csipet só"
+              instructions: Verd fel a tojásokat, melegítsd fel a vajat, süsd meg közepes lángon.
+              savedBy: 5
+              familyId: 2
+              mealType: reggeli
       responses:
         '201':
-          description: Recipe added successfully
+          description: Recipe saved successfully
           content:
             application/json:
               schema:
                 $ref: '../interfaces/recipe.yaml#/components/schemas/Recipe'
-              examples:
-                example1:
-                  value:
-                    recipeId: 1
-                    recipeName: "Pancakes"
-                    mealType: "reggeli"
-                    sharedWithFamily: true
-                    ingredients: [
-                        {
-                            ingredientId: 1,
-                            recipeId: 1,
-                            productName: "Flour",
-                            quantity: 2,
-                            unit: "dkg"
-                        }
-                    ]
+              example:
+                value:
+                  id: 1
+                  title: Tojásrántotta
+                  description: Egyszerű és gyors reggeli tojásból.
+                  ingredients:
+                    - "2 tojás"
+                    - "1 evőkanál vaj"
+                    - "csipet só"
+                  instructions: Verd fel a tojásokat, melegítsd fel a vajat, süsd meg közepes lángon.
+                  savedBy: 5
+                  familyId: 2
+                  mealType: reggeli
 
-  /recipes/{recipeId}/ingredients:
-    post:
+  /recipes/{userId}/favorites:
+    get:
       tags:
         - Recipe
-      summary: Add ingredient to a recipe
-      operationId: addIngredientToRecipe
+      summary: Get users favorite recipes
+      operationId: getUsersFavoriteRecipes
       parameters:
-        - in: path
-          name: recipeId
-          schema:
-              type: integer
+        - name: userId
+          in: path
           required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of favorite recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/recipe.yaml#/components/schemas/Recipe'
+              example:
+                - id: 1
+                  title: Tojásrántotta
+                  description: Egyszerű és gyors reggeli tojásból.
+                  ingredients:
+                    - "2 tojás"
+                    - "1 evőkanál vaj"
+                    - "csipet só"
+                  instructions: Verd fel a tojásokat, melegítsd fel a vajat, süsd meg közepes lángon.
+                  savedBy: 5
+                  familyId: 2
+                  mealType: reggeli
+                - id: 2
+                  title: Paradicsomos tészta
+                  description: Gyors és ízletes tésztaétel paradicsommal.
+                  ingredients:
+                    - "200 g tészta"
+                    - "2 paradicsom"
+                    - "1 evőkanál olívaolaj"
+                  instructions: Főzd meg a tésztát, pirítsd meg a paradicsomot olívaolajjal, keverd össze.
+                  savedBy: 3
+                  familyId: 1
+                  mealType: ebéd
+
+    delete:
+      tags:
+        - Recipe
+      summary: Remove recipe from favorites
+      operationId: removeRecipeFromFavorites
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user whose favorite recipe to remove
+          schema:
+            type: integer
+        - name: recipeId
+          in: query
+          required: true
+          description: ID of the recipe to remove from favorites
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Recipe removed from favorites successfully
+
+  /recipes/{userId}/favorites/family/{familyId}:
+    get:
+      tags:
+        - Recipe
+      summary: Get family shared recipes excluding user's own
+      operationId: getUsersFamilySharedRecipes
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of family shared recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../interfaces/recipe.yaml#/components/schemas/Recipe'
+  /recipes/{recipeId}:
+    put:
+      tags:
+        - Recipe
+      summary: Update recipe (e.g. share with family)
+      operationId: updateRecipe
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '../interfaces/recipe.yaml#/components/schemas/Ingredient'
+              $ref: '../interfaces/recipe.yaml#/components/schemas/UpdateRecipe'
+            example:
+              familyId: 2
       responses:
-        '201':
-          description: Ingredient added successfully
+        '200':
+          description: Recipe updated successfully
           content:
             application/json:
               schema:
-                $ref: '../interfaces/recipe.yaml#/components/schemas/Ingredient'
-              examples:
-                example1:
-                  value:
-                    ingredientId: 1
-                    recipeId: 1
-                    productName: "Flour"
-                    quantity: 2
-                    unit: "dkg"
+                $ref: '../interfaces/recipe.yaml#/components/schemas/Recipe'
+        '404':
+          description: Recipe not found

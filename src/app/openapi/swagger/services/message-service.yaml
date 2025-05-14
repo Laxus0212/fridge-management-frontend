@@ -29,14 +29,14 @@ paths:
                     familyId: 2
                     sentAt: "2023-11-01T10:00:00Z"
 
-  /messages/chats/{chatId}/messages:
+  /messages/chats/{familyId}/messages:
     get:
       tags:
         - Message
       summary: Get all messages for a chat
       operationId: getMessagesForChat
       parameters:
-        - name: chatId
+        - name: familyId
           in: path
           required: true
           schema:

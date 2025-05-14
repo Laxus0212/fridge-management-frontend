@@ -34,7 +34,14 @@ export class AccountComponent extends AbstractPage implements OnInit {
   override ngOnInit() {
     super.ngOnInit();
     this.initForm();
-    this.loadUserData();
+    this.authService.userId$.subscribe((userId) => {
+      if (userId) {
+        this.userId = userId;
+        this.loadUserData();
+      } else {
+        this.accountForm.reset();
+      }
+    });
   }
 
   initForm() {

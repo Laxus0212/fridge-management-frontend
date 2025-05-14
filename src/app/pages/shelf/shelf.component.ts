@@ -9,7 +9,7 @@ import { CacheService } from 'src/app/services/cache.service';
 import {CapacitorBarcodeScanner} from '@capacitor/barcode-scanner';
 import { ModalController } from '@ionic/angular';
 import {LogPopupComponent} from '../../components/log-popup/log-popup.component';
-import {map, Observable, tap} from 'rxjs';
+import {BehaviorSubject, filter, map, Observable, switchMap, tap} from 'rxjs';
 import {ShelfViewModel} from './shelf-view-model';
 
 @Component({
@@ -48,6 +48,8 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   highlightedProducts: { [key: number]: boolean } = {};
   expandedShelfId: number | null = null;
   sortDirections: {[shelfId: number]: 'asc' | 'desc'} = {};
+  private fridgeIdSubject$ = new BehaviorSubject<number | undefined>(undefined);
+
 
 
   constructor(
@@ -68,39 +70,25 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   override ngOnInit() {
     super.ngOnInit();
     this.fridgeId = Number.parseInt(sessionStorage.getItem('selectedFridgeId') ?? '');
+    this.fridgeIdSubject$.next(this.fridgeId); // Update the subject with the fridgeId
     this.loadShelves();
-    this.route.queryParams.subscribe(params => {
-      const scannedBarcode = params['barcode'];
-      if (scannedBarcode) {
-        // használd itt a kódot
-        console.log('Beolvasott vonalkód:', scannedBarcode);
-      }
-    });
+    // this.route.queryParams.subscribe(params => {
+    //   const scannedBarcode = params['barcode'];
+    //   if (scannedBarcode) {
+    //     // használd itt a kódot
+    //     console.log('Beolvasott vonalkód:', scannedBarcode);
+    //   }
+    // });
 
-    this.cacheService.getProducts().subscribe((products) => {
-      this.shelves.forEach((shelf) => {
-        shelf.products = products.filter((product) => product.shelfId === shelf.shelfId);
-      });
-    });
+    // this.cacheService.getProducts().subscribe((products) => {
+    //   this.shelves.forEach((shelf) => {
+    //     shelf.products = products.filter((product) => product.shelfId === shelf.shelfId);
+    //   });
+    // });
     this.rebuildShelvesStream();
   }
 
-  shelves$: Observable<ShelfViewModel[]> = this.cacheService.getShelves().pipe(
-    map(shelves => shelves.map(shelf => ({
-      ...shelf,
-      products$: this.cacheService.getProducts().pipe(
-        map(products => {
-          const shelfProducts = products.filter(p => p.shelfId === shelf.shelfId);
-          const direction = this.sortDirections[shelf.shelfId!] || 'asc';
-          return [...shelfProducts].sort((a, b) => {
-            const dateA = new Date(a.expirationDate).getTime();
-            const dateB = new Date(b.expirationDate).getTime();
-            return direction === 'asc' ? dateA - dateB : dateB - dateA;
-          });
-        })
-      )
-    })))
-  );
+  shelves$: Observable<Shelf[]> = this.getShelvesStream();
 
   toggleSortDirection(shelfId: number) {
     const current = this.sortDirections[shelfId] || 'asc';
@@ -109,21 +97,23 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   }
 
   rebuildShelvesStream() {
-    this.shelves$ = this.cacheService.getShelves().pipe(
-      map(shelves => shelves.map(shelf => ({
-        ...shelf,
-        products$: this.cacheService.getProducts().pipe(
-          map(products => {
-            const shelfProducts = products.filter(p => p.shelfId === shelf.shelfId);
+    this.shelves$ = this.getShelvesStream();
+  }
+
+  private getShelvesStream(): Observable<Shelf[]> {
+    return this.fridgeIdSubject$.pipe(
+      filter((id): id is number => id !== undefined), // Ensure fridgeId is defined
+      switchMap(fridgeId => this.cacheService.getShelvesFromCacheByFridgeId(fridgeId).pipe(
+        map(shelves => shelves.map(shelf => ({
+          ...shelf,
+          products: [...(shelf.products || [])].sort((a, b) => {
             const direction = this.sortDirections[shelf.shelfId!] || 'asc';
-            return [...shelfProducts].sort((a, b) => {
-              const dateA = new Date(a.expirationDate).getTime();
-              const dateB = new Date(b.expirationDate).getTime();
-              return direction === 'asc' ? dateA - dateB : dateB - dateA;
-            });
+            const dateA = new Date(a.expirationDate).getTime();
+            const dateB = new Date(b.expirationDate).getTime();
+            return direction === 'asc' ? dateA - dateB : dateB - dateA;
           })
-        )
-      })))
+        })))
+      ))
     );
   }
 
@@ -145,14 +135,13 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   loadShelves() {
     if (!this.fridgeId) return;
     this.isLoading = true;
-    this.cacheService.loadShelves(this.fridgeId).subscribe({
-      next: (shelves) => {
-        this.shelves = shelves;
-        this.shelves.forEach((shelf) => this.loadProductsForShelf(shelf));
+
+    this.cacheService.getShelvesFromCacheByFridgeId(this.fridgeId).subscribe({
+      next: () => {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Failed to load shelves:', error);
+        console.error('Failed to load shelves from cache:', error);
         void this.commonService.presentToast(error.error.message, 'danger');
         this.isLoading = false;
       },
@@ -216,7 +205,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   }
 
    async startScan(isNewProduct: boolean) {
-
        try {
          const result = await CapacitorBarcodeScanner.scanBarcode({
            hint: 17,
@@ -225,8 +213,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
          const barcode = result.ScanResult; // pl. "5991234567890"
 
          if (!barcode) return;
-
-         console.log('Scanned barcode:', barcode);
 
          const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
          const data = await response.json();
@@ -246,7 +232,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
              this.selectedProduct.quantity = quantity;
              this.selectedProduct.unit = unit as Product.UnitEnum;
            }
-
            void this.commonService.presentToast(`Product found: ${name}`, 'success');
          } else {
            void this.commonService.presentToast('Product not found in database', 'warning');
@@ -255,7 +240,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
          console.error('Scan failed', error);
          void this.commonService.presentToast('Scan failed!', 'danger');
        }
-
   }
 
   async stopScan() {
@@ -272,10 +256,11 @@ export class ShelfComponent extends AbstractPage implements OnInit {
     this.selectedShelf = this.shelves.find(shelf => shelf.shelfId === product.shelfId) ?? null;
   }
 
-  deleteProduct(id: number) {
-    this.cacheService.deleteProduct(id).subscribe({
+  deleteProduct(productId: number) {
+    this.cacheService.deleteProduct(productId).subscribe({
       next: () => {
-        //this.loadShelves();
+        const shelfId = this.selectedProduct.shelfId!;
+        this.updateShelfCache(shelfId);
         void this.commonService.presentToast('Product deleted successfully!', 'success');
       },
       error: (error) => {
@@ -300,6 +285,7 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
     this.cacheService.addShelf(newShelf).subscribe({
       next: () => {
+        this.rebuildShelvesStream();
         this.closeAddShelfModal();
         void this.commonService.presentToast('Shelf added successfully!', 'success');
       },
@@ -347,6 +333,7 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
     this.cacheService.updateShelfName(this.selectedShelf.shelfId!, updatedShelf).subscribe({
       next: () => {
+        this.rebuildShelvesStream();
         this.closeUpdateShelfModal();
         void this.commonService.presentToast('Shelf updated successfully!', 'success');
       },
@@ -362,6 +349,7 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
     this.cacheService.deleteShelf(id).subscribe({
       next: () => {
+        this.rebuildShelvesStream();
         void this.commonService.presentToast('Shelf deleted successfully!', 'success');
       },
       error: (error) => {
@@ -398,16 +386,17 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   addProduct() {
     if (!this.selectedShelf || !this.newProduct?.productName || !this.newProduct.quantity || !this.newProduct.unit || !this.newProduct.expirationDate) return;
 
-    //check unit in Product.UnitEnum enum and set it to newProduct.unit
     if (!Object.values(Product.UnitEnum).includes(this.newProduct.unit)) {
       void this.commonService.presentToast('Invalid unit!', 'danger');
       return;
     }
+
     this.newProduct.unit = this.newProduct.unit as Product.UnitEnum;
     this.newProduct.expirationDate = this.formatDate(this.newProduct.expirationDate);
-    if (this.newProduct.opened_date){
+    if (this.newProduct.opened_date) {
       this.newProduct.opened_date = this.formatDate(this.newProduct.opened_date);
     }
+
     const newProduct: Product = {
       ...this.newProduct,
       shelfId: this.selectedShelf.shelfId
@@ -415,6 +404,7 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
     this.cacheService.addProduct(newProduct).subscribe({
       next: () => {
+        this.updateShelfCache(this.selectedShelf?.shelfId!);
         this.closeAddProductModal();
         void this.commonService.presentToast('Product added successfully!', 'success');
       },
@@ -447,12 +437,24 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
     this.cacheService.updateProduct(this.selectedProduct.productId!, this.selectedProduct).subscribe({
       next: () => {
+        this.updateShelfCache(this.selectedProduct.shelfId!);
         this.closeUpdateProductModal();
         void this.commonService.presentToast('Product updated successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to update product:', error);
         void this.commonService.presentToast('Failed to update product!', 'danger');
+      }
+    });
+  }
+
+  private updateShelfCache(shelfId: number) {
+    this.cacheService.loadShelfProductsIntoCache(shelfId).subscribe({
+      next: () => {
+        this.rebuildShelvesStream();
+      },
+      error: (error) => {
+        console.error(`Failed to update shelf cache for shelf ${shelfId}:`, error);
       }
     });
   }

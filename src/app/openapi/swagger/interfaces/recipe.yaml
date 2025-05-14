@@ -1,37 +1,38 @@
 components:
   schemas:
-    Recipe:
+    CreateRecipe:
       type: object
       properties:
-        recipeId:
-          type: integer
-        recipeName:
+        title:
           type: string
+          description:
+            type: string
+        ingredients:
+          type: array
+          items:
+            type: string
+        instructions:
+          type: string
+        savedBy:
+          type: integer
+        familyId:
+          type: integer
+          nullable: true
         mealType:
           type: string
-          enum:
-            - reggeli
-            - ebéd
-            - vacsora
-        saved_by:
-          type: integer
-        sharedWithFamily:
-          type: boolean
-        ingredients:
-            type: array
-            items:
-              $ref: '#/components/schemas/Ingredient'
+          enum: [ reggeli, ebéd, vacsora ]
 
-    Ingredient:
+    Recipe:
+      allOf:
+        - $ref: './recipe.yaml#/components/schemas/CreateRecipe'
+        - type: object
+          properties:
+            id:
+              type: integer
+
+    UpdateRecipe:
       type: object
       properties:
-        ingredientId:
+        familyId:
           type: integer
-        ingredient_name:
-          type: string
-        quantity:
-          type: number
-        unit:
-          type: string
-        recipeId:
-          type: integer
+          nullable: true
