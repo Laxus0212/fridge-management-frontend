@@ -1,59 +1,93 @@
-# Leírás a projekt elindításához
+# Fridge Management – Frontend
 
-> npm install ws szerveren a websockethez
+> Egy mobilalkalmazás frontendje hűtők, termékek, receptek, bevásárlólisták és családi megosztás kezelésére.  
+> Ionic + Angular + Capacitor alapokon, WebSocket és OpenAPI támogatással.
 
-## Kódsorok lokális futtatásához
+---
 
-> npm install
+## 📦 Alap telepítés
 
-//> cd fridge-management/src/app/openapi
+> Telepítsd a szükséges csomagokat:
 
-//> openapi-generator-cli generate -i http://localhost:3000/swagger.json -g typescript-angular -o ./generated-angular-sdk
-> npm run generate:swagger
+```
+npm install
+npm install @ionic/utils-process
+npm install ws // csak ha WebSocket hibát ír a szerveren
+```
 
-//> cd ../..
+---
 
-//> ionic serve --configuration=development vagy ionic capacitor build android
-> npm run start:dev
+## 🔄 OpenAPI kliens generálás
 
-## Prism mock szerver futtatása
+> A biztosított OpenAPI YAML alapján generálódnak a service-ek:
 
-> cd .\src\app\openapi\
+```
+npm run generate:swagger
+```
 
-> prism mock openapi.yaml
+---
 
-## Kódsorok prod futtatáshoz
+## 🧪 Fejlesztői szerver indítása
 
-> cd fridge-management/src/app/openapi
+> Lokális fejlesztéshez:
 
-> openapi-generator-cli generate -i https://varadinas.synology.me:3000/swagger.json -g typescript-angular -o ./generated-angular-sdk
+```
+npm run serve:dev
+```
 
-> cd ../..
+vagy
 
-> ionic serve --configuration=production vagy ionic capacitor build android
+```
+ionic serve --configuration=development
+```
 
-npm install @ionic/utils-process -> az ionic-nak, hogy lássa a telefont
+---
 
-kell még websocket a chat funkcióhoz
-regisztrációs oldalt is megnézni
-valahogy megoldani, hogy a család "tulajdonosa" meg tudjon hívni felhasználót emailcím alapján
-ki lehessen lépni a családból
-külön fül, ahol meg lehet nézni kik vannak a családban
-hűtő megosztása a családdal az update oldalon és a hozzáadásnál is
-backend kell a swagger alapján
-tesztek
-package json átnézése
-ci/cd pipeline
-dockert átnézni mi kell hozzá
-dokumentáció
-readme átnézése
-inline teszt adatok kiírtása
-mindent kitelepíteni nas-ra
-mobilon tesztelni
-admin felület
-folyamat stb ábrák
+## 📱 Android build
 
-ezek a service-ek segíthetnek még a familyid, userid adatok elérésében. 
-A fridge component alapján szereném az owned és family shared, valamint 
-az edit és new shopping list-et megoldani.
+> Natív mobilalkalmazás fordítása Androidra:
 
+```
+ionic capacitor build android
+```
+
+---
+
+## 🧪 Prism mock szerver indítása
+
+> A backend nélküli teszteléshez használhatsz Prism mock szervert:
+
+```
+cd ./src/app/openapi/
+prism mock openapi.yaml
+```
+
+---
+
+## 🚀 Production mód build
+
+> Production környezetre való build:
+
+```
+npm run generate:swagger
+ionic serve --configuration=production
+```
+
+vagy
+
+```
+ionic capacitor build android
+```
+
+---
+
+## ⚙️ Használt főbb technológiák
+
+> Az alkalmazás az alábbi technológiákra épül:
+
+- `@angular/core`, `@ionic/angular`
+- `@capacitor/android`, `@capacitor/barcode-scanner`, `@capacitor/local-notifications`
+- `socket.io-client` – WebSocket alapú családi csevegéshez
+- `openapi-generator-cli` – OpenAPI definíciók alapján generált service-ek
+
+---

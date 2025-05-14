@@ -6,5 +6,11 @@
       "open": false
     }
   },
-  "type": "angular"
+  "type": "angular",
+  "proxies": [
+    {
+      "path": "/",
+      "proxyUrl": "https://varadinas.synology.me:3001"
+    }
+  ]
 }
