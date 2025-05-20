@@ -1,8 +1,6 @@
-<ion-header>
   <ion-toolbar>
     <ion-title>Account</ion-title>
   </ion-toolbar>
-</ion-header>
 
 <ion-content *ngIf="accountForm" class="page-content">
   <form [formGroup]="accountForm" (ngSubmit)="updateAccount()">
