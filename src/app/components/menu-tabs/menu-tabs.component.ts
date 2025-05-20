@@ -29,7 +29,6 @@ export class MenuTabsComponent  implements OnInit {
           text: 'Account Settings',
           icon: 'settings',
           handler: () => {
-            // Navigálás a fiókbeállítások oldalra
             this.commonService.navigateToPage(RoutePaths.Account, this.route);
             console.log('Account Settings clicked');
           }
@@ -38,7 +37,6 @@ export class MenuTabsComponent  implements OnInit {
           text: 'Family',
           icon: 'people-circle-outline',
           handler: () => {
-            // Navigálás a fiókbeállítások oldalra
             this.commonService.navigateToPage(RoutePaths.Family, this.route);
             console.log('Family clicked');
           }
@@ -47,7 +45,6 @@ export class MenuTabsComponent  implements OnInit {
           text: 'Notifications',
           icon: 'notifications-outline',
           handler: () => {
-            // Navigálás a fiókbeállítások oldalra
             this.commonService.navigateToPage(RoutePaths.Notifications, this.route);
             console.log('Notifications clicked');
           }
@@ -57,7 +54,6 @@ export class MenuTabsComponent  implements OnInit {
           role: 'destructive',
           icon: 'log-out',
           handler: () => {
-            // Kijelentkezés logika
             this.authService.logout();
             console.log('Logout clicked');
           }

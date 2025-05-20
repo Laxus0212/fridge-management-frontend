@@ -52,7 +52,6 @@ export class CacheService {
   private familyRecipesSubject$ = new BehaviorSubject<Recipe[]>([]);
   private allFridgeProductsCache$ = new BehaviorSubject<Product[]>([]);
   isLoading$ = this.isLoadingSubject$.asObservable();
-  private cacheLoaded = false;
 
   constructor(
     public fridgeService: FridgeService,
@@ -62,15 +61,11 @@ export class CacheService {
     private userService: UserService,
     private familyService: FamilyService,
     private recipeService: RecipeService,
-  ) {
-    // this.productCache$.subscribe(products => {
-    //   this.allFridgeProductsCache$.next(products);
-    // });
-  }
+  ) {}
 
   /** Load all fridges for the user and store them in cache */
   loadFridges(userId: number | null, familyId: number | null): void {
-    this.isLoadingSubject$.next(true); // Start loading
+    this.isLoadingSubject$.next(true);
     this.syncFridges(userId, familyId);
 
     this.getFridges().pipe(
@@ -87,7 +82,6 @@ export class CacheService {
     this.shoppingListCache$.next([]);
     this.shelfCache$.next([]);
     this.productCache$.next([]);
-    //this.accountCache$.next(null);
     this.familyCache$.next(null);
     this.chatCache$.next(null);
     this.familyMembersCache$.next([]);
@@ -106,7 +100,6 @@ export class CacheService {
             this.makeMergedFridgesFromOwnedAndFamilys(familyId, fridges);
           } else {
             this.fridgeCache$.next([...fridges]);
-            //this.loadAllFridgeProducts();
             this.isLoadingSubject$.next(false); // Stop loading
           }
         },
@@ -121,24 +114,6 @@ export class CacheService {
     return this.allFridgeProductsCache$.asObservable();
   }
 
-  // loadAllFridgeProducts(): void {
-  //   this.getFridges().pipe(
-  //     filter(fridges => fridges.length > 0),
-  //     switchMap(fridges => {
-  //       const shelvesRequests = fridges.map(fridge => this.loadShelves(fridge.fridgeId!));
-  //       return forkJoin(shelvesRequests);
-  //     }),
-  //     switchMap(() => this.getShelves()),
-  //     switchMap(shelves => {
-  //       const productsRequests = shelves.map(shelf => this.loadShelfProducts(shelf.shelfId!));
-  //       return forkJoin(productsRequests);
-  //     }),
-  //     map(productsArrays => productsArrays.flat())
-  //   ).subscribe({
-  //     next: (allProducts) => this.allFridgeProductsCache$.next(allProducts),
-  //     error: (error) => console.error('Failed to load all fridge products:', error),
-  //   });
-  // }
 
   loadAllFridgeProducts(): void {
     this.getFridges().pipe(
@@ -174,10 +149,6 @@ export class CacheService {
       },
       error: (error) => console.error('Failed to load all fridge products:', error),
     });
-  }
-
-  getAllShelvesWithProducts(): Observable<Shelf[]> {
-    return this.allShelvesWithProducts$.asObservable();
   }
 
   getShelvesFromCacheByFridgeId(fridgeId: number): Observable<Shelf[]> {
@@ -356,11 +327,6 @@ export class CacheService {
         return throwError(() => error);
       })
     );
-  }
-
-  /** Get cached products as an observable */
-  getProducts(): Observable<Product[]> {
-    return this.productCache$.asObservable();
   }
 
   /** Load family data and members */
@@ -582,10 +548,6 @@ export class CacheService {
     return this.productCache$.asObservable();
   }
 
-  getAccountData(): Observable<User | null> {
-    return this.accountCache$.asObservable();
-  }
-
   getFamilyData(): Observable<Family | null> {
     return this.familyCache$.asObservable();
   }
@@ -622,7 +584,7 @@ export class CacheService {
 
   loadFamilyRecipes(userId: number, familyId: number) {
     if (familyId){
-      this.recipeService.getUsersFamilySharedRecipes(userId, familyId).subscribe({
+      this.recipeService.getUsersFamilySharedRecipes(familyId, userId).subscribe({
         next: (recipes) => this.familyRecipesSubject$.next(recipes),
         error: () => console.error('Failed to load family shared recipes'),
       });
@@ -681,5 +643,4 @@ export class CacheService {
       })
     );
   }
-
 }

@@ -14,7 +14,6 @@ import {CacheService} from '../../services/cache.service';
 })
 export class AccountComponent extends AbstractPage implements OnInit {
   accountForm!: FormGroup;
-  originalPassword: string = '';
 
   emailErrorText = 'Email is required.';
   usernameErrorText = 'Username is required.';
@@ -99,8 +98,8 @@ export class AccountComponent extends AbstractPage implements OnInit {
     let valid = false;
     const isEmailValid = this.accountForm.get('email')?.valid ?? false;
     const isUsernameValid = this.accountForm.get('username')?.valid ?? false;
-    const isPasswordValid = this.accountForm.get('password')?.valid ?? true; // Password nem kötelező, ezért alapból true
-    const isPasswordRepeatValid = this.accountForm.get('password_repeat')?.valid ?? true; // Password repeat nem kötelező, ezért alapból true
+    const isPasswordValid = this.accountForm.get('password')?.valid ?? true;
+    const isPasswordRepeatValid = this.accountForm.get('password_repeat')?.valid ?? true;
     const isPasswordMatchValid = !this.accountForm.errors?.['passwordsDoNotMatch'] ?? true;
 
     valid = isEmailValid && isUsernameValid && isPasswordValid && isPasswordRepeatValid && isPasswordMatchValid;

@@ -19,11 +19,4 @@ export class UserBarComponent  implements OnInit {
   ngOnInit() {
     this.username = this.authService.getUsername();
   }
-
-  logout() {
-    this.authService.logout();
-    // Navigáció a bejelentkezési oldalra
-    void this.router.navigate([RoutePaths.Login]);
-
-  }
 }

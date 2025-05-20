@@ -15,6 +15,5 @@ export enum RoutePaths {
   Account = 'account',
   Family = 'family',
   Error = 'error',
-  Scan = 'scan',
   Notifications = 'notifications',
 }

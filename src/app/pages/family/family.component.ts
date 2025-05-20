@@ -21,7 +21,6 @@ export class FamilyComponent extends AbstractPage implements OnInit {
   constructor(
     authService: AuthService,
     cacheService: CacheService,
-    private toastController: ToastController,
     commonService: CommonService
   ) {
     super(authService, cacheService, commonService);
@@ -189,7 +188,6 @@ export class FamilyComponent extends AbstractPage implements OnInit {
         next: () => {
           this.family = null;
           this.authService.clearUserFamilyId();
-          //this.cacheService.clearCache();
           this.cacheService.fullLoad(this.userId, this.familyId);
           this.commonService.presentToast('You have left the family.', 'warning');
         },

@@ -10,7 +10,6 @@ import {CapacitorBarcodeScanner} from '@capacitor/barcode-scanner';
 import { ModalController } from '@ionic/angular';
 import {LogPopupComponent} from '../../components/log-popup/log-popup.component';
 import {BehaviorSubject, filter, map, Observable, switchMap, tap} from 'rxjs';
-import {ShelfViewModel} from './shelf-view-model';
 
 @Component({
   selector: 'app-shelf',
@@ -53,16 +52,12 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
 
   constructor(
-    private shelfService: ShelfService,
-    readonly activatedRoute: ActivatedRoute,
     readonly router: Router,
     authService: AuthService,
     cacheService: CacheService,
     commonService: CommonService,
     private route: ActivatedRoute,
-    private productService: ProductService,
     private readonly modalController: ModalController,
-    //private barcodeScanner: BarcodeScanner
   ) {
     super(authService, cacheService, commonService);
   }
@@ -70,21 +65,8 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   override ngOnInit() {
     super.ngOnInit();
     this.fridgeId = Number.parseInt(sessionStorage.getItem('selectedFridgeId') ?? '');
-    this.fridgeIdSubject$.next(this.fridgeId); // Update the subject with the fridgeId
+    this.fridgeIdSubject$.next(this.fridgeId);
     this.loadShelves();
-    // this.route.queryParams.subscribe(params => {
-    //   const scannedBarcode = params['barcode'];
-    //   if (scannedBarcode) {
-    //     // használd itt a kódot
-    //     console.log('Beolvasott vonalkód:', scannedBarcode);
-    //   }
-    // });
-
-    // this.cacheService.getProducts().subscribe((products) => {
-    //   this.shelves.forEach((shelf) => {
-    //     shelf.products = products.filter((product) => product.shelfId === shelf.shelfId);
-    //   });
-    // });
     this.rebuildShelvesStream();
   }
 
@@ -148,55 +130,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
     });
   }
 
-  loadProductsForShelf(shelf: Shelf) {
-    this.cacheService.loadShelfProductsIntoCache(shelf.shelfId!).subscribe({
-      next: products => {
-        shelf.products = products;
-      },
-      error: error => {
-        console.error(`Failed to load products for shelf ${shelf.shelfId}:`, error);
-        void this.commonService.presentToast(error.error.message, 'danger');
-      }
-    });
-  }
-
-  searchProducts(event: any) {
-    const query = event.target.value.toLowerCase();
-    this.expandedShelfId = null;
-    this.highlightedProducts = {};
-
-    this.shelves.forEach(shelf => {
-      let shelfExpanded = false;
-      shelf.products?.forEach(product => {
-        if (product.productName.toLowerCase().includes(query)) {
-          shelfExpanded = true;
-          this.highlightedProducts[product.productId!] = true;
-        }
-      });
-      if (shelfExpanded) {
-        this.expandedShelfId = shelf.shelfId!;
-      }
-    });
-  }
-
-  isProductHighlighted(productId: number): boolean {
-    return this.highlightedProducts[productId] || false;
-  }
-
-  // scanBarcode() {
-  //   this.barcodeScanner.scan().then(barcodeData => {
-  //     console.log('Barcode data:', barcodeData);
-  //
-  //     // példa: vonalkódból termék hozzáadása
-  //     const scannedText = barcodeData.text;
-  //     if (scannedText) {
-  //       this.handleScannedBarcode(scannedText);
-  //     }
-  //   }).catch(err => {
-  //     console.error('Error', err);
-  //   });
-  // }
-
   async openLogPopup() {
     const modal = await this.modalController.create({
       component: LogPopupComponent,
@@ -240,10 +173,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
          console.error('Scan failed', error);
          void this.commonService.presentToast('Scan failed!', 'danger');
        }
-  }
-
-  async stopScan() {
-    document.body.classList.remove('scanner-active');
   }
 
   openAddShelfModal() {
@@ -308,24 +237,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
     this.selectedShelfName = '';
   }
 
-  // updateShelf() {
-  //   if (!this.selectedShelf || !this.selectedShelfName) return;
-  //
-  //   const updatedShelf: Shelf = {...this.selectedShelf, shelfName: this.selectedShelfName};
-  //
-  //   this.shelfService.updateShelfName(this.selectedShelf.shelfId!, updatedShelf).subscribe({
-  //     next: () => {
-  //       this.loadShelves();
-  //       this.closeUpdateShelfModal();
-  //       void this.commonService.presentToast('Shelf updated successfully!', 'success');
-  //     },
-  //     error: (error) => {
-  //       console.error('Failed to update shelf:', error);
-  //       void this.commonService.presentToast(error.error.message, 'danger');
-  //     }
-  //   });
-  // }
-
   updateShelf() {
     if (!this.selectedShelf || !this.selectedShelfName) return;
 
@@ -357,13 +268,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
         void this.commonService.presentToast('Failed to delete shelf!', 'danger');
       }
     });
-  }
-
-  navigateToProductPage(shelfId: number) {
-    sessionStorage.removeItem('selectedShelfId');
-    sessionStorage.setItem('selectedShelfId', shelfId.toString());
-    this.commonService.setShelfName(this.shelves.find(shelf => shelf.shelfId === shelfId)?.shelfName ?? '');
-    this.commonService.navigateToPage(RoutePaths.ShelfProduct, this.route);
   }
 
   openAddProductModal(shelf: Shelf) {
@@ -459,7 +363,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
     });
   }
 
-  // Function to format the date
   formatDate(date: string | Date): string {
     return new Date(date).toISOString().split('T')[0];
   }

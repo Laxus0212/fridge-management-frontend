@@ -15,7 +15,6 @@ export class AuthService {
   private userFamilyId = 'user_familyId'; // Store family id in localStorage
   private userId = 'userId'; // Store user id in localStorage
 
-  // Reaktív tárolók, hogy azonnal frissüljenek a komponensek
   private userIdSubject = new BehaviorSubject<number | null>(this.getUserId());
   private userFamilyIdSubject = new BehaviorSubject<number | null>(this.getUserFamilyId());
 

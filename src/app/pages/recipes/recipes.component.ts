@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {ModalController} from '@ionic/angular';
+import {ActionSheetController, ModalController} from '@ionic/angular';
 import {Fridge, FridgeService, Recipe, ShelfService, UpdateRecipe} from '../../openapi/generated-src';
 import {CommonService} from 'src/app/services/common.service';
 import {AuthService} from 'src/app/services/auth.service';
@@ -20,9 +20,6 @@ export class RecipesComponent extends AbstractPage implements OnInit {
   selectedIngredients: string[] = [];
   selectedMealType: 'reggeli' | 'ebéd' | 'vacsora' | null = null;
   newIngredientName: string = '';
-  newIngredientQuantity: number | null = null;
-  newIngredientUnit: string | null = null;
-  ingredientUnits = ['g', 'kg', 'ml', 'l', 'pcs', 'dkg', 'dl'];
   suggestedRecipes: any[] = [];
   searched = false;
   isRecipeModalOpen = false;
@@ -43,12 +40,10 @@ export class RecipesComponent extends AbstractPage implements OnInit {
 
   constructor(
     private recipeService: CustomRecipeService,
-    private shelfProductService: ShelfService,
     override commonService: CommonService,
     override authService: AuthService,
-    private fridgeService: FridgeService,
-    private modalController: ModalController,
-    override cacheService: CacheService
+    override cacheService: CacheService,
+    private actionSheetController: ActionSheetController
   ) {
     super(authService, cacheService, commonService);
   }
@@ -69,9 +64,6 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     this.favoriteRecipes$ = this.cacheService.getFavoriteRecipes(this.userId!);
     this.familyRecipes$ = this.cacheService.getFamilyRecipes(this.userId!, this.familyId!);
     this.filteredFavorites$ = this.getFilteredFavorites();
-
-    //this.cacheService.loadAllFridgeProducts();
-    //this.loadFridgeIngredients();
 
     this.cacheService.getAllFridgeProducts().pipe(
       filter(products => products.length > 0)
@@ -107,39 +99,21 @@ export class RecipesComponent extends AbstractPage implements OnInit {
   );
 
   applyFavoritesFilter() {
-    const all = [...this.favoriteRecipes, ...this.familySharedRecipes];
+    const allRecipes = [...this.favoriteRecipes, ...this.familySharedRecipes];
 
-    this.filteredFavorites = all.filter(recipe => {
-      const matchType = this.selectedMealType ? recipe.mealType === this.selectedMealType : true;
+    this.filteredFavorites = allRecipes.filter(recipe => {
       const matchOwnership = this.filterOption === 'own'
         ? recipe.savedBy === this.userId
-        : recipe.familyId === this.authService.getUserFamilyId() && recipe.savedBy !== this.userId;
+        : recipe.familyId === this.familyId && recipe.savedBy !== this.userId;
 
-      return matchType && matchOwnership;
+      const matchMealType = this.selectedMealType
+        ? recipe.mealType === this.selectedMealType
+        : true;
+
+      return matchOwnership && matchMealType;
     });
-  }
 
-  loadAllProductsFromFridges() {
-    this.cacheService.getFridges().pipe(
-      filter(fridges => fridges.length > 0),
-      switchMap(fridges => {
-        const shelvesRequests = fridges.map(fridge => this.cacheService.loadShelves(fridge.fridgeId!));
-        return forkJoin(shelvesRequests);
-      }),
-      switchMap(() => this.cacheService.getShelves()),
-      switchMap(shelves => {
-        const productsRequests = shelves.map(shelf => this.cacheService.loadShelfProducts(shelf.shelfId!));
-        return forkJoin(productsRequests);
-      }),
-      switchMap(() => this.cacheService.getShelfProducts()),
-      map(products => {
-        products.forEach(product => {
-          if (!this.ingredientsList.some(ing => ing.ingredient_name === product.productName)) {
-            this.ingredientsList.push({ ingredient_name: product.productName });
-          }
-        });
-      })
-    ).subscribe();
+    this.filteredFavorites$ = of(this.filteredFavorites);
   }
 
   reloadRecipes() {
@@ -153,10 +127,6 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     } else {
       void this.commonService.presentToast('User not found', 'danger');
     }
-  }
-
-  loadFridgeIngredients() {
-    this.loadAllProductsFromFridges();
   }
 
   saveRecipeToFavorites(recipe: any) {
@@ -299,5 +269,34 @@ export class RecipesComponent extends AbstractPage implements OnInit {
         void this.commonService.presentToast(`Failed to update sharing for '${recipe.title}'`, 'danger');
       }
     });
+  }
+
+  async presentDeleteConfirmation(recipe: Recipe | undefined) {
+    if (!recipe) return;
+
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Delete Recipe',
+      subHeader: 'Are you sure you want to delete this recipe?',
+      buttons: [
+        {
+          text: 'Delete',
+          role: 'destructive',
+          icon: 'trash',
+          handler: () => {
+            this.deleteRecipe(recipe);
+          },
+        },
+        {
+          text: 'Cancel',
+          icon: 'close',
+          role: 'cancel',
+          handler: () => {
+            console.log('Delete cancelled');
+          },
+        },
+      ],
+    });
+
+    await actionSheet.present();
   }
 }

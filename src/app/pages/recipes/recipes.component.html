@@ -1,4 +1,3 @@
-<ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-button (click)="reloadRecipes()">
@@ -17,9 +16,33 @@
       </ion-segment-button>
     </ion-segment>
   </ion-toolbar>
-</ion-header>
+  <ion-toolbar *ngIf="selectedTab === 'favorites'">
+    <ion-item>
+      <ion-select
+        [(ngModel)]="filterOption"
+        (ionChange)="applyFavoritesFilter()"
+        label="Ownership"
+        fill="solid"
+      >
+        <ion-select-option value="own">Owned</ion-select-option>
+        <ion-select-option value="family">Family Shared</ion-select-option>
+      </ion-select>
+    </ion-item>
 
-
+    <ion-item>
+      <ion-select
+        [(ngModel)]="selectedMealType"
+        (ionChange)="applyFavoritesFilter()"
+        label="Meal Type"
+        fill="solid"
+      >
+        <ion-select-option value="breakfast">Breakfast</ion-select-option>
+        <ion-select-option value="lunch">Lunch</ion-select-option>
+        <ion-select-option value="dinner">Dinner</ion-select-option>
+        <ion-select-option [value]="null">All</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </ion-toolbar>
 <ion-content *ngIf="selectedTab === 'favorites'" class="page-content">
   <ion-card *ngFor="let recipe of filteredFavorites$ | async">
     <ion-card-header>
@@ -31,7 +54,7 @@
     </ion-card-header>
     <ion-card-content>
       <ion-button color="secondary" (click)="openRecipeModal(recipe)">Details</ion-button>
-      <ion-button *ngIf="isOwnRecipe(recipe)" (click)="deleteRecipe(recipe)" color="danger">Remove</ion-button>
+      <ion-button *ngIf="isOwnRecipe(recipe)" (click)="presentDeleteConfirmation(recipe)" color="danger">Remove</ion-button>
       <ion-button *ngIf="isOwnRecipe(recipe)" color="tertiary" (click)="toggleFamilyShare(recipe)">
         {{ recipe.familyId ? 'Unshare' : 'Share' }}
       </ion-button>

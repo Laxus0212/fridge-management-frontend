@@ -1,12 +1,13 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import { Component, OnInit} from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { CommonService } from '../../services/common.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { RoutePaths } from '../../enums/route-paths';
-import {Fridge, UpdateFridgeReq} from '../../openapi/generated-src';
+import { Fridge, UpdateFridgeReq } from '../../openapi/generated-src';
 import { CacheService } from '../../services/cache.service';
-import {AbstractPage} from '../abstract-page';
-import {map, Observable, tap} from 'rxjs';
+import { AbstractPage } from '../abstract-page';
+import { map, Observable, tap } from 'rxjs';
+import {ActionSheetController} from '@ionic/angular';
 
 @Component({
   selector: 'app-fridge',
@@ -14,8 +15,6 @@ import {map, Observable, tap} from 'rxjs';
   styleUrls: ['./fridge.component.scss'],
 })
 export class FridgeComponent extends AbstractPage implements OnInit {
-  fridges: Fridge[] = [];
-  filteredFridges: Fridge[] = [];
   fridges$: Observable<Fridge[]> = this.cacheService.getFridges();
   filteredFridges$: Observable<Fridge[]>;
   newFridgeName: string = '';
@@ -32,13 +31,11 @@ export class FridgeComponent extends AbstractPage implements OnInit {
   constructor(
     authService: AuthService,
     commonService: CommonService,
-    private router: Router,
     private route: ActivatedRoute,
     cacheService: CacheService,
-    private changeDetectorRef: ChangeDetectorRef
+    private actionSheetController: ActionSheetController
   ) {
     super(authService, cacheService, commonService);
-    console.log('FridgeComponent constructor called');
 
     this.filteredFridges$ = this.fridges$.pipe(
       tap(fridges => {
@@ -55,15 +52,12 @@ export class FridgeComponent extends AbstractPage implements OnInit {
     console.log('FridgeComponent ngOnInit called');
     this.authService.userId$.subscribe(userId => {
       this.userId = userId;
-      //this.loadFridges();
     });
 
     this.authService.userFamilyId$.subscribe(familyId => {
       this.familyId = familyId;
-      //this.loadFridges();
     });
     this.cacheService.isLoading$.subscribe(isLoading => this.isLoading = isLoading);
-    //this.loadFridges();
   }
 
   reloadFridges() {
@@ -74,36 +68,6 @@ export class FridgeComponent extends AbstractPage implements OnInit {
       void this.commonService.presentToast('User not found', 'danger');
     }
   }
-
-
-  // loadFridges() {
-  //   this.cacheService.loadFridges(this.userId, this.familyId);
-  //   this.cacheService.getFridges().subscribe(
-  //     {
-  //       next: fridges => {
-  //         this.fridges = fridges;
-  //         this.applyFilter();
-  //         //this.changeDetectorRef.detectChanges();
-  //         if (this.fridges.length === 0) {
-  //           void this.commonService.presentToast('You have no fridges yet. Click the + button to add one!', 'warning');
-  //         }
-  //       },
-  //       error: (e) => this.commonService.presentToast('Failed to load fridges', e),
-  //     }
-  //     );
-  // }
-
-  // applyFilter() {
-  //   if (this.filterOption === 'owned') {
-  //     this.filteredFridges = this.fridges.filter(fridge => fridge.ownerId === this.userId);
-  //   } else if (this.filterOption === 'family' && this.familyId) {
-  //     this.filteredFridges = this.fridges.filter(
-  //       fridge => fridge.familyId && fridge.ownerId && this.familyId
-  //     );
-  //   } else {
-  //     this.filteredFridges = [];
-  //   }
-  // }
 
   private applyFilter(fridges: Fridge[]): Fridge[] {
     if (this.filterOption === 'owned') {
@@ -116,7 +80,6 @@ export class FridgeComponent extends AbstractPage implements OnInit {
   }
 
   onFilterChange() {
-    // Új filter kiválasztáskor új stream generálása
     this.filteredFridges$ = this.fridges$.pipe(
       map(fridges => this.applyFilter(fridges))
     );
@@ -196,7 +159,39 @@ export class FridgeComponent extends AbstractPage implements OnInit {
 
   navigateToShelf(fridgeId: number) {
     sessionStorage.setItem('selectedFridgeId', fridgeId.toString());
-    this.commonService.setFridgeName(this.fridges.find(fridge => fridge.fridgeId === fridgeId)?.fridgeName || '');
-    this.commonService.navigateToPage(RoutePaths.Shelf, this.route);
+    this.fridges$.subscribe(fridges => {
+      const fridgeName = fridges.find(fridge => fridge.fridgeId === fridgeId)?.fridgeName || '';
+      this.commonService.setFridgeName(fridgeName);
+      this.commonService.navigateToPage(RoutePaths.Shelf, this.route);
+    }).unsubscribe();
+  }
+
+  async presentDeleteConfirmation(fridgeId: number | undefined) {
+    if (!fridgeId) return;
+
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Delete Fridge',
+      subHeader: 'Are you sure you want to delete this fridge?',
+      buttons: [
+        {
+          text: 'Delete',
+          role: 'destructive',
+          icon: 'trash',
+          handler: () => {
+            this.deleteFridge(fridgeId);
+          },
+        },
+        {
+          text: 'Cancel',
+          icon: 'close',
+          role: 'cancel',
+          handler: () => {
+            console.log('Delete cancelled');
+          },
+        },
+      ],
+    });
+
+    await actionSheet.present();
   }
 }

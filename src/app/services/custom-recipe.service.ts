@@ -7,7 +7,7 @@ import OpenAI from 'openai';
 })
 export class CustomRecipeService {
   private apiUrl = 'https://api.openai.com/v1/chat/completions';
-  private apiKey = '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'; // Replace with your OpenAI API key
+  private apiKey = 'asd'; // Replace with your OpenAI API key
 
   openai = new OpenAI({
     apiKey: this.apiKey,

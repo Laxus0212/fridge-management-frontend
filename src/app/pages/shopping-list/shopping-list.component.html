@@ -1,4 +1,3 @@
-<ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-button (click)="reloadShoppingLists()">
@@ -22,7 +21,6 @@
       </ion-segment-button>
     </ion-segment>
   </ion-toolbar>
-</ion-header>
 
 <ion-content class="page-content">
   <!-- Loading state -->
@@ -47,7 +45,7 @@
               <h2>{{ shoppingList.name }}</h2>
             </ion-label>
             <ion-button *ngIf="filterOption === 'owned'" slot="end" fill="clear" color="primary" (click)="$event.stopPropagation();openEditShoppingListModal(shoppingList)">Edit</ion-button>
-            <ion-button *ngIf="filterOption === 'owned'" slot="end" fill="clear" color="danger" (click)="$event.stopPropagation();deleteShoppingList(shoppingList.listId!)">Delete</ion-button>
+            <ion-button *ngIf="filterOption === 'owned'" slot="end" fill="clear" color="danger" (click)="$event.stopPropagation();presentDeleteConfirmation(shoppingList.listId!)">Delete</ion-button>
               <ion-icon slot="end" color="primary" [name]="isExpanded[shoppingList.listId!] ? 'chevron-up' : 'chevron-down'"></ion-icon>
           </ion-item>
         </ion-card-header>

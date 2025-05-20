@@ -40,14 +40,6 @@ export class CommonService {
     void this.router.navigate([path], {relativeTo: activatedRoute});
   }
 
-  navigateRelativeToParent(path: RoutePaths, activatedRoute: ActivatedRoute) {
-    void this.router.navigate([path], {relativeTo: activatedRoute.parent});
-  }
-
-  setShelfName(name: string) {
-    this.shelfName = name;
-  }
-
   getShelfName() {
     return this.shelfName;
   }
@@ -55,19 +47,6 @@ export class CommonService {
   setFridgeName(name: string) {
     this.selectedFridgeName = name;
   }
-
-  getFridgeName() {
-    return this.selectedFridgeName;
-  }
-
-  setFamilyName(name: string) {
-    this.familyName = name;
-  }
-
-  getFamilyName() {
-    return this.familyName;
-  }
-
 
   get shelfId(): number {
     return this._shelfId;

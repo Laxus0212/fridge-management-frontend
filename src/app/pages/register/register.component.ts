@@ -13,7 +13,6 @@ import {CreateFamilyReq, Family, FamilyService, User, UserService} from '../../o
 })
 export class RegisterComponent implements OnInit {
   registerForm!: FormGroup;
-  families: Family[] = [];
 
   // Error message variables
   emailErrorText = 'Email is required.';
@@ -58,12 +57,10 @@ export class RegisterComponent implements OnInit {
       validators: PasswordValidator.areNotEqual
     });
 
-    // Figyeljük az isNewFamily változását
     this.registerForm.get('isNewFamily')?.valueChanges.subscribe((isNewFamily) => {
       this.toggleNewFamilyNameValidation(isNewFamily);
     });
 
-    // Call validation on form changes
     this.registerForm.valueChanges.subscribe(() => {
       this.checkValidation();
     });

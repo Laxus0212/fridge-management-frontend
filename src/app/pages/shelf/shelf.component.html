@@ -11,7 +11,6 @@
 </ion-header>
 
 <ion-content class="page-content">
-  <ion-searchbar [(ngModel)]="searchQuery" (ionInput)="searchProducts($event)"></ion-searchbar>
 
   <ng-container *ngIf="isLoading">
     <ion-list>

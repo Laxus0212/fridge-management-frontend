@@ -88,15 +88,4 @@ export class LoginComponent implements OnInit, AfterViewInit {
       void this.commonService.presentToast('Please fill out the form correctly.', 'danger');
     }
   }
-
-  navigateToCallback() {
-    this.userService.usersGoogleGet().subscribe({
-      next: (res) => {
-        console.log('Google Login Callback:', res);
-      },
-      error: (error) => {
-        console.error('Google Login Callback Error:', error);
-      }
-    });
-  }
 }

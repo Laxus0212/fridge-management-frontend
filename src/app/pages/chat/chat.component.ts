@@ -112,27 +112,6 @@ export class ChatComponent extends AbstractPage implements OnInit, OnDestroy {
     };
   }
 
-  // Load all websocketMessages for the chat
-  loadMessages() {
-    if (this.chatId) {
-      this.isLoading = true;
-      this.messageService.getMessagesForChat(this.chatId).subscribe({
-        next: (messages: Message[]) => {
-          this.prevWebsocketMessages = messages;
-          messages.forEach(message => {
-            this.getMessageSenderDetails(message);
-          });
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Failed to load messages:', error);
-          void this.commonService.presentToast('Error loading messages', 'danger');
-          this.isLoading = false;
-        }
-      });
-    }
-  }
-
   deleteMessage(messageId: string) {
     this.messageService.deleteMessage(messageId).subscribe({
       next: () => {
@@ -186,11 +165,6 @@ export class ChatComponent extends AbstractPage implements OnInit, OnDestroy {
       ]
     });
     await actionSheet.present();
-  }
-
-  getMessageSenderName(message: Message): string {
-    const user = this.messageParticipants.find(user => user.userId === message.senderId);
-    return user ? user.username : 'User';
   }
 
   getMessageSenderDetails(message: Message) {

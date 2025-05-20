@@ -6,6 +6,7 @@ import UnitEnum = Product.UnitEnum;
 import {AbstractPage} from '../abstract-page';
 import {CacheService} from '../../services/cache.service';
 import {map, Observable, tap} from 'rxjs';
+import {ActionSheetController} from '@ionic/angular';
 
 @Component({
   selector: 'app-shopping-list',
@@ -13,8 +14,6 @@ import {map, Observable, tap} from 'rxjs';
   styleUrls: ['./shopping-list.component.scss'],
 })
 export class ShoppingListComponent extends AbstractPage implements OnInit {
-  shoppingLists: ShoppingList[] = [];
-  filteredShoppingLists: ShoppingList[] = [];
   newShoppingListName: string = '';
   newShoppingListSharedWithFamily: boolean = false;
   isModalOpen: boolean = false;
@@ -29,7 +28,6 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
   editProductQuantity: number | null = null;
   editProductUnit?: UnitEnum;
   currentEditingProductId: number | null = null;
-
 
   currentEditingShoppingListId: number | null = null;
   newProductName: string = '';
@@ -46,6 +44,7 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
     authService: AuthService,
     cacheService: CacheService,
     commonService: CommonService,
+    private actionSheetController: ActionSheetController
   ) {
     super(authService, cacheService, commonService);
 
@@ -90,33 +89,6 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
       return [];
     }
   }
-
-  // shoppingLists$: Observable<ShoppingList[]> = this.cacheService.getShoppingLists().pipe(
-  //   tap(lists => {
-  //     if (lists.length === 0) {
-  //       void this.commonService.presentToast('No shopping lists yet', 'warning');
-  //     }
-  //   }),
-  //   map(lists => this.applyFilter(lists))
-  // );
-
-  // loadShoppingLists() {
-  //   this.cacheService.loadShoppingLists(this.userId);
-  //   this.cacheService.getShoppingLists().subscribe(lists => {
-  //     this.shoppingLists = lists;
-  //     this.applyFilter();
-  //   });
-  // }
-
-  // applyFilter(shoppingLists: ShoppingList[]): ShoppingList[] {
-  //   if (this.filterOption === 'owned') {
-  //     return shoppingLists.filter(s => s.ownerId === this.userId);
-  //   } else if (this.filterOption === 'family' && this.familyId) {
-  //     return shoppingLists.filter(list => list.familyId === this.familyId);
-  //   }else {
-  //     return [];
-  //   }
-  // }
 
   openAddShoppingListModal() {
     this.isModalOpen = true;
@@ -306,8 +278,33 @@ export class ShoppingListComponent extends AbstractPage implements OnInit {
     }
   }
 
-  public hasSelectedProduct(): boolean {
-    return !!this.selectedProduct;
+  async presentDeleteConfirmation(listId: number | undefined) {
+    if (!listId) return;
+
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Delete Shopping List',
+      subHeader: 'Are you sure you want to delete this shopping list?',
+      buttons: [
+        {
+          text: 'Delete',
+          role: 'destructive',
+          icon: 'trash',
+          handler: () => {
+            this.deleteShoppingList(listId);
+          },
+        },
+        {
+          text: 'Cancel',
+          icon: 'close',
+          role: 'cancel',
+          handler: () => {
+            console.log('Delete cancelled');
+          },
+        },
+      ],
+    });
+
+    await actionSheet.present();
   }
 
   protected readonly ShoppingListItem = ShoppingListItem;
