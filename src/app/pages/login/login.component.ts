@@ -4,6 +4,8 @@ import {Router} from '@angular/router';
 import {AuthService} from "../../services/auth.service";
 import {CommonService} from "../../services/common.service";
 import {LoginUserReq, UserService} from '../../openapi/generated-src';
+import {GoogleAuth} from '@codetrix-studio/capacitor-google-auth';
+import {isPlatform} from '@ionic/angular';
 
 @Component({
   selector: 'app-login',
@@ -29,6 +31,13 @@ export class LoginComponent implements OnInit, AfterViewInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+    void GoogleAuth.initialize({
+      scopes: ['profile', 'email'],
+      clientId: '277078751696-4l4jj3i8aijahnujtg8eg45l61inb6bu.apps.googleusercontent.com',
+      grantOfflineAccess: true,
+    });
+    console.log('Google Auth initialized');
+    console.log(GoogleAuth)
   }
 
   ngAfterViewInit(): void {
@@ -48,14 +57,32 @@ export class LoginComponent implements OnInit, AfterViewInit {
     );
   }
 
-  handleGoogleSignIn() {
-    const googleButtonContainer = document.getElementById('google-login-button');
-    if (googleButtonContainer) {
-      const googleButton = googleButtonContainer.querySelector("div[role='button']") as HTMLElement;
-      if (googleButton) {
-        googleButton.click();
-      }
-    }
+  // handleGoogleSignIn() {
+  //   const googleButtonContainer = document.getElementById('google-login-button');
+  //   if (googleButtonContainer) {
+  //     const googleButton = googleButtonContainer.querySelector("div[role='button']") as HTMLElement;
+  //     if (googleButton) {
+  //       googleButton.click();
+  //     }
+  //   }
+  // }
+
+  async handleGoogleSignIn(): Promise<void> {
+      const googleUser = await GoogleAuth.signIn().then(
+        (user) => {
+          console.log('Google User:', user);
+          return user;
+        }
+      );
+
+
+      const responseLikeWeb = {
+        clientId: '277078751696-4l4jj3i8aijahnujtg8eg45l61inb6bu.apps.googleusercontent.com',
+        credential: googleUser.authentication.idToken,
+        select_by: 'user'
+      };
+
+      this.handleCredentialResponse(responseLikeWeb); // ugyanaz, mint weben
   }
 
   public navigatetoRegistration(): void {

@@ -2,13 +2,12 @@ import {Component, OnInit} from '@angular/core';
 import {CommonService} from '../../services/common.service';
 import {RoutePaths} from '../../enums/route-paths';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Product, ProductService, Shelf, ShelfService} from 'src/app/openapi/generated-src';
+import {Product, Shelf} from 'src/app/openapi/generated-src';
 import {AbstractPage} from '../abstract-page';
 import {AuthService} from '../../services/auth.service';
 import { CacheService } from 'src/app/services/cache.service';
 import {CapacitorBarcodeScanner} from '@capacitor/barcode-scanner';
 import { ModalController } from '@ionic/angular';
-import {LogPopupComponent} from '../../components/log-popup/log-popup.component';
 import {BehaviorSubject, filter, map, Observable, switchMap, tap} from 'rxjs';
 
 @Component({
@@ -128,13 +127,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
         this.isLoading = false;
       },
     });
-  }
-
-  async openLogPopup() {
-    const modal = await this.modalController.create({
-      component: LogPopupComponent,
-    });
-    return await modal.present();
   }
 
    async startScan(isNewProduct: boolean) {
