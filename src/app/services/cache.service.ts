@@ -238,18 +238,20 @@ export class CacheService {
   addProduct(newProduct: Product): Observable<Product> {
     return this.productService.addProduct(newProduct).pipe(
       tap((product) => {
-        this.allShelvesWithProducts$.pipe(
-          filter(shelves => shelves.length > 0),
-          take(1)
-        ).subscribe((shelves) => {
-          const shelf = shelves.find(shelf => shelf.shelfId === product.shelfId);
-          if (shelf) {
-            shelf.products?.push(newProduct);
-          }
-        }
-        )
+        const shelves = this.allShelvesWithProducts$.getValue();
+        const updatedShelves = shelves.map(shelf =>
+          shelf.shelfId === product.shelfId
+            ? {
+              ...shelf,
+              products: [...(shelf.products || []), product]
+            }
+            : shelf
+        );
+        this.allShelvesWithProducts$.next(updatedShelves);
+
         const currentProducts = this.productCache$.getValue();
         this.productCache$.next([...currentProducts, product]);
+
         const allProducts = this.allFridgeProductsCache$.getValue();
         this.allFridgeProductsCache$.next([...allProducts, product]);
       }),
@@ -260,30 +262,32 @@ export class CacheService {
     );
   }
 
+
   /** Update an existing product */
   updateProduct(productId: number, updatedProduct: Product): Observable<Product> {
     return this.productService.updateProduct(productId, updatedProduct).pipe(
       tap(() => {
-        this.allShelvesWithProducts$.pipe(
-          filter(shelves => shelves.length > 0),
-          take(1)
-        ).subscribe((shelves) => {
-          const shelf = shelves.find(shelf => shelf.shelfId === updatedProduct.shelfId);
-          if (shelf) {
-            const productIndex = shelf.products?.findIndex(product => product.productId === productId);
-            if (productIndex !== undefined && productIndex !== -1) {
-              shelf.products![productIndex] = updatedProduct;
+        const shelves = this.allShelvesWithProducts$.getValue();
+        const updatedShelves = shelves.map(shelf =>
+          shelf.shelfId === updatedProduct.shelfId
+            ? {
+              ...shelf,
+              products: (shelf.products || []).map(product =>
+                product.productId === productId ? updatedProduct : product
+              )
             }
-          }
-        }
-        )
+            : shelf
+        );
+        this.allShelvesWithProducts$.next(updatedShelves);
+
         const currentProducts = this.productCache$.getValue();
-        const updatedProducts = currentProducts.map((product) =>
+        const updatedProducts = currentProducts.map(product =>
           product.productId === productId ? updatedProduct : product
         );
         this.productCache$.next(updatedProducts);
+
         const allProducts = this.allFridgeProductsCache$.getValue();
-        const updatedAllProducts = allProducts.map((product) =>
+        const updatedAllProducts = allProducts.map(product =>
           product.productId === productId ? updatedProduct : product
         );
         this.allFridgeProductsCache$.next(updatedAllProducts);
@@ -295,6 +299,7 @@ export class CacheService {
     );
   }
 
+
   /** Delete a product */
   deleteProduct(productId: number): Observable<void> {
     return this.productService.deleteProduct(productId).pipe(
@@ -303,13 +308,13 @@ export class CacheService {
           filter(shelves => shelves.length > 0),
           take(1)
         ).subscribe((shelves) => {
-          shelves.forEach(shelf => {
-            const productIndex = shelf.products?.findIndex(product => product.productId === productId);
-            if (productIndex !== undefined && productIndex !== -1) {
-              shelf.products!.splice(productIndex, 1);
-            }
-          });
-        }
+            const updatedShelves = shelves.map(shelf =>
+              shelf.products?.some(p => p.productId === productId)
+                ? { ...shelf, products: shelf.products!.filter(p => p.productId !== productId) }
+                : shelf
+            );
+            this.allShelvesWithProducts$.next(updatedShelves);
+          }
         )
         const currentProducts = this.productCache$.getValue();
         const updatedProducts = currentProducts.filter(

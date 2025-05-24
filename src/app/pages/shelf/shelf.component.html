@@ -74,7 +74,7 @@
                     'product-expired': getExpirationStatus(product.expirationDate) === 'expired'
                   }"
                 >Expiration Date: {{ product.expirationDate | date: 'yyyy-MM-dd' }}</p>
-                <p>Opened Date: {{ product.opened_date | date: 'yyyy-MM-dd' }}</p>
+                <p>Opened Date: {{ product.openedDate | date: 'yyyy-MM-dd' }}</p>
               </ion-label>
               <ion-button slot="end" color="primary" (click)="openUpdateProductModal(product); $event.stopPropagation()">
                 <ion-icon name="pencil-outline" class="large-icon"></ion-icon>
@@ -186,7 +186,7 @@
             labelPlacement="stacked"
             label="Unit"
           >
-            <ion-select-option *ngFor="let unit of ['g', 'kg', 'ml', 'l', 'pcs']">{{ unit }}</ion-select-option>
+            <ion-select-option *ngFor="let unit of ['g', 'kg', 'ml', 'l', 'pcs', 'dkg', 'dl']">{{ unit }}</ion-select-option>
           </ion-select>
         </ion-item>
 
@@ -207,7 +207,7 @@
 
         <ion-item>
           <ion-input
-            value="{{ newProduct.opened_date | date: 'yyyy-MM-dd' }}"
+            value="{{ newProduct.openedDate | date: 'yyyy-MM-dd' }}"
             id="newOpenDate"
             fill="solid"
             labelPlacement="stacked"
@@ -215,7 +215,7 @@
           ></ion-input>
           <ion-popover trigger="newOpenDate">
             <ng-template>
-              <ion-datetime presentation="date" [(ngModel)]="newProduct.opened_date"></ion-datetime>
+              <ion-datetime presentation="date" [(ngModel)]="newProduct.openedDate"></ion-datetime>
             </ng-template>
           </ion-popover>
         </ion-item>
@@ -226,8 +226,7 @@
         !newProduct.productName ||
         !newProduct.quantity ||
         !newProduct.unit ||
-        !newProduct.expirationDate ||
-        !newProduct.opened_date"
+        !newProduct.expirationDate"
           (click)="addProduct()"
         >Add Product</ion-button>
       </ion-content>
@@ -249,7 +248,7 @@
       <ion-content>
         <ion-item>
           <ion-input
-            [(ngModel)]="selectedProduct.productName"
+            [(ngModel)]="selectedProduct!.productName"
             type="text"
             required
             minlength="1"
@@ -266,7 +265,7 @@
         <ion-item>
           <ion-input
             type="number"
-            [(ngModel)]="selectedProduct.quantity"
+            [(ngModel)]="selectedProduct!.quantity"
             required
             min="1"
             max="1000"
@@ -278,7 +277,7 @@
 
         <ion-item>
           <ion-select
-            [(ngModel)]="selectedProduct.unit"
+            [(ngModel)]="selectedProduct!.unit"
             fill="solid"
             labelPlacement="stacked"
             label="Unit"
@@ -289,7 +288,7 @@
 
         <ion-item>
           <ion-input
-            value="{{ selectedProduct.expirationDate | date: 'yyyy-MM-dd' }}"
+            value="{{ selectedProduct?.expirationDate | date: 'yyyy-MM-dd' }}"
             id="updateDate"
             fill="solid"
             labelPlacement="stacked"
@@ -297,14 +296,14 @@
           ></ion-input>
           <ion-popover trigger="updateDate">
             <ng-template>
-              <ion-datetime presentation="date" [(ngModel)]="selectedProduct.expirationDate"></ion-datetime>
+              <ion-datetime presentation="date" [(ngModel)]="selectedProduct!.expirationDate"></ion-datetime>
             </ng-template>
           </ion-popover>
         </ion-item>
 
         <ion-item>
           <ion-input
-            value="{{ selectedProduct.opened_date | date: 'yyyy-MM-dd' }}"
+            value="{{ selectedProduct?.openedDate | date: 'yyyy-MM-dd' }}"
             id="updateOpenDate"
             fill="solid"
             labelPlacement="stacked"
@@ -312,7 +311,7 @@
           ></ion-input>
           <ion-popover trigger="updateOpenDate">
             <ng-template>
-              <ion-datetime presentation="date" [(ngModel)]="selectedProduct.opened_date"></ion-datetime>
+              <ion-datetime presentation="date" [(ngModel)]="selectedProduct!.openedDate"></ion-datetime>
             </ng-template>
           </ion-popover>
         </ion-item>
@@ -320,11 +319,10 @@
         <ion-button
           expand="block"
           [disabled]="
-        !selectedProduct.productName ||
-        !selectedProduct.quantity ||
-        !selectedProduct.unit ||
-        !selectedProduct.expirationDate ||
-        !selectedProduct.opened_date"
+        !selectedProduct?.productName ||
+        !selectedProduct?.quantity ||
+        !selectedProduct?.unit ||
+        !selectedProduct?.expirationDate"
           (click)="updateProduct()"
         >Update Product</ion-button>
       </ion-content>

@@ -21,7 +21,7 @@ components:
         expirationDate:
           type: string
           format: date
-        opened_date:
+        openedDate:
           type: string
           format: date
         shelfId:

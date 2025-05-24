@@ -16,7 +16,6 @@ import {BehaviorSubject, filter, map, Observable, switchMap, tap} from 'rxjs';
   styleUrls: ['./shelf.component.scss'],
 })
 export class ShelfComponent extends AbstractPage implements OnInit {
-  shelves: Shelf[] = [];
   newShelfName: string = '';
   selectedShelfName: string = '';
   selectedShelf: Shelf | null = null;
@@ -25,38 +24,23 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   isAddProductModalOpen: boolean = false;
   isUpdateProductModalOpen: boolean = false;
   fridgeId: number | undefined;
-  newProduct: Product = {
-    productName: '',
+  newProduct: Product = <Product>{
     quantity: 0,
     unit: Product.UnitEnum.G,
-    opened_date: '',
-    expirationDate: '',
-    shelfId: 0
   };
-  selectedProduct: Product = {
-    productName: '',
-    quantity: 0,
-    unit: Product.UnitEnum.G,
-    opened_date: '',
-    expirationDate: '',
-    shelfId: 0
-  };
+  selectedProduct: Product | undefined;
   isLoading: boolean = false;
-  searchQuery: string = '';
-  highlightedProducts: { [key: number]: boolean } = {};
-  expandedShelfId: number | null = null;
   sortDirections: {[shelfId: number]: 'asc' | 'desc'} = {};
   private fridgeIdSubject$ = new BehaviorSubject<number | undefined>(undefined);
-
-
+  shelves$: Observable<Shelf[]> = this.getShelvesStream().pipe(
+    tap(() => this.isLoading = false)
+  );
 
   constructor(
     readonly router: Router,
     authService: AuthService,
     cacheService: CacheService,
     commonService: CommonService,
-    private route: ActivatedRoute,
-    private readonly modalController: ModalController,
   ) {
     super(authService, cacheService, commonService);
   }
@@ -65,11 +49,9 @@ export class ShelfComponent extends AbstractPage implements OnInit {
     super.ngOnInit();
     this.fridgeId = Number.parseInt(sessionStorage.getItem('selectedFridgeId') ?? '');
     this.fridgeIdSubject$.next(this.fridgeId);
-    this.loadShelves();
     this.rebuildShelvesStream();
   }
 
-  shelves$: Observable<Shelf[]> = this.getShelvesStream();
 
   toggleSortDirection(shelfId: number) {
     const current = this.sortDirections[shelfId] || 'asc';
@@ -113,21 +95,21 @@ export class ShelfComponent extends AbstractPage implements OnInit {
     }
   }
 
-  loadShelves() {
-    if (!this.fridgeId) return;
-    this.isLoading = true;
-
-    this.cacheService.getShelvesFromCacheByFridgeId(this.fridgeId).subscribe({
-      next: () => {
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Failed to load shelves from cache:', error);
-        void this.commonService.presentToast(error.error.message, 'danger');
-        this.isLoading = false;
-      },
-    });
-  }
+  // loadShelves() {
+  //   if (!this.fridgeId) return;
+  //   this.isLoading = true;
+  //
+  //   this.cacheService.getShelvesFromCacheByFridgeId(this.fridgeId).subscribe({
+  //     next: () => {
+  //       this.isLoading = false;
+  //     },
+  //     error: (error) => {
+  //       console.error('Failed to load shelves from cache:', error);
+  //       void this.commonService.presentToast(error.error.message, 'danger');
+  //       this.isLoading = false;
+  //     },
+  //   });
+  // }
 
    async startScan(isNewProduct: boolean) {
        try {
@@ -153,9 +135,9 @@ export class ShelfComponent extends AbstractPage implements OnInit {
              this.newProduct.quantity = quantity;
              this.newProduct.unit = unit as Product.UnitEnum;
            } else {
-             this.selectedProduct.productName = name;
-             this.selectedProduct.quantity = quantity;
-             this.selectedProduct.unit = unit as Product.UnitEnum;
+             this.selectedProduct!.productName = name;
+             this.selectedProduct!.quantity = quantity;
+             this.selectedProduct!.unit = unit as Product.UnitEnum;
            }
            void this.commonService.presentToast(`Product found: ${name}`, 'success');
          } else {
@@ -174,14 +156,13 @@ export class ShelfComponent extends AbstractPage implements OnInit {
   openUpdateProductModal(product: Product) {
     this.selectedProduct = {...product};
     this.isUpdateProductModalOpen = true;
-    this.selectedShelf = this.shelves.find(shelf => shelf.shelfId === product.shelfId) ?? null;
+    //this.selectedShelf = this.shelves.find(shelf => shelf.shelfId === product.shelfId) ?? null;
   }
 
   deleteProduct(productId: number) {
     this.cacheService.deleteProduct(productId).subscribe({
       next: () => {
-        const shelfId = this.selectedProduct.shelfId!;
-        this.updateShelfCache(shelfId);
+        this.closeUpdateProductModal();
         void this.commonService.presentToast('Product deleted successfully!', 'success');
       },
       error: (error) => {
@@ -190,6 +171,7 @@ export class ShelfComponent extends AbstractPage implements OnInit {
       }
     });
   }
+
 
   closeAddShelfModal() {
     this.isAddModalOpen = false;
@@ -269,13 +251,9 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
   closeAddProductModal() {
     this.isAddProductModalOpen = false;
-    this.newProduct = {
-      productName: '',
+    this.newProduct = <Product>{
       quantity: 0,
       unit: Product.UnitEnum.G,
-      opened_date: '',
-      expirationDate: '',
-      shelfId: 0
     };
   }
 
@@ -289,8 +267,8 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
     this.newProduct.unit = this.newProduct.unit as Product.UnitEnum;
     this.newProduct.expirationDate = this.formatDate(this.newProduct.expirationDate);
-    if (this.newProduct.opened_date) {
-      this.newProduct.opened_date = this.formatDate(this.newProduct.opened_date);
+    if (this.newProduct.openedDate) {
+      this.newProduct.openedDate = this.formatDate(this.newProduct.openedDate);
     }
 
     const newProduct: Product = {
@@ -300,7 +278,6 @@ export class ShelfComponent extends AbstractPage implements OnInit {
 
     this.cacheService.addProduct(newProduct).subscribe({
       next: () => {
-        this.updateShelfCache(this.selectedShelf?.shelfId!);
         this.closeAddProductModal();
         void this.commonService.presentToast('Product added successfully!', 'success');
       },
@@ -311,46 +288,28 @@ export class ShelfComponent extends AbstractPage implements OnInit {
     });
   }
 
+
   closeUpdateProductModal() {
     this.isUpdateProductModalOpen = false;
-    this.selectedProduct = {
-      productName: '',
-      quantity: 0,
-      unit: Product.UnitEnum.G,
-      opened_date: '',
-      expirationDate: '',
-      shelfId: 0
-    };
+    this.selectedProduct = undefined;
   }
 
   updateProduct() {
     if (!this.selectedProduct) return;
 
     this.selectedProduct.expirationDate = this.formatDate(this.selectedProduct.expirationDate);
-    if (this.selectedProduct.opened_date) {
-      this.selectedProduct.opened_date = this.formatDate(this.selectedProduct.opened_date);
+    if (this.selectedProduct.openedDate) {
+      this.selectedProduct.openedDate = this.formatDate(this.selectedProduct.openedDate);
     }
 
     this.cacheService.updateProduct(this.selectedProduct.productId!, this.selectedProduct).subscribe({
       next: () => {
-        this.updateShelfCache(this.selectedProduct.shelfId!);
         this.closeUpdateProductModal();
         void this.commonService.presentToast('Product updated successfully!', 'success');
       },
       error: (error) => {
         console.error('Failed to update product:', error);
         void this.commonService.presentToast('Failed to update product!', 'danger');
-      }
-    });
-  }
-
-  private updateShelfCache(shelfId: number) {
-    this.cacheService.loadShelfProductsIntoCache(shelfId).subscribe({
-      next: () => {
-        this.rebuildShelvesStream();
-      },
-      error: (error) => {
-        console.error(`Failed to update shelf cache for shelf ${shelfId}:`, error);
       }
     });
   }

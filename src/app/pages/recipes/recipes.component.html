@@ -55,7 +55,7 @@
     <ion-card-content>
       <ion-button color="secondary" (click)="openRecipeModal(recipe)">Details</ion-button>
       <ion-button *ngIf="isOwnRecipe(recipe)" (click)="presentDeleteConfirmation(recipe)" color="danger">Remove</ion-button>
-      <ion-button *ngIf="isOwnRecipe(recipe)" color="tertiary" (click)="toggleFamilyShare(recipe)">
+      <ion-button *ngIf="isOwnRecipe(recipe) && familyId" color="tertiary" (click)="toggleFamilyShare(recipe)">
         {{ recipe.familyId ? 'Unshare' : 'Share' }}
       </ion-button>
     </ion-card-content>
