@@ -91,3 +91,17 @@ ionic capacitor build android
 - `openapi-generator-cli` – OpenAPI definíciók alapján generált service-ek
 
 ---
+
+### 📱 Android natív működéshez szükséges plusz lépések
+
+- Szükséges jogosultságok beállítása az `android/app/src/main/AndroidManifest.xml` fájlban:
+  - `INTERNET` (hálózati kommunikációhoz)
+  - `CAMERA` (vonalkód olvasáshoz)
+  - `POST_NOTIFICATIONS` (értesítésekhez, Android 13+)
+- Példa jogosultságok:
+  ```xml
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.CAMERA" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  
+
