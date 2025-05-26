@@ -5,7 +5,6 @@ import {CommonService} from 'src/app/services/common.service';
 import {AuthService} from 'src/app/services/auth.service';
 import {CustomRecipeService} from '../../services/custom-recipe.service';
 import {CacheService} from '../../services/cache.service';
-import {Ingredient} from '../../openapi/generated-src/model/ingredient';
 import {AbstractPage} from '../abstract-page';
 import {BehaviorSubject, combineLatest, filter, forkJoin, map, Observable, of, switchMap} from 'rxjs';
 
@@ -15,8 +14,8 @@ import {BehaviorSubject, combineLatest, filter, forkJoin, map, Observable, of, s
   styleUrls: ['./recipes.component.scss'],
 })
 export class RecipesComponent extends AbstractPage implements OnInit {
-  ingredientsList: Ingredient[] = [];
-  customIngredients: any[] = [];
+  ingredientsList: string[] = [];
+  customIngredients: string[] = [];
   selectedIngredients: string[] = [];
   selectedMealType: 'reggeli' | 'ebéd' | 'vacsora' | null = null;
   newIngredientName: string = '';
@@ -36,7 +35,7 @@ export class RecipesComponent extends AbstractPage implements OnInit {
   familyRecipes$: Observable<Recipe[]> = of([]);
 
   filteredFavorites$: Observable<Recipe[]> = of([]);
-  private customIngredients$ = new BehaviorSubject<Ingredient[]>([]);
+  private customIngredients$ = new BehaviorSubject<string[]>([]);
 
   constructor(
     private recipeService: CustomRecipeService,
@@ -68,9 +67,9 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     this.cacheService.getAllFridgeProducts().pipe(
       filter(products => products.length > 0)
     ).subscribe((products) => {
-      this.ingredientsList = products.map(product => ({
-        ingredient_name: product.productName,
-      }));
+      this.ingredientsList = products.map(product => (
+        product.productName
+      ));
     });
   }
 
@@ -80,17 +79,17 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     );
   }
 
-  ingredientsList$: Observable<Ingredient[]> = combineLatest([
+  ingredientsList$: Observable<string[]> = combineLatest([
     this.cacheService.getAllFridgeProducts().pipe(
       filter(products => products.length > 0),
-      map(products => products.map(p => ({ ingredient_name: p.productName })))
+      map(products => products.map(p => (p.productName )))
     ),
     this.customIngredients$
   ]).pipe(
     map(([fromFridge, custom]) => {
-      const combined: Ingredient[] = [...fromFridge];
+      const combined: string[] = [...fromFridge];
       custom.forEach(cust => {
-        if (!combined.some(i => i.ingredient_name?.toLowerCase() === cust.ingredient_name?.toLowerCase())) {
+        if (!combined.some(i => i.toLowerCase() === cust.toLowerCase())) {
           combined.push(cust);
         }
       });
@@ -158,11 +157,11 @@ export class RecipesComponent extends AbstractPage implements OnInit {
 
   addCustomIngredient() {
     if (this.newIngredientName) {
-      const newIngredient = { ingredient_name: this.newIngredientName };
+      const newIngredient = this.newIngredientName;
 
       const current = this.customIngredients$.value;
       const exists = current.some(
-        ing => ing.ingredient_name?.toLowerCase() === this.newIngredientName.toLowerCase()
+        ing => ing.toLowerCase() === this.newIngredientName.toLowerCase()
       );
 
       if (!exists) {
@@ -183,7 +182,7 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     this.suggestedRecipes = [];
     const ingredients = [
       ...this.selectedIngredients,
-      ...this.customIngredients.map(i => i.ingredient_name)
+      ...this.customIngredients$.value,
     ];
 
     this.recipeService.getRecipeSuggestions(ingredients, this.selectedMealType).then(
@@ -204,7 +203,7 @@ export class RecipesComponent extends AbstractPage implements OnInit {
     this.loading = true;
     const ingredients = [
       ...this.selectedIngredients,
-      ...this.customIngredients.map(i => i.ingredient_name)
+      ...this.customIngredients$.value
     ];
 
     this.recipeService.getRecipeSuggestions(ingredients, this.selectedMealType).then(

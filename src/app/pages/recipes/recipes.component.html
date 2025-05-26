@@ -73,7 +73,7 @@
       multiple="true"
     >
       <ion-select-option *ngFor="let ingredient of ingredientsList$ | async" [value]="ingredient">
-        {{ ingredient.ingredient_name }}
+        {{ ingredient }}
       </ion-select-option>
     </ion-select>
   </ion-item>

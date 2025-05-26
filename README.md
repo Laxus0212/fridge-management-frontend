@@ -10,9 +10,10 @@
 > Telepítsd a szükséges csomagokat:
 
 ```
-npm install
-npm install @ionic/utils-process
+npm install --legacy-peer-deps
+npm install -g @ionic/cli
 npm install ws // csak ha WebSocket hibát ír a szerveren
+npm install -g @openapitools/openapi-generator-cli
 ```
 
 ---

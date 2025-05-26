@@ -32,7 +32,7 @@ import {
   User,
   UserService,
 } from '../openapi/generated-src';
-import {Chat} from '../openapi/generated-src/model/chat';
+import {Chat} from '../pages/chat/chat';
 
 @Injectable({
   providedIn: 'root'
